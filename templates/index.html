@@ -505,6 +505,100 @@
     @keyframes spin { to { transform: rotate(360deg); } }
 
     .empty { text-align: center; color: var(--muted); font-size: .88rem; padding: 1.5rem 0; }
+
+    /* ── Pitch layout ──────────────────────────────────────────────── */
+    .pitch-wrap {
+      border-radius: 12px;
+      overflow: hidden;
+      background: repeating-linear-gradient(
+        180deg,
+        #1d7a3e 0px, #1d7a3e 44px,
+        #1a7039 44px, #1a7039 88px
+      );
+      padding: 12px 8px 10px;
+      margin-bottom: .6rem;
+      box-shadow: inset 0 0 0 2px rgba(255,255,255,.1);
+    }
+    .pitch-row {
+      display: flex;
+      justify-content: center;
+      align-items: stretch;
+      gap: 5px;
+      margin-bottom: 6px;
+    }
+    .p-card {
+      background: rgba(255,255,255,.93);
+      border-radius: 7px;
+      padding: 5px 6px 6px;
+      min-width: 68px;
+      max-width: 110px;
+      flex: 1;
+      text-align: center;
+      cursor: pointer;
+      border-top: 3px solid var(--border);
+      transition: transform .12s, box-shadow .12s;
+      user-select: none;
+      position: relative;
+    }
+    .p-card:hover       { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,.18); }
+    .p-card.p-GKP       { border-top-color: var(--gkp); }
+    .p-card.p-DEF       { border-top-color: var(--def); }
+    .p-card.p-MID       { border-top-color: var(--mid); }
+    .p-card.p-FWD       { border-top-color: var(--fwd); }
+    .p-card.transferring { box-shadow: 0 0 0 2.5px var(--primary); background: #ecfdf5; }
+    .p-card.benched     { opacity: .75; }
+
+    .p-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px; }
+    .p-badge { width: 20px; height: 20px; object-fit: contain; flex-shrink: 0; }
+    .p-name  { font-size: .72rem; font-weight: 700; color: #064e3b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+    .p-meta  { font-size: .63rem; color: var(--primary-d); font-weight: 600; }
+
+    .bench-wrap {
+      background: #fff;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      padding: 8px 6px;
+      margin-bottom: .75rem;
+    }
+    .bench-title {
+      font-size: .72rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .07em; color: var(--muted); text-align: center; margin-bottom: 6px;
+    }
+
+    /* ── Season Info tab ───────────────────────────────────────────── */
+    .season-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: .6rem;
+      margin-bottom: 1rem;
+    }
+    .season-card {
+      background: #fff;
+      border: 1.5px solid var(--border);
+      border-radius: var(--r);
+      padding: .85rem .75rem;
+      text-align: center;
+    }
+    .season-card .s-label { font-size: .75rem; color: var(--muted); margin-bottom: .2rem; }
+    .season-card .s-val   { font-size: 1.15rem; font-weight: 800; color: var(--text); }
+
+    .chips-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: .5rem;
+    }
+    .chip-card {
+      background: #fff;
+      border: 1.5px solid var(--border);
+      border-radius: var(--r);
+      padding: .7rem .65rem;
+      text-align: center;
+    }
+    .chip-card.available { border-color: var(--primary); background: #ecfdf5; }
+    .chip-card.used      { opacity: .5; }
+    .chip-card .ch-name  { font-size: .82rem; font-weight: 700; color: var(--text); }
+    .chip-card .ch-status{ font-size: .72rem; color: var(--muted); margin-top: .15rem; }
+    .chip-card.available .ch-status { color: var(--primary-d); }
   </style>
 </head>
 <body>
@@ -548,7 +642,7 @@
 
   <div class="tab-nav">
     <button class="tab-btn active" onclick="switchTab('team')">My Team</button>
-    <button class="tab-btn" onclick="switchTab('setup')">Initial Setup</button>
+    <button class="tab-btn" onclick="switchTab('setup')">Season Info</button>
   </div>
 
   <main>
@@ -564,50 +658,9 @@
       </div>
     </div>
 
-    <!-- Initial Setup -->
+    <!-- Season Info -->
     <div id="tab-setup" style="display:none">
-      <div class="setup-intro">
-        <strong>Pick your initial 15 players</strong>
-        2 goalkeepers · 5 defenders · 5 midfielders · 3 forwards within a £100m budget,
-        max 3 players per club. Once ready, click <em>Submit to FPL</em>.<br><br>
-        You must first create your FPL team name on
-        <a href="https://fantasy.premierleague.com" target="_blank">fantasy.premierleague.com</a>
-        before submitting here.
-      </div>
-
-      <div class="budget-tracker" id="budget-tracker">
-        <div class="budget-chip">Budget <span class="val">£100.0m</span></div>
-        <div class="budget-chip">Remaining <span class="val" id="remaining-val">£100.0m</span></div>
-        <div class="budget-chip">Players <span class="val" id="count-val">0</span>/15</div>
-      </div>
-      <div class="pos-counter" id="pos-counter"></div>
-
-      <div class="setup-cols">
-        <div class="setup-panel">
-          <h3>Search players</h3>
-          <div class="search-row">
-            <input type="text" id="setup-q" placeholder="Name or club…" oninput="setupSearch()" />
-            <select id="setup-pos" onchange="setupSearch()">
-              <option value="">All</option>
-              <option value="GKP">GKP</option>
-              <option value="DEF">DEF</option>
-              <option value="MID">MID</option>
-              <option value="FWD">FWD</option>
-            </select>
-          </div>
-          <div id="setup-results" class="player-list"><div class="empty">Search above to add players.</div></div>
-        </div>
-        <div class="setup-panel">
-          <h3>Your selection (<span id="picked-count">0</span>/15)</h3>
-          <div id="setup-picked" class="player-list"><div class="empty">No players yet.</div></div>
-          <div style="margin-top:.75rem; display:flex; flex-direction:column; gap:.4rem;">
-            <button class="btn btn-green" id="setup-submit-btn" onclick="submitSetup()" disabled>
-              Submit Squad to FPL
-            </button>
-            <button class="btn btn-white btn-sm" onclick="clearSetup()">Clear all</button>
-          </div>
-        </div>
-      </div>
+      <div id="season-content"><div class="empty">Loading season info…</div></div>
     </div>
   </main>
 </div>
@@ -660,8 +713,6 @@ let captainEl = null;    // element id of captain
 let vcEl = null;         // element id of vice-captain
 let capDirty = false;    // unsaved captain change
 let capSaveTimer = null;
-let setupPicked = [];    // players for initial setup
-const POS_LIMITS = { GKP: 2, DEF: 5, MID: 5, FWD: 3 };
 
 // ── Helpers ────────────────────────────────────────────────────
 function toast(msg, type = '') {
@@ -787,9 +838,9 @@ async function loadSquad() {
           <p style="font-size:.85rem;color:var(--muted);line-height:1.55;margin-bottom:.85rem;">
             Create your team on
             <a href="https://fantasy.premierleague.com" target="_blank" style="color:var(--primary-d);">fantasy.premierleague.com</a>,
-            then come back here to manage it — or use the Setup tab to pick your 15 players.
+            then come back here to manage it.
           </p>
-          <button class="btn btn-green btn-sm" onclick="switchTab('setup')">Go to Setup</button>
+          <button class="btn btn-green btn-sm" onclick="refreshTeam()">↻ Refresh</button>
         </div>`;
     } else {
       document.getElementById('squad-grid').innerHTML = `<div class="empty">${e.message}</div>`;
@@ -801,73 +852,114 @@ async function loadSquad() {
 function updateHeaderInfo() {
   if (!squad) return;
   const bank = (squad.transfers?.bank ?? 0) / 10;
-  const ft = squad.transfers?.limit ?? 1;
-  const bankChip = document.getElementById('bank-chip');
-  const ftChip   = document.getElementById('ft-chip');
-  bankChip.textContent = `£${bank.toFixed(1)}m`;
-  bankChip.style.display = '';
-  ftChip.textContent = `${ft} free transfer${ft !== 1 ? 's' : ''}`;
-  ftChip.style.display = '';
+  const isPreseason = squad.is_preseason;
+  const ft = isPreseason ? '∞' : (squad.transfers?.limit ?? 1);
+  const ftLabel = isPreseason ? 'Unlimited transfers' : `${ft} free transfer${ft !== 1 ? 's' : ''}`;
+
+  document.getElementById('bank-chip').textContent = `£${bank.toFixed(1)}m`;
+  document.getElementById('bank-chip').style.display = '';
+  document.getElementById('ft-chip').textContent = ftLabel;
+  document.getElementById('ft-chip').style.display = '';
+
+  const ei = squad.entry_info || {};
+  const chips = squad.chips || [];
+  const chipNameMap = { wildcard: 'Wildcard', bboost: 'Bench Boost', '3xc': 'Triple Captain', freehit: 'Free Hit' };
+  const playedChipNames = new Set(chips.map(c => c.name));
 
   const infoBar = document.getElementById('info-bar');
   infoBar.innerHTML = `
     <div class="info-chip"><span class="label">Bank </span>£${bank.toFixed(1)}m</div>
-    <div class="info-chip"><span class="label">Free transfers </span>${ft}</div>
+    <div class="info-chip"><span class="label">Transfers </span>${isPreseason ? 'Unlimited (pre-season)' : ft}</div>
+    ${ei.rank ? `<div class="info-chip"><span class="label">Rank </span>#${Number(ei.rank).toLocaleString()}</div>` : ''}
+    ${ei.team_name ? `<div class="info-chip" title="Your team name">${ei.team_name}</div>` : ''}
   `;
+
+  // Render season info tab
+  const seasonCards = [
+    { label: 'Team', val: ei.team_name || '—' },
+    { label: 'Overall Rank', val: ei.rank ? '#' + Number(ei.rank).toLocaleString() : '—' },
+    { label: 'Total Points', val: ei.total_points ?? '—' },
+    { label: 'Free Transfers', val: isPreseason ? 'Unlimited' : ft },
+    { label: 'Bank', val: `£${bank.toFixed(1)}m` },
+  ].map(c => `<div class="season-card"><div class="s-label">${c.label}</div><div class="s-val">${c.val}</div></div>`).join('');
+
+  const chipCards = Object.entries(chipNameMap).map(([key, name]) => {
+    const used = playedChipNames.has(key);
+    return `<div class="chip-card ${used ? 'used' : 'available'}">
+      <div class="ch-name">${name}</div>
+      <div class="ch-status">${used ? '✓ Used' : 'Available'}</div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('season-content').innerHTML = `
+    <div class="season-grid">${seasonCards}</div>
+    <div style="font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:.6rem;">Chips</div>
+    <div class="chips-grid">${chipCards}</div>`;
 }
 
 function renderSquad() {
   if (!squad?.picks?.length) {
-    document.getElementById('squad-grid').innerHTML = '<div class="empty">No squad data. Have you set up your team?</div>';
+    document.getElementById('squad-grid').innerHTML = `
+      <div style="background:#fff;border:1.5px solid var(--border);border-radius:var(--r);padding:1.25rem 1rem;text-align:center;">
+        <div style="font-size:1rem;font-weight:700;color:var(--text);margin-bottom:.4rem;">No FPL squad yet for 2026/27</div>
+        <p style="font-size:.85rem;color:var(--muted);line-height:1.55;margin-bottom:.85rem;">
+          Create your team on
+          <a href="https://fantasy.premierleague.com" target="_blank" style="color:var(--primary-d);">fantasy.premierleague.com</a>,
+          then come back here to manage it.
+        </p>
+        <button class="btn btn-green btn-sm" onclick="refreshTeam()">↻ Refresh</button>
+      </div>`;
     return;
   }
 
-  // Detect current captain/VC from squad
   const cap = squad.picks.find(p => p.is_captain);
   const vc  = squad.picks.find(p => p.is_vice_captain);
   if (!capDirty) {
     captainEl = cap?.element ?? null;
-    vcEl      = vc?.element  ?? null;
+    vcEl      = vc?.element ?? null;
   }
 
-  const starters = squad.picks.filter(p => p.position <= 11);
-  const bench    = squad.picks.filter(p => p.position > 11);
+  const starters = squad.picks.filter(p => p.position <= 11).sort((a,b) => a.position - b.position);
+  const bench    = squad.picks.filter(p => p.position > 11).sort((a,b) => a.position - b.position);
 
-  const groups = { GKP: [], DEF: [], MID: [], FWD: [] };
-  starters.forEach(p => { if (groups[p.pos]) groups[p.pos].push(p); });
+  const gkp = starters.filter(p => p.pos === 'GKP');
+  const def = starters.filter(p => p.pos === 'DEF');
+  const mid = starters.filter(p => p.pos === 'MID');
+  const fwd = starters.filter(p => p.pos === 'FWD');
 
-  const posLabels = { GKP: 'Goalkeepers', DEF: 'Defenders', MID: 'Midfielders', FWD: 'Forwards' };
-  let html = '';
+  const pitchRowHTML = players =>
+    `<div class="pitch-row">${players.map(p => pitchCardHTML(p)).join('')}</div>`;
 
-  for (const [pos, players] of Object.entries(groups)) {
-    if (!players.length) continue;
-    html += `<div class="pos-section">
-      <div class="pos-section-title"><span class="pos-dot dot-${pos}"></span>${posLabels[pos]}</div>
-      <div class="player-row-grid">${players.map(p => playerCardHTML(p)).join('')}</div>
+  document.getElementById('squad-grid').innerHTML = `
+    <div class="pitch-wrap">
+      ${pitchRowHTML(fwd)}
+      ${pitchRowHTML(mid)}
+      ${pitchRowHTML(def)}
+      ${pitchRowHTML(gkp)}
+    </div>
+    <div class="bench-wrap">
+      <div class="bench-title">Bench</div>
+      <div class="pitch-row">${bench.map(p => pitchCardHTML(p, true)).join('')}</div>
     </div>`;
-  }
-
-  html += `<div class="bench-divider">Bench</div>
-    <div class="player-row-grid">${bench.map(p => playerCardHTML(p, true)).join('')}</div>`;
-
-  document.getElementById('squad-grid').innerHTML = html;
 }
 
-function playerCardHTML(p, benched = false) {
+function pitchCardHTML(p, benched = false) {
   const isCap = p.element === captainEl;
   const isVC  = p.element === vcEl;
-  const capLabel = isCap ? 'C' : isVC ? 'V' : 'C';
+  const capLabel = isCap ? 'C' : isVC ? 'V' : '·';
   const capClass = isCap ? 'is-cap' : isVC ? 'is-vc' : '';
+  const transferringClass = sellPick?.element === p.element ? ' transferring' : '';
   const benchClass = benched ? ' benched' : '';
-  const transferClass = sellPick?.element === p.element ? ' transfering' : '';
-  return `<div class="player-card pos-${p.pos}${benchClass}${transferClass}"
-               onclick="selectForTransfer(${p.element})">
-    <div class="card-top">
-      <div class="card-name">${p.web_name || p.name}</div>
-      <button class="cap-btn ${capClass}" onclick="cycleCapt(${p.element}, event)">${capLabel}</button>
-    </div>
-    <div class="card-meta">${p.team} · <span class="card-price">£${(p.price || 0).toFixed(1)}m</span></div>
-  </div>`;
+  const badge = `https://resources.premierleague.com/premierleague/badges/t${p.team_code}.png`;
+  return `
+    <div class="p-card p-${p.pos}${transferringClass}${benchClass}" onclick="selectForTransfer(${p.element})">
+      <div class="p-top">
+        <img src="${badge}" class="p-badge" onerror="this.style.visibility='hidden'" />
+        <button class="cap-btn ${capClass}" onclick="cycleCapt(${p.element},event)">${capLabel}</button>
+      </div>
+      <div class="p-name">${p.web_name || p.name}</div>
+      <div class="p-meta">£${(p.price||0).toFixed(1)}m</div>
+    </div>`;
 }
 
 // ── Captain (inline toggle) ────────────────────────────────────
@@ -1006,18 +1098,26 @@ function updateTransferSummary() {
 
 async function confirmTransfer() {
   if (!sellPick || !buyPlayer) return;
-  setBtn('confirm-btn', '<span class="spin"></span> Submitting…', true);
+  const btn = document.getElementById('confirm-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span> Submitting…';
   try {
     await api('/api/transfer', {
       method: 'POST',
       body: JSON.stringify({ element_out: sellPick.element, element_in: buyPlayer.id }),
     });
-    toast(`✓ ${buyPlayer.web_name} is in!`, 'ok');
-    closeSheet();
-    await loadSquad();
+    btn.innerHTML = '✓ Transfer complete!';
+    btn.style.background = '#059669';
+    toast(`✓ ${buyPlayer.web_name || buyPlayer.name} is in your squad!`, 'ok');
+    setTimeout(async () => {
+      closeSheet();
+      await loadSquad();
+    }, 1200);
   } catch (e) {
     toast(e.message, 'err');
-    setBtn('confirm-btn', 'Confirm Transfer', false);
+    btn.disabled = false;
+    btn.innerHTML = 'Confirm Transfer';
+    btn.style.background = '';
   }
 }
 
@@ -1027,129 +1127,6 @@ function switchTab(name) {
     b.classList.toggle('active', ['team', 'setup'][i] === name));
   document.getElementById('tab-team').style.display  = name === 'team'  ? '' : 'none';
   document.getElementById('tab-setup').style.display = name === 'setup' ? '' : 'none';
-}
-
-// ── Initial setup ──────────────────────────────────────────────
-const BUDGET = 100.0;
-
-function setupSearch() {
-  clearTimeout(setupSearch._t);
-  setupSearch._t = setTimeout(_doSetupSearch, 250);
-}
-
-async function _doSetupSearch() {
-  const q   = document.getElementById('setup-q').value.trim();
-  const pos = document.getElementById('setup-pos').value;
-  const el  = document.getElementById('setup-results');
-  if (!q && !pos) { el.innerHTML = '<div class="empty">Search above.</div>'; return; }
-  try {
-    const params = new URLSearchParams({ q, pos });
-    const players = await api('/api/players?' + params);
-    const pickedIds = new Set(setupPicked.map(p => p.id));
-    el.innerHTML = players.map(p => `
-      <div class="pl-row ${pickedIds.has(p.id) ? 'selected' : ''}"
-           onclick="toggleSetup(${p.id})">
-        <div class="pl-dot ${p.status}"></div>
-        <div class="pl-info">
-          <div class="pl-name">${p.web_name || p.name}</div>
-          <div class="pl-sub">${p.position} · ${p.team}</div>
-        </div>
-        <div class="pl-price">£${p.price.toFixed(1)}m</div>
-      </div>`).join('') || '<div class="empty">No results.</div>';
-  } catch (e) {
-    el.innerHTML = `<div class="empty">${e.message}</div>`;
-  }
-}
-
-function toggleSetup(id) {
-  const idx = setupPicked.findIndex(p => p.id === id);
-  if (idx >= 0) {
-    setupPicked.splice(idx, 1);
-  } else {
-    if (setupPicked.length >= 15) { toast('Already 15 players selected.', 'err'); return; }
-    const player = allPlayers.find(p => p.id === id);
-    if (!player) return;
-    if (setupPicked.filter(p => p.position === player.position).length >= POS_LIMITS[player.position]) {
-      toast(`Max ${POS_LIMITS[player.position]} ${player.position} players.`, 'err');
-      return;
-    }
-    if (setupPicked.filter(p => p.team === player.team).length >= 3) {
-      toast('Max 3 players per club.', 'err');
-      return;
-    }
-    setupPicked.push(player);
-  }
-  renderSetup();
-  _doSetupSearch();
-}
-
-function renderSetup() {
-  const total = setupPicked.reduce((s, p) => s + p.price, 0);
-  const remaining = BUDGET - total;
-  const count = setupPicked.length;
-
-  document.getElementById('remaining-val').textContent = `£${remaining.toFixed(1)}m`;
-  document.getElementById('remaining-val').className = remaining < 0 ? 'val over' : 'val';
-  document.getElementById('count-val').textContent = count;
-  document.getElementById('picked-count').textContent = count;
-
-  // Position pills
-  const posCounts = { GKP: 0, DEF: 0, MID: 0, FWD: 0 };
-  setupPicked.forEach(p => posCounts[p.position]++);
-  document.getElementById('pos-counter').innerHTML =
-    Object.entries(posCounts).map(([pos, n]) =>
-      `<span class="pos-pill ${pos}">${pos}: ${n}/${POS_LIMITS[pos]}</span>`
-    ).join('');
-
-  // Picked list
-  document.getElementById('setup-picked').innerHTML = count
-    ? setupPicked.map((p, i) => `
-        <div class="picked-item">
-          <span class="pos-pill ${p.position}">${p.position}</span>
-          <div class="pl-info">
-            <div class="pl-name">${p.web_name || p.name}</div>
-            <div class="pl-sub">${p.team} · £${p.price.toFixed(1)}m</div>
-          </div>
-          <button class="remove-btn" onclick="removeSetup(${i})">×</button>
-        </div>`).join('')
-    : '<div class="empty">No players yet.</div>';
-
-  document.getElementById('setup-submit-btn').disabled = !(count === 15 && remaining >= 0);
-}
-
-function removeSetup(i) {
-  setupPicked.splice(i, 1);
-  renderSetup();
-  _doSetupSearch();
-}
-
-function clearSetup() {
-  setupPicked = [];
-  renderSetup();
-}
-
-async function submitSetup() {
-  if (setupPicked.length !== 15) return;
-  setBtn('setup-submit-btn', '<span class="spin"></span> Submitting…', true);
-  const errors = [];
-  for (const p of setupPicked) {
-    try {
-      await api('/api/transfer', { method: 'POST', body: JSON.stringify({ element_in: p.id }) });
-    } catch (e) {
-      errors.push(`${p.web_name}: ${e.message}`);
-    }
-  }
-  if (errors.length === 0) {
-    toast('All 15 players submitted!', 'ok');
-    setupPicked = [];
-    renderSetup();
-    switchTab('team');
-    await loadSquad();
-  } else {
-    toast(`${errors.length} player(s) failed — see console`, 'err');
-    console.error('Setup errors:', errors);
-  }
-  setBtn('setup-submit-btn', 'Submit Squad to FPL', false);
 }
 
 // ── Auto-restore session ───────────────────────────────────────
