@@ -618,7 +618,12 @@ def fetch_football_data_odds(season: str = "2024-25", league: str = "E0",
         cached = _cache_read(name, ttl_hours=CACHE_TTL_HOURS * 28)
         if cached is not None:
             df = pd.read_json(StringIO(cached), orient="split")
+            # attrs do not survive JSON round-tripping, so rebuild them from the
+            # cached columns rather than returning a frame whose metadata is
+            # present on a fresh fetch and missing on a cached one.
             df.attrs["season"] = season
+            df.attrs["odds_source"] = _first_available(df, ODDS_1X2_PREFERENCE)
+            df.attrs["ou25_source"] = _first_available(df, ODDS_OU25_PREFERENCE)
             return df
 
     text = _get(f"{FOOTBALL_DATA_BASE}/{code}/{league}.csv", expect="text")
