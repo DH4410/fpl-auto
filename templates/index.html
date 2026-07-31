@@ -557,7 +557,7 @@
       <div class="info-bar" id="info-bar"></div>
       <div id="squad-grid"><div class="empty">Loading squad…</div></div>
       <div style="margin-top:.75rem; display:flex; gap:.5rem; flex-wrap:wrap;">
-        <button class="btn btn-white btn-sm" onclick="loadSquad()">↻ Refresh</button>
+        <button class="btn btn-white btn-sm" onclick="refreshTeam()">↻ Refresh</button>
         <button class="btn btn-green btn-sm" id="save-cap-btn" onclick="saveCaptain()" style="display:none">
           Save captain changes
         </button>
@@ -758,6 +758,13 @@ function onLoggedIn(name) {
 // ── Init ───────────────────────────────────────────────────────
 async function init() {
   await Promise.all([loadAllPlayers(), loadSquad()]);
+}
+
+async function refreshTeam() {
+  // Re-check status first so the backend picks up a new entry_id if the user
+  // just created their team on the FPL website since the last login.
+  try { await api('/api/status'); } catch (_) {}
+  await loadSquad();
 }
 
 async function loadAllPlayers() {

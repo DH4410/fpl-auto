@@ -199,8 +199,23 @@ def search_players():
 def get_team():
     if not _state["token"]:
         return jsonify({"error": "Not logged in"}), 401
+
+    # Re-fetch entry_id from the FPL API if not cached (e.g. team created after login)
+    if not _state["entry_id"]:
+        try:
+            if not _state["session"]:
+                import requests as req
+                _state["session"] = req.Session()
+            user = fpl_api.me(_state["session"], _state["token"])
+            _state["entry_id"] = user["player"].get("entry")
+            if _state["entry_id"]:
+                _save_session()
+        except Exception:
+            pass
+
     if not _state["entry_id"]:
         return jsonify({"error": "No FPL team found. Please create one on fantasy.premierleague.com first."}), 404
+
     try:
         team_data = fpl_api.my_team(_state["session"], _state["token"], _state["entry_id"])
         if _state["bootstrap"] and team_data.get("picks"):
@@ -208,6 +223,25 @@ def get_team():
         return jsonify(team_data)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/debug/me")
+def debug_me():
+    """Temporary debug endpoint — shows raw /api/me/ response and app state."""
+    if not _state["token"]:
+        return jsonify({"error": "Not logged in"})
+    try:
+        if not _state["session"]:
+            import requests as req
+            _state["session"] = req.Session()
+        raw = fpl_api.me(_state["session"], _state["token"])
+        return jsonify({
+            "me_response": raw,
+            "state_entry_id": _state["entry_id"],
+            "state_has_token": bool(_state["token"]),
+        })
+    except Exception as e:
+        return jsonify({"error": str(e), "state_entry_id": _state["entry_id"]})
 
 
 @app.route("/api/transfer", methods=["POST"])
