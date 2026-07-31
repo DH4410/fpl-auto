@@ -194,7 +194,7 @@
       border-radius: 2px 2px 0 0;
     }
 
-    main { max-width: 900px; margin: 0 auto; padding: 1rem; }
+    main { max-width: 1100px; margin: 0 auto; padding: .75rem 1.25rem; }
 
     /* ── Info bar ──────────────────────────────────────────── */
     .info-bar {
@@ -264,21 +264,21 @@
 
     .cap-btn {
       flex-shrink: 0;
-      width: 22px; height: 22px;
+      width: 18px; height: 18px;
       border-radius: 50%;
       border: none;
-      font-size: .68rem;
+      font-size: .6rem;
       font-weight: 800;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      background: #f3f4f6;
-      color: var(--muted);
-      transition: background .15s, color .15s;
+      background: rgba(0,0,0,.22);
+      color: #fff;
+      transition: background .15s;
     }
-    .cap-btn.is-cap { background: var(--warn); color: #fff; }
-    .cap-btn.is-vc  { background: #c4b5fd; color: #4c1d95; }
+    .cap-btn.is-cap { background: var(--warn); }
+    .cap-btn.is-vc  { background: #a78bfa; }
 
     .bench-divider {
       text-align: center;
@@ -294,34 +294,28 @@
       content: ''; flex: 1; height: 1px; background: var(--border);
     }
 
-    /* ── Transfer sheet (slides up from bottom) ────────────── */
+    /* ── Transfer panel (right sidebar) ────────────────────── */
     #sheet-overlay {
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,.25);
+      background: rgba(0,0,0,.3);
       z-index: 98;
     }
     #transfer-sheet {
       position: fixed;
-      bottom: 0; left: 0; right: 0;
+      top: 0; right: 0; bottom: 0;
+      width: min(400px, 100vw);
       background: #fff;
-      border-radius: 18px 18px 0 0;
-      box-shadow: 0 -6px 30px rgba(0,0,0,.12);
-      padding: 0 1rem 1.5rem;
-      max-height: 72vh;
+      border-left: 1.5px solid var(--border);
+      box-shadow: -6px 0 32px rgba(0,0,0,.14);
+      padding: 1.25rem 1rem;
       overflow-y: auto;
       z-index: 99;
-      transform: translateY(100%);
-      transition: transform .28s cubic-bezier(.4,0,.2,1);
+      transform: translateX(110%);
+      transition: transform .3s cubic-bezier(.4,0,.2,1);
     }
-    #transfer-sheet.open { transform: translateY(0); }
-    .sheet-handle {
-      width: 38px; height: 4px;
-      background: #e5e7eb;
-      border-radius: 2px;
-      margin: .75rem auto .6rem;
-    }
+    #transfer-sheet.open { transform: translateX(0); }
     .sheet-header {
       display: flex;
       align-items: center;
@@ -353,7 +347,7 @@
       color: var(--text);
     }
 
-    .player-list { max-height: 220px; overflow-y: auto; }
+    .player-list { max-height: 44vh; overflow-y: auto; }
     .pl-row {
       display: flex;
       align-items: center;
@@ -508,49 +502,77 @@
 
     /* ── Pitch layout ──────────────────────────────────────────────── */
     .pitch-wrap {
-      border-radius: 12px;
+      border-radius: 10px;
       overflow: hidden;
       background: repeating-linear-gradient(
         180deg,
-        #1d7a3e 0px, #1d7a3e 44px,
-        #1a7039 44px, #1a7039 88px
+        #1a7a3c 0px, #1a7a3c 48px,
+        #176e34 48px, #176e34 96px
       );
-      padding: 12px 8px 10px;
+      padding: 10px 8px 8px;
       margin-bottom: .6rem;
-      box-shadow: inset 0 0 0 2px rgba(255,255,255,.1);
+      box-shadow: inset 0 0 0 3px rgba(255,255,255,.28), 0 2px 12px rgba(0,0,0,.12);
+    }
+    .pitch-center-line {
+      height: 1.5px;
+      background: rgba(255,255,255,.32);
+      margin: 2px 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .pitch-center-circle {
+      width: 54px; height: 54px;
+      border: 1.5px solid rgba(255,255,255,.32);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      pointer-events: none;
+    }
+    .pitch-center-dot {
+      width: 5px; height: 5px;
+      background: rgba(255,255,255,.4);
+      border-radius: 50%;
     }
     .pitch-row {
       display: flex;
       justify-content: center;
       align-items: stretch;
-      gap: 5px;
+      gap: 6px;
       margin-bottom: 6px;
     }
     .p-card {
-      background: rgba(255,255,255,.93);
-      border-radius: 7px;
-      padding: 5px 6px 6px;
-      min-width: 68px;
-      max-width: 110px;
+      border-radius: 5px;
+      min-width: 72px;
+      max-width: 155px;
       flex: 1;
       text-align: center;
       cursor: pointer;
-      border-top: 3px solid var(--border);
+      overflow: hidden;
+      border: 1.5px solid rgba(255,255,255,.18);
       transition: transform .12s, box-shadow .12s;
       user-select: none;
-      position: relative;
     }
-    .p-card:hover       { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,.18); }
-    .p-card.p-GKP       { border-top-color: var(--gkp); }
-    .p-card.p-DEF       { border-top-color: var(--def); }
-    .p-card.p-MID       { border-top-color: var(--mid); }
-    .p-card.p-FWD       { border-top-color: var(--fwd); }
-    .p-card.transferring { box-shadow: 0 0 0 2.5px var(--primary); background: #ecfdf5; }
-    .p-card.benched     { opacity: .75; }
+    .p-card:hover        { transform: translateY(-3px); box-shadow: 0 6px 18px rgba(0,0,0,.3); }
+    .p-card.transferring { box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--primary); }
+    .p-card.benched      { opacity: .7; }
 
-    .p-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px; }
-    .p-badge { width: 20px; height: 20px; object-fit: contain; flex-shrink: 0; }
-    .p-name  { font-size: .72rem; font-weight: 700; color: #064e3b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+    .p-header {
+      padding: 3px 4px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .p-card.p-GKP .p-header { background: var(--gkp); }
+    .p-card.p-DEF .p-header { background: var(--def); }
+    .p-card.p-MID .p-header { background: var(--mid); }
+    .p-card.p-FWD .p-header { background: var(--fwd); }
+
+    .p-body { background: rgba(255,255,255,.94); padding: 3px 4px 5px; }
+    .p-badge { width: 22px; height: 22px; object-fit: contain; flex-shrink: 0; }
+    .p-name  { font-size: .73rem; font-weight: 700; color: #064e3b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .p-meta  { font-size: .63rem; color: var(--primary-d); font-weight: 600; }
 
     .bench-wrap {
@@ -668,7 +690,6 @@
 <!-- ── Transfer bottom sheet ──────────────────────────────────── -->
 <div id="sheet-overlay" onclick="closeSheet()"></div>
 <div id="transfer-sheet">
-  <div class="sheet-handle"></div>
   <div class="sheet-header">
     <div class="sheet-title">Replacing: <span class="name" id="replacing-name">—</span></div>
     <button class="close-btn" onclick="closeSheet()">✕</button>
@@ -809,6 +830,7 @@ function onLoggedIn(name) {
 // ── Init ───────────────────────────────────────────────────────
 async function init() {
   await Promise.all([loadAllPlayers(), loadSquad()]);
+  setInterval(() => { if (!sellPick) loadSquad(); }, 30000);
 }
 
 async function refreshTeam() {
@@ -884,7 +906,7 @@ function updateHeaderInfo() {
   ].map(c => `<div class="season-card"><div class="s-label">${c.label}</div><div class="s-val">${c.val}</div></div>`).join('');
 
   const chipCards = Object.entries(chipNameMap).map(([key, name]) => {
-    const used = playedChipNames.has(key);
+    const used = !isPreseason && playedChipNames.has(key);
     return `<div class="chip-card ${used ? 'used' : 'available'}">
       <div class="ch-name">${name}</div>
       <div class="ch-status">${used ? '✓ Used' : 'Available'}</div>
@@ -933,6 +955,7 @@ function renderSquad() {
   document.getElementById('squad-grid').innerHTML = `
     <div class="pitch-wrap">
       ${pitchRowHTML(fwd)}
+      <div class="pitch-center-line"><div class="pitch-center-circle"><div class="pitch-center-dot"></div></div></div>
       ${pitchRowHTML(mid)}
       ${pitchRowHTML(def)}
       ${pitchRowHTML(gkp)}
@@ -951,14 +974,18 @@ function pitchCardHTML(p, benched = false) {
   const transferringClass = sellPick?.element === p.element ? ' transferring' : '';
   const benchClass = benched ? ' benched' : '';
   const badge = `https://resources.premierleague.com/premierleague/badges/t${p.team_code}.png`;
+  const teamShort = (p.team || '???').substring(0, 3).toUpperCase();
+  const svgFb = encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22"><rect width="22" height="22" rx="3" fill="rgba(0,0,0,.3)"/><text x="11" y="15.5" text-anchor="middle" fill="white" font-size="6.5" font-weight="bold" font-family="sans-serif">${teamShort}</text></svg>`);
   return `
     <div class="p-card p-${p.pos}${transferringClass}${benchClass}" onclick="selectForTransfer(${p.element})">
-      <div class="p-top">
-        <img src="${badge}" class="p-badge" onerror="this.style.visibility='hidden'" />
+      <div class="p-header">
+        <img src="${badge}" class="p-badge" onerror="this.src='data:image/svg+xml,${svgFb}'" />
         <button class="cap-btn ${capClass}" onclick="cycleCapt(${p.element},event)">${capLabel}</button>
       </div>
-      <div class="p-name">${p.web_name || p.name}</div>
-      <div class="p-meta">£${(p.price||0).toFixed(1)}m</div>
+      <div class="p-body">
+        <div class="p-name">${p.web_name || p.name}</div>
+        <div class="p-meta">£${(p.price||0).toFixed(1)}m</div>
+      </div>
     </div>`;
 }
 
