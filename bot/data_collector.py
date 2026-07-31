@@ -11,7 +11,16 @@ Sources (see ``DATA_SOURCES.md`` at the repo root for the full audit):
    CSVs used to train the models. Weekly updates stopped after 2024/25, so this
    is a *training* source only, never a live one.
 3. **FPL-Core-Insights** -- secondary CSV warehouse for cross-season snapshots.
-4. **``/team/set-piece-notes/``** -- penalty / corner / free-kick takers.
+4. **``/team/set-piece-notes/``** -- penalty / corner / free-kick takers. (Note the
+   ``/team/`` segment: ``/api/set-piece-notes/`` returns 404.)
+5. **football-data.co.uk** -- free historical CSVs carrying closing bookmaker
+   odds (Pinnacle, Bet365, market average) plus shots, corners and cards.
+   Plain HTTP GET, no account, no key.
+
+**No API keys anywhere.** Every source here is a public, unauthenticated HTTP
+GET. Nothing in this package reads a token, and no paid data provider is used.
+The only authenticated calls in the wider repo are the user's own FPL session in
+``fpl_auth.py``, which this package never touches.
 
 Caching
 -------
@@ -536,15 +545,219 @@ def current_gameweek(force: bool = False) -> int | None:
     return int(unfinished.iloc[0]["id"]) if not unfinished.empty else None
 
 
-# TODO(odds): no free bookmaker odds API is available to this project. When one
-# is added (e.g. the-odds-api, Betfair Exchange), fetch 1X2 + Asian handicap +
-# over/under 2.5 per fixture, de-vig with Shin or proportional normalisation,
-# and convert to implied team goal expectations. Those would replace the
-# Dixon-Coles ratings in feature_engineering.team_strength_matrix as the
-# strongest single input to the simulator.
+# ---------------------------------------------------------------------------
+# football-data.co.uk -- free historical odds and match stats
+# ---------------------------------------------------------------------------
 
-# TODO(nlp): press-conference and injury-news sentiment would sharpen the
-# minutes model more than any other missing feature. It needs a scraper
-# (official club sites / a news API) plus a rotation-risk classifier. The
-# `news` and `chance_of_playing_next_round` fields in bootstrap are the only
-# structured substitute currently ingested.
+FOOTBALL_DATA_BASE = "https://www.football-data.co.uk/mmz4281"
+
+#: football-data.co.uk encodes seasons as a 4-digit code: 2024-25 -> "2425".
+def _fd_season_code(season: str) -> str:
+    """Convert a Vaastav-style season string ("2024-25") to "2425"."""
+    try:
+        start, end = season.split("-")
+        return f"{start[-2:]}{end[-2:]}"
+    except ValueError as exc:
+        raise ValueError(f"season must look like '2024-25', got {season!r}") from exc
+
+
+#: Preference order for the 1X2 columns. Pinnacle closing odds are the sharpest
+#: public price and the best single input; the market average and Bet365 are
+#: fallbacks for seasons where a bookmaker's columns are absent. Column sets
+#: genuinely differ between seasons, so never assume one exists.
+ODDS_1X2_PREFERENCE = (
+    ("PSCH", "PSCD", "PSCA"),   # Pinnacle closing
+    ("PSH", "PSD", "PSA"),      # Pinnacle opening
+    ("AvgCH", "AvgCD", "AvgCA"),  # market average closing
+    ("AvgH", "AvgD", "AvgA"),   # market average opening
+    ("B365CH", "B365CD", "B365CA"),
+    ("B365H", "B365D", "B365A"),
+)
+
+#: Same idea for the over/under 2.5 goals market, which pins total goals.
+ODDS_OU25_PREFERENCE = (
+    ("PC>2.5", "PC<2.5"),
+    ("P>2.5", "P<2.5"),
+    ("AvgC>2.5", "AvgC<2.5"),
+    ("Avg>2.5", "Avg<2.5"),
+    ("B365C>2.5", "B365C<2.5"),
+    ("B365>2.5", "B365<2.5"),
+)
+
+
+def _first_available(df: pd.DataFrame, preference: tuple) -> tuple | None:
+    """First column group from ``preference`` that is fully present in ``df``."""
+    for group in preference:
+        if all(c in df.columns for c in group):
+            return group
+    return None
+
+
+def fetch_football_data_odds(season: str = "2024-25", league: str = "E0",
+                             force: bool = False) -> pd.DataFrame:
+    """Free historical match odds and stats from football-data.co.uk.
+
+    ``league="E0"`` is the Premier League. The CSV carries full-time scores,
+    shots, corners, cards and closing odds from several bookmakers -- everything
+    needed to de-vig a market without paying for an odds API.
+
+    Bookmaker column sets change between seasons (2024/25 has William Hill and
+    1XBet columns that 2025/26 replaces with BetVictor and Coral), so the frame
+    is normalised: whichever of the preferred 1X2 and over/under-2.5 groups is
+    available is copied into stable ``odds_home`` / ``odds_draw`` /
+    ``odds_away`` / ``odds_over25`` / ``odds_under25`` columns, and the source
+    used is recorded in ``df.attrs["odds_source"]``.
+
+    Team names here are football-data's own strings ("Man United", "Nott'm
+    Forest") and do **not** match FPL team ids -- use
+    :func:`match_team_names` to join.
+    """
+    code = _fd_season_code(season)
+    name = f"football_data_{league}_{code}.json"
+    if not force:
+        cached = _cache_read(name, ttl_hours=CACHE_TTL_HOURS * 28)
+        if cached is not None:
+            df = pd.read_json(StringIO(cached), orient="split")
+            df.attrs["season"] = season
+            return df
+
+    text = _get(f"{FOOTBALL_DATA_BASE}/{code}/{league}.csv", expect="text")
+    df = pd.read_csv(StringIO(text), encoding_errors="ignore")
+    df = df.dropna(how="all").dropna(subset=["HomeTeam", "AwayTeam"])
+
+    # Build the normalised columns in one go -- assigning them one at a time to
+    # a 130-column frame triggers pandas' fragmentation warning.
+    normalised = {"season": season}
+    if "Date" in df.columns:
+        normalised["date"] = pd.to_datetime(df["Date"], dayfirst=True,
+                                            errors="coerce")
+    group_1x2 = _first_available(df, ODDS_1X2_PREFERENCE)
+    if group_1x2:
+        for out_col, src in zip(("odds_home", "odds_draw", "odds_away"), group_1x2):
+            normalised[out_col] = pd.to_numeric(df[src], errors="coerce")
+    group_ou = _first_available(df, ODDS_OU25_PREFERENCE)
+    if group_ou:
+        normalised["odds_over25"] = pd.to_numeric(df[group_ou[0]], errors="coerce")
+        normalised["odds_under25"] = pd.to_numeric(df[group_ou[1]], errors="coerce")
+
+    # Canonical result columns, matching the Dixon-Coles fitter's expectations.
+    if {"FTHG", "FTAG"} <= set(df.columns):
+        normalised["home_goals"] = pd.to_numeric(df["FTHG"], errors="coerce")
+        normalised["away_goals"] = pd.to_numeric(df["FTAG"], errors="coerce")
+
+    df = pd.concat([df, pd.DataFrame(normalised, index=df.index)], axis=1)
+
+    _cache_write(name, df.to_json(orient="split", date_format="iso"))
+    df.attrs["season"] = season
+    df.attrs["odds_source"] = group_1x2
+    df.attrs["ou25_source"] = group_ou
+    return df
+
+
+#: Fallback aliases for football-data.co.uk names that FPL spells differently.
+#: Most names already match FPL's ``name`` field exactly ("Man Utd" is FPL's own
+#: spelling, as is "Nott'm Forest"), so these are tried *after* an exact match,
+#: never instead of one -- overriding first would break the names that agree.
+FOOTBALL_DATA_NAME_ALIASES = {
+    "Man United": "Man Utd",
+    "Tottenham": "Spurs",
+    "Nott'm Forest": "Nottingham Forest",
+    "Newcastle": "Newcastle United",
+    "West Ham": "West Ham United",
+    "Wolves": "Wolverhampton Wanderers",
+    "Sheffield United": "Sheffield Utd",
+    "Leeds": "Leeds United",
+    "Brighton": "Brighton and Hove Albion",
+    "Leicester": "Leicester City",
+    "Ipswich": "Ipswich Town",
+    "Luton": "Luton Town",
+    "Norwich": "Norwich City",
+    "Bournemouth": "AFC Bournemouth",
+    "Hull": "Hull City",
+    "Coventry": "Coventry City",
+}
+
+
+def match_team_names(names: Iterable[str], teams_df: pd.DataFrame) -> dict:
+    """Map football-data.co.uk team names onto FPL team ids.
+
+    Resolution order: exact match on FPL ``name`` or ``short_name``, then the
+    alias table, then case-insensitive containment either way.
+
+    Unmatched names map to ``None``, which is expected and not an error: a
+    historical season contains clubs that have since been relegated, so fitting
+    2024/25 odds against the 2026/27 team list will legitimately leave several
+    names unmapped. Callers should drop those rows rather than assume the
+    mapping is total.
+    """
+    lookup: dict[str, int] = {}
+    for _, row in teams_df.iterrows():
+        lookup[str(row["name"]).lower()] = int(row["id"])
+        if "short_name" in teams_df.columns:
+            lookup.setdefault(str(row["short_name"]).lower(), int(row["id"]))
+
+    out: dict[str, int | None] = {}
+    unmatched = []
+    for raw in names:
+        low = str(raw).lower()
+        hit = lookup.get(low)
+        if hit is None:
+            alias = FOOTBALL_DATA_NAME_ALIASES.get(raw)
+            if alias:
+                hit = lookup.get(str(alias).lower())
+        if hit is None:
+            hit = next((tid for nm, tid in lookup.items()
+                        if low in nm or nm in low), None)
+        out[raw] = hit
+        if hit is None:
+            unmatched.append(raw)
+
+    if unmatched:
+        log.info("football-data teams not in the current FPL team list "
+                 "(likely relegated): %s", unmatched)
+    return out
+
+
+# ---------------------------------------------------------------------------
+# Optional free enrichment
+# ---------------------------------------------------------------------------
+
+def fetch_soccerdata_fbref(season: str = "2024-25", stat_type: str = "standard"
+                           ) -> pd.DataFrame:
+    """FBref player stats via the free ``soccerdata`` package, if installed.
+
+    ``soccerdata`` scrapes public pages -- no key, no account. It is an optional
+    dependency because it is heavy and rate-limits itself; the pipeline works
+    without it. Raises :class:`DataFetchError` with install instructions when
+    the package is absent.
+
+    Entity matching is on you: FBref player names do not carry FPL ids, so a
+    fuzzy name+club join is required before these columns can be used as
+    features.
+    """
+    try:
+        import soccerdata as sd  # noqa: PLC0415 -- optional dependency
+    except ImportError as exc:
+        raise DataFetchError(
+            "soccerdata is not installed. It is optional free enrichment: "
+            "`pip install soccerdata`. The pipeline runs fine without it."
+        ) from exc
+
+    fbref = sd.FBref(leagues="ENG-Premier League", seasons=season)
+    return fbref.read_player_season_stats(stat_type=stat_type).reset_index()
+
+
+# TODO(understat): the free `understat` package (async, scrapes understat.com,
+# no key) provides shot-level xG with shot coordinates. That would enable the
+# spatial/shot-quality upgrade described in research/starting_point/README.md.
+# Not wired in here because it needs an asyncio entry point and the same fuzzy
+# name matching as FBref, and the FPL API's own `expected_goals` already covers
+# the aggregate case this pipeline consumes.
+
+# TODO(transfermarkt): preseason arrivals and departures are not in any FPL
+# feed, so a promoted or heavily rebuilt squad looks identical to a stable one.
+# transfermarkt.com/premier-league is scrapeable with ordinary headers and no
+# key; parsing the squad and arrivals tables would give a "squad churn" feature
+# to widen uncertainty on rebuilt teams. Until then,
+# feature_engineering.promoted_team_priors handles the promoted-club case with
+# worst-quartile priors.
