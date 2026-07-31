@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FPL Auto</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --green: #00a651;
+      --green-light: #e8f7ee;
+      --purple: #37003c;
+      --bg: #f4f5f7;
+      --card: #ffffff;
+      --border: #e0e3e8;
+      --text: #1a1a2e;
+      --muted: #6b7280;
+      --red: #dc2626;
+      --yellow: #f59e0b;
+      --radius: 10px;
+      --shadow: 0 1px 4px rgba(0,0,0,.08);
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── Header ──────────────────────────────────────────────── */
+    header {
+      background: var(--purple);
+      color: #fff;
+      padding: 0 1.5rem;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .logo { font-size: 1.15rem; font-weight: 700; letter-spacing: -.3px; }
+    .logo span { color: #00ff87; }
+    #user-badge {
+      font-size: .85rem;
+      background: rgba(255,255,255,.12);
+      padding: .3rem .75rem;
+      border-radius: 20px;
+      display: none;
+    }
+
+    /* ── Layout ──────────────────────────────────────────────── */
+    main { max-width: 1100px; margin: 0 auto; padding: 1.5rem 1rem; }
+
+    /* ── Login card ──────────────────────────────────────────── */
+    #login-view {
+      max-width: 400px;
+      margin: 4rem auto;
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 2rem;
+    }
+    #login-view h1 { font-size: 1.4rem; margin-bottom: .4rem; }
+    #login-view p { color: var(--muted); font-size: .9rem; margin-bottom: 1.5rem; }
+
+    label { display: block; font-size: .85rem; font-weight: 500; margin-bottom: .3rem; margin-top: .9rem; }
+    input[type=email], input[type=password], input[type=text] {
+      width: 100%;
+      padding: .6rem .8rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: .95rem;
+      outline: none;
+      transition: border-color .15s;
+    }
+    input:focus { border-color: var(--green); }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+      padding: .6rem 1.2rem;
+      border: none;
+      border-radius: 6px;
+      font-size: .9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity .15s, transform .1s;
+    }
+    .btn:active { transform: scale(.98); }
+    .btn-primary { background: var(--green); color: #fff; }
+    .btn-primary:hover { opacity: .88; }
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+    .btn-outline:hover { background: var(--bg); }
+    .btn-danger { background: var(--red); color: #fff; }
+    .btn-danger:hover { opacity: .88; }
+    .btn-full { width: 100%; justify-content: center; margin-top: 1.2rem; }
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
+
+    #login-error {
+      color: var(--red);
+      font-size: .85rem;
+      margin-top: .8rem;
+      display: none;
+    }
+
+    /* ── App view ────────────────────────────────────────────── */
+    #app-view { display: none; }
+
+    .tabs {
+      display: flex;
+      gap: .5rem;
+      margin-bottom: 1.25rem;
+      border-bottom: 2px solid var(--border);
+      padding-bottom: .5rem;
+    }
+    .tab-btn {
+      background: none;
+      border: none;
+      padding: .5rem 1rem;
+      font-size: .9rem;
+      font-weight: 600;
+      color: var(--muted);
+      cursor: pointer;
+      border-radius: 6px 6px 0 0;
+      transition: color .15s, background .15s;
+    }
+    .tab-btn.active { color: var(--purple); background: rgba(55,0,60,.06); }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* ── Squad tab ───────────────────────────────────────────── */
+    .squad-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+      gap: .5rem;
+    }
+    .squad-meta { font-size: .85rem; color: var(--muted); }
+    .squad-meta strong { color: var(--text); }
+
+    .position-group { margin-bottom: 1rem; }
+    .position-label {
+      font-size: .75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--muted);
+      margin-bottom: .5rem;
+    }
+    .player-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: .5rem;
+    }
+
+    .player-card {
+      background: var(--card);
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: .65rem .75rem;
+      cursor: pointer;
+      transition: border-color .15s, box-shadow .15s;
+      position: relative;
+    }
+    .player-card:hover { border-color: var(--green); box-shadow: 0 2px 8px rgba(0,166,81,.15); }
+    .player-card.selected { border-color: var(--green); background: var(--green-light); }
+    .player-card.captain-badge::after {
+      content: "C";
+      position: absolute;
+      top: 4px; right: 6px;
+      background: var(--yellow);
+      color: #fff;
+      font-size: .65rem;
+      font-weight: 800;
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .player-card.vc-badge::after {
+      content: "V";
+      background: var(--muted);
+    }
+    .player-card.benched { opacity: .65; }
+
+    .pc-name { font-size: .88rem; font-weight: 600; }
+    .pc-sub { font-size: .75rem; color: var(--muted); margin-top: 2px; display: flex; gap: .4rem; }
+    .pc-price { font-weight: 600; color: var(--green); }
+    .pc-pos {
+      font-size: .65rem;
+      font-weight: 700;
+      padding: 1px 4px;
+      border-radius: 3px;
+      text-transform: uppercase;
+    }
+    .pos-GKP { background: #fef3c7; color: #92400e; }
+    .pos-DEF { background: #dbeafe; color: #1e40af; }
+    .pos-MID { background: #d1fae5; color: #065f46; }
+    .pos-FWD { background: #fee2e2; color: #991b1b; }
+
+    .bench-divider {
+      margin: .75rem 0 .5rem;
+      font-size: .8rem;
+      font-weight: 600;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+    }
+    .bench-divider::before, .bench-divider::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* ── Transfers tab ───────────────────────────────────────── */
+    .transfer-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+    @media (max-width: 600px) { .transfer-layout { grid-template-columns: 1fr; } }
+
+    .panel {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 1rem;
+    }
+    .panel h3 { font-size: .95rem; font-weight: 700; margin-bottom: .75rem; }
+
+    .search-bar { display: flex; gap: .4rem; margin-bottom: .75rem; }
+    .search-bar input { flex: 1; }
+    .search-bar select {
+      padding: .6rem .5rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: .85rem;
+      background: var(--card);
+    }
+
+    .player-list { max-height: 360px; overflow-y: auto; }
+    .player-row {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      padding: .55rem .5rem;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background .1s;
+    }
+    .player-row:hover { background: var(--bg); }
+    .player-row.selected { background: var(--green-light); }
+    .pr-info { flex: 1; min-width: 0; }
+    .pr-name { font-size: .88rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pr-sub { font-size: .75rem; color: var(--muted); }
+    .pr-price { font-size: .85rem; font-weight: 600; color: var(--green); white-space: nowrap; }
+    .status-dot {
+      width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+    }
+    .status-a { background: var(--green); }
+    .status-d, .status-i { background: var(--yellow); }
+    .status-u, .status-s { background: var(--red); }
+    .status-n { background: var(--muted); }
+
+    .transfer-summary {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 1rem;
+      margin-top: 1rem;
+    }
+    .transfer-summary h3 { font-size: .95rem; font-weight: 700; margin-bottom: .75rem; }
+    .transfer-row {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      font-size: .9rem;
+    }
+    .transfer-row .arrow { color: var(--muted); font-size: 1.2rem; }
+    .transfer-row .out { color: var(--red); font-weight: 600; }
+    .transfer-row .in { color: var(--green); font-weight: 600; }
+    .cost-diff {
+      margin-top: .5rem;
+      font-size: .85rem;
+      color: var(--muted);
+    }
+    .cost-diff.over { color: var(--red); font-weight: 600; }
+
+    /* ── Setup tab ───────────────────────────────────────────── */
+    .setup-intro {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+    }
+    .setup-intro p { font-size: .9rem; color: var(--muted); margin-top: .4rem; line-height: 1.5; }
+
+    .budget-bar {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: .75rem 1rem;
+      margin-bottom: 1rem;
+      box-shadow: var(--shadow);
+      flex-wrap: wrap;
+    }
+    .budget-item { font-size: .85rem; }
+    .budget-item span { font-weight: 700; }
+    .budget-item .over { color: var(--red); }
+
+    .setup-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+    @media (max-width: 600px) { .setup-grid { grid-template-columns: 1fr; } }
+
+    .picked-list { max-height: 360px; overflow-y: auto; }
+    .picked-row {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      padding: .5rem;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      margin-bottom: .35rem;
+      background: var(--card);
+    }
+    .picked-row .pr-info { flex: 1; }
+    .remove-btn {
+      background: none;
+      border: none;
+      color: var(--red);
+      font-size: 1.1rem;
+      cursor: pointer;
+      padding: 0 .25rem;
+      line-height: 1;
+    }
+
+    /* ── Captain tab ─────────────────────────────────────────── */
+    .captain-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: .5rem;
+    }
+    .captain-card {
+      background: var(--card);
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: .75rem;
+      cursor: pointer;
+      transition: border-color .15s;
+    }
+    .captain-card:hover { border-color: var(--yellow); }
+    .captain-card.is-cap { border-color: var(--yellow); background: #fffbeb; }
+    .captain-card.is-vc { border-color: var(--muted); background: #f9fafb; }
+    .cap-role {
+      font-size: .7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      margin-top: .3rem;
+    }
+    .cap-role.c { color: var(--yellow); }
+    .cap-role.vc { color: var(--muted); }
+
+    /* ── Toast ───────────────────────────────────────────────── */
+    #toast {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      background: var(--text);
+      color: #fff;
+      padding: .7rem 1.1rem;
+      border-radius: 8px;
+      font-size: .9rem;
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity .2s, transform .2s;
+      pointer-events: none;
+      z-index: 999;
+      max-width: 300px;
+    }
+    #toast.show { opacity: 1; transform: translateY(0); }
+    #toast.success { background: var(--green); }
+    #toast.error { background: var(--red); }
+
+    /* ── Spinner ─────────────────────────────────────────────── */
+    .spinner {
+      display: inline-block;
+      width: 18px; height: 18px;
+      border: 2px solid rgba(255,255,255,.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .6s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .empty { text-align: center; color: var(--muted); font-size: .9rem; padding: 2rem 0; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">FPL <span>Auto</span></div>
+  <div id="user-badge"></div>
+</header>
+
+<!-- ── Login ──────────────────────────────────────────────────── -->
+<div id="login-view">
+  <h1>Sign in to FPL</h1>
+  <p>Use your Fantasy Premier League (premierleague.com) credentials.</p>
+  <label>Email</label>
+  <input type="email" id="email" placeholder="your@email.com" />
+  <label>Password</label>
+  <input type="password" id="password" placeholder="••••••••" />
+  <div id="login-error"></div>
+  <button class="btn btn-primary btn-full" id="login-btn" onclick="doLogin()">Sign in</button>
+</div>
+
+<!-- ── App ────────────────────────────────────────────────────── -->
+<main id="app-view">
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('squad')">My Squad</button>
+    <button class="tab-btn" onclick="switchTab('transfers')">Transfers</button>
+    <button class="tab-btn" onclick="switchTab('setup')">Initial Setup</button>
+    <button class="tab-btn" onclick="switchTab('captain')">Captain</button>
+  </div>
+
+  <!-- Squad Tab -->
+  <div id="tab-squad" class="tab-content active">
+    <div class="squad-header">
+      <div>
+        <strong style="font-size:1.05rem">Current Squad</strong>
+        <div class="squad-meta" id="squad-meta"></div>
+      </div>
+      <button class="btn btn-outline" onclick="loadSquad()">Refresh</button>
+    </div>
+    <div id="squad-container"><div class="empty">Loading squad…</div></div>
+  </div>
+
+  <!-- Transfers Tab -->
+  <div id="tab-transfers" class="tab-content">
+    <div class="transfer-layout">
+      <!-- Sell panel -->
+      <div class="panel">
+        <h3>1. Select player to sell</h3>
+        <div id="sell-list" class="player-list"><div class="empty">Load your squad first.</div></div>
+      </div>
+      <!-- Buy panel -->
+      <div class="panel">
+        <h3>2. Select replacement</h3>
+        <div class="search-bar">
+          <input type="text" id="buy-search" placeholder="Search player…" oninput="searchBuy()" />
+          <select id="buy-pos" onchange="searchBuy()">
+            <option value="">All</option>
+            <option value="GKP">GKP</option>
+            <option value="DEF">DEF</option>
+            <option value="MID">MID</option>
+            <option value="FWD">FWD</option>
+          </select>
+        </div>
+        <div id="buy-list" class="player-list"><div class="empty">Search for a player.</div></div>
+      </div>
+    </div>
+    <!-- Summary -->
+    <div class="transfer-summary" id="transfer-summary" style="display:none">
+      <h3>Transfer Summary</h3>
+      <div class="transfer-row">
+        <span class="out" id="ts-out">–</span>
+        <span class="arrow">→</span>
+        <span class="in" id="ts-in">–</span>
+      </div>
+      <div class="cost-diff" id="ts-cost"></div>
+      <div style="margin-top:.75rem; display:flex; gap:.5rem; flex-wrap:wrap;">
+        <button class="btn btn-primary" onclick="confirmTransfer()">Confirm Transfer</button>
+        <button class="btn btn-outline" onclick="clearTransfer()">Clear</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Initial Setup Tab -->
+  <div id="tab-setup" class="tab-content">
+    <div class="setup-intro">
+      <strong>Pick your initial squad (15 players)</strong>
+      <p>
+        Select 2 goalkeepers, 5 defenders, 5 midfielders and 3 forwards within a £100m budget.
+        Maximum 3 players from the same club. Once ready, click <em>Submit to FPL</em>.
+      </p>
+      <p style="margin-top:.5rem; color: #b45309;">
+        Note: you must have already created your FPL team name on
+        <a href="https://fantasy.premierleague.com" target="_blank">fantasy.premierleague.com</a>
+        before submitting here.
+      </p>
+    </div>
+    <div class="budget-bar">
+      <div class="budget-item">Budget: <span id="setup-budget">£100.0m</span></div>
+      <div class="budget-item">Remaining: <span id="setup-remaining">£100.0m</span></div>
+      <div class="budget-item">Players: <span id="setup-count">0</span> / 15</div>
+      <div class="budget-item" id="setup-pos-count" style="display:flex;gap:.75rem"></div>
+    </div>
+    <div class="setup-grid">
+      <div class="panel">
+        <h3>Search players</h3>
+        <div class="search-bar">
+          <input type="text" id="setup-search" placeholder="Name or club…" oninput="searchSetup()" />
+          <select id="setup-pos" onchange="searchSetup()">
+            <option value="">All</option>
+            <option value="GKP">GKP</option>
+            <option value="DEF">DEF</option>
+            <option value="MID">MID</option>
+            <option value="FWD">FWD</option>
+          </select>
+        </div>
+        <div id="setup-search-results" class="player-list"><div class="empty">Search for players to add.</div></div>
+      </div>
+      <div class="panel">
+        <h3>Selected players (<span id="setup-count2">0</span>/15)</h3>
+        <div id="setup-picked" class="picked-list"><div class="empty">No players selected yet.</div></div>
+        <div style="margin-top:.75rem">
+          <button class="btn btn-primary btn-full" id="submit-setup-btn" onclick="submitInitialSetup()" disabled>
+            Submit to FPL
+          </button>
+          <button class="btn btn-outline btn-full" style="margin-top:.5rem" onclick="clearSetup()">Clear all</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Captain Tab -->
+  <div id="tab-captain" class="tab-content">
+    <p style="margin-bottom:1rem; font-size:.9rem; color:var(--muted)">
+      Click a player to set them as captain (C). Click again to set as vice captain (V).
+    </p>
+    <div id="captain-grid" class="captain-grid"><div class="empty">Load your squad first.</div></div>
+    <div style="margin-top:1rem; display:flex; gap:.5rem">
+      <button class="btn btn-primary" id="save-captain-btn" onclick="saveCaptain()" disabled>Save Captain Choice</button>
+    </div>
+  </div>
+</main>
+
+<div id="toast"></div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────
+let allPlayers = [];   // bootstrap players
+let squad = null;       // current 15 picks from FPL
+let selectedSell = null;  // player card being sold
+let selectedBuy = null;   // player card being bought
+let setupPicked = [];   // players picked for initial setup
+let captainEl = null;   // element id of captain
+let vcEl = null;        // element id of vice captain
+
+const BUDGET = 100.0;
+const POS_LIMITS = { GKP: 2, DEF: 5, MID: 5, FWD: 3 };
+
+// ── Helpers ────────────────────────────────────────────────────────────
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show ' + type;
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.className = '', 3000);
+}
+
+async function api(path, opts = {}) {
+  const r = await fetch(path, {
+    headers: { 'Content-Type': 'application/json' },
+    ...opts,
+  });
+  const data = await r.json();
+  if (!r.ok) throw new Error(data.error || `HTTP ${r.status}`);
+  return data;
+}
+
+function posClass(pos) {
+  return `pos-${pos}`;
+}
+
+function statusClass(status) {
+  const map = { a: 'status-a', d: 'status-d', i: 'status-i', u: 'status-u', s: 'status-s', n: 'status-n' };
+  return map[status] || 'status-n';
+}
+
+function switchTab(name) {
+  document.querySelectorAll('.tab-btn').forEach((b, i) => {
+    b.classList.toggle('active', ['squad','transfers','setup','captain'][i] === name);
+  });
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+
+  if (name === 'transfers' && squad) populateSellList();
+  if (name === 'captain' && squad) renderCaptainGrid();
+}
+
+// ── Auth ───────────────────────────────────────────────────────────────
+async function doLogin() {
+  const btn = document.getElementById('login-btn');
+  const err = document.getElementById('login-error');
+  err.style.display = 'none';
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Signing in…';
+
+  try {
+    const res = await api('/api/login', {
+      method: 'POST',
+      body: JSON.stringify({
+        email: document.getElementById('email').value.trim(),
+        password: document.getElementById('password').value,
+      }),
+    });
+    document.getElementById('login-view').style.display = 'none';
+    document.getElementById('app-view').style.display = 'block';
+    const badge = document.getElementById('user-badge');
+    badge.textContent = res.name || 'Signed in';
+    badge.style.display = 'block';
+    await init();
+  } catch (e) {
+    err.textContent = e.message;
+    err.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = 'Sign in';
+  }
+}
+
+// allow pressing Enter to login
+document.getElementById('password').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doLogin();
+});
+
+// ── Init ───────────────────────────────────────────────────────────────
+async function init() {
+  try {
+    const [_, players] = await Promise.all([loadSquad(), loadAllPlayers()]);
+  } catch (e) {
+    showToast(e.message, 'error');
+  }
+}
+
+async function loadAllPlayers() {
+  allPlayers = await api('/api/bootstrap');
+}
+
+async function loadSquad() {
+  const container = document.getElementById('squad-container');
+  try {
+    const data = await api('/api/team');
+    squad = data;
+    renderSquad(data);
+  } catch (e) {
+    container.innerHTML = `<div class="empty">${e.message}</div>`;
+  }
+}
+
+// ── Squad render ───────────────────────────────────────────────────────
+function renderSquad(data) {
+  const picks = data.picks || [];
+  const bank = (data.transfers?.bank ?? 0) / 10;
+  const freeTransfers = data.transfers?.limit ?? 1;
+
+  document.getElementById('squad-meta').innerHTML =
+    `Bank: <strong>£${bank.toFixed(1)}m</strong> &nbsp;·&nbsp; Free transfers: <strong>${freeTransfers}</strong>`;
+
+  const starters = picks.filter(p => p.position <= 11);
+  const bench = picks.filter(p => p.position > 11);
+
+  const groups = { GKP: [], DEF: [], MID: [], FWD: [] };
+  starters.forEach(p => (groups[p.position_type] || groups[p.position])?.push(p));
+
+  // Group by position for display
+  const byPos = { GKP: [], DEF: [], MID: [], FWD: [] };
+  starters.forEach(p => { const g = byPos[p.position]; if (g) g.push(p); });
+
+  let html = '';
+  for (const [pos, players] of Object.entries(byPos)) {
+    if (!players.length) continue;
+    html += `<div class="position-group">
+      <div class="position-label">${pos}</div>
+      <div class="player-grid">${players.map(playerCard).join('')}</div>
+    </div>`;
+  }
+
+  html += `<div class="bench-divider">Bench</div>
+    <div class="player-grid">${bench.map(p => playerCard(p, true)).join('')}</div>`;
+
+  document.getElementById('squad-container').innerHTML = html;
+}
+
+function playerCard(p, benched = false) {
+  const capClass = p.is_captain ? 'captain-badge' : p.is_vice_captain ? 'vc-badge' : '';
+  const benchClass = benched ? 'benched' : '';
+  return `<div class="player-card ${capClass} ${benchClass}" data-id="${p.element}">
+    <div class="pc-name">${p.web_name}</div>
+    <div class="pc-sub">
+      <span class="${posClass(p.position)} pc-pos">${p.position}</span>
+      <span>${p.team}</span>
+      <span class="pc-price">£${(p.price||0).toFixed(1)}m</span>
+    </div>
+  </div>`;
+}
+
+// ── Transfer tab ───────────────────────────────────────────────────────
+function populateSellList() {
+  const el = document.getElementById('sell-list');
+  if (!squad?.picks?.length) {
+    el.innerHTML = '<div class="empty">No squad loaded.</div>';
+    return;
+  }
+  el.innerHTML = squad.picks.map(p => `
+    <div class="player-row ${selectedSell?.element === p.element ? 'selected' : ''}"
+         onclick="selectSell(${p.element})"
+         data-id="${p.element}">
+      <div class="status-dot status-a"></div>
+      <div class="pr-info">
+        <div class="pr-name">${p.web_name || p.name}</div>
+        <div class="pr-sub">${p.position} · ${p.team}</div>
+      </div>
+      <div class="pr-price">£${(p.selling_price/10||0).toFixed(1)}m</div>
+    </div>`).join('');
+}
+
+function selectSell(id) {
+  selectedSell = squad.picks.find(p => p.element === id);
+  selectedBuy = null;
+  populateSellList();
+  document.getElementById('buy-pos').value = selectedSell?.position || '';
+  searchBuy();
+  updateTransferSummary();
+}
+
+let buySearchTimer = null;
+function searchBuy() {
+  clearTimeout(buySearchTimer);
+  buySearchTimer = setTimeout(_searchBuy, 250);
+}
+
+async function _searchBuy() {
+  const q = document.getElementById('buy-search').value.trim();
+  const pos = document.getElementById('buy-pos').value;
+  const el = document.getElementById('buy-list');
+
+  if (!q && !pos) { el.innerHTML = '<div class="empty">Search for a player.</div>'; return; }
+  el.innerHTML = '<div class="empty">Searching…</div>';
+
+  try {
+    const params = new URLSearchParams({ q, pos });
+    const players = await api('/api/players?' + params);
+    const squadIds = new Set((squad?.picks || []).map(p => p.element));
+    const filtered = players.filter(p => !squadIds.has(p.id));
+
+    if (!filtered.length) { el.innerHTML = '<div class="empty">No players found.</div>'; return; }
+    el.innerHTML = filtered.map(p => `
+      <div class="player-row ${selectedBuy?.id === p.id ? 'selected' : ''}"
+           onclick="selectBuy(${p.id})"
+           data-id="${p.id}">
+        <div class="status-dot ${statusClass(p.status)}"></div>
+        <div class="pr-info">
+          <div class="pr-name">${p.web_name || p.name}</div>
+          <div class="pr-sub">${p.position} · ${p.team}</div>
+        </div>
+        <div class="pr-price">£${p.price.toFixed(1)}m</div>
+      </div>`).join('');
+  } catch (e) {
+    el.innerHTML = `<div class="empty">${e.message}</div>`;
+  }
+}
+
+function selectBuy(id) {
+  selectedBuy = allPlayers.find(p => p.id === id);
+  document.querySelectorAll('#buy-list .player-row').forEach(r => {
+    r.classList.toggle('selected', +r.dataset.id === id);
+  });
+  updateTransferSummary();
+}
+
+function updateTransferSummary() {
+  const summary = document.getElementById('transfer-summary');
+  if (!selectedSell || !selectedBuy) { summary.style.display = 'none'; return; }
+  summary.style.display = 'block';
+
+  const sellPrice = (selectedSell.selling_price || 0) / 10;
+  const buyPrice = selectedBuy.price;
+  const diff = sellPrice - buyPrice;
+
+  document.getElementById('ts-out').textContent = `${selectedSell.web_name || selectedSell.name} (£${sellPrice.toFixed(1)}m)`;
+  document.getElementById('ts-in').textContent = `${selectedBuy.web_name || selectedBuy.name} (£${buyPrice.toFixed(1)}m)`;
+
+  const costEl = document.getElementById('ts-cost');
+  if (diff >= 0) {
+    costEl.className = 'cost-diff';
+    costEl.textContent = `£${diff.toFixed(1)}m profit → added to bank`;
+  } else {
+    costEl.className = 'cost-diff over';
+    costEl.textContent = `£${Math.abs(diff).toFixed(1)}m extra cost from bank`;
+  }
+}
+
+async function confirmTransfer() {
+  if (!selectedSell || !selectedBuy) return;
+  const btn = document.querySelector('[onclick="confirmTransfer()"]');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Processing…';
+
+  try {
+    await api('/api/transfer', {
+      method: 'POST',
+      body: JSON.stringify({ element_out: selectedSell.element, element_in: selectedBuy.id }),
+    });
+    showToast(`Transfer confirmed: ${selectedBuy.web_name} in!`, 'success');
+    clearTransfer();
+    await loadSquad();
+    populateSellList();
+  } catch (e) {
+    showToast(e.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Confirm Transfer';
+  }
+}
+
+function clearTransfer() {
+  selectedSell = null;
+  selectedBuy = null;
+  document.getElementById('transfer-summary').style.display = 'none';
+  populateSellList();
+  document.getElementById('buy-list').innerHTML = '<div class="empty">Search for a player.</div>';
+  document.getElementById('buy-search').value = '';
+}
+
+// ── Initial Setup tab ──────────────────────────────────────────────────
+function searchSetup() {
+  clearTimeout(searchSetup._timer);
+  searchSetup._timer = setTimeout(_searchSetup, 250);
+}
+
+async function _searchSetup() {
+  const q = document.getElementById('setup-search').value.trim();
+  const pos = document.getElementById('setup-pos').value;
+  const el = document.getElementById('setup-search-results');
+
+  if (!q && !pos) { el.innerHTML = '<div class="empty">Search for players to add.</div>'; return; }
+
+  try {
+    const params = new URLSearchParams({ q, pos });
+    const players = await api('/api/players?' + params);
+    const pickedIds = new Set(setupPicked.map(p => p.id));
+
+    el.innerHTML = players.map(p => `
+      <div class="player-row ${pickedIds.has(p.id) ? 'selected' : ''}"
+           onclick="toggleSetupPlayer(${p.id})"
+           data-id="${p.id}">
+        <div class="status-dot ${statusClass(p.status)}"></div>
+        <div class="pr-info">
+          <div class="pr-name">${p.web_name || p.name}</div>
+          <div class="pr-sub">${p.position} · ${p.team}</div>
+        </div>
+        <div class="pr-price">£${p.price.toFixed(1)}m</div>
+      </div>`).join('') || '<div class="empty">No results.</div>';
+  } catch (e) {
+    el.innerHTML = `<div class="empty">${e.message}</div>`;
+  }
+}
+
+function toggleSetupPlayer(id) {
+  const existing = setupPicked.findIndex(p => p.id === id);
+  if (existing >= 0) {
+    setupPicked.splice(existing, 1);
+  } else {
+    if (setupPicked.length >= 15) { showToast('Already have 15 players selected.', 'error'); return; }
+    const player = allPlayers.find(p => p.id === id);
+    if (!player) return;
+
+    // Validate position limits
+    const posCount = setupPicked.filter(p => p.position === player.position).length;
+    if (posCount >= POS_LIMITS[player.position]) {
+      showToast(`Can only have ${POS_LIMITS[player.position]} ${player.position} players.`, 'error');
+      return;
+    }
+
+    // Validate club limit (max 3)
+    const clubCount = setupPicked.filter(p => p.team === player.team).length;
+    if (clubCount >= 3) {
+      showToast('Maximum 3 players per club.', 'error');
+      return;
+    }
+
+    setupPicked.push(player);
+  }
+  renderSetup();
+  _searchSetup();
+}
+
+function renderSetup() {
+  const totalCost = setupPicked.reduce((s, p) => s + p.price, 0);
+  const remaining = BUDGET - totalCost;
+  const count = setupPicked.length;
+
+  document.getElementById('setup-budget').textContent = `£${BUDGET.toFixed(1)}m`;
+  const remEl = document.getElementById('setup-remaining');
+  remEl.textContent = `£${remaining.toFixed(1)}m`;
+  remEl.className = remaining < 0 ? 'over' : '';
+  document.getElementById('setup-count').textContent = count;
+  document.getElementById('setup-count2').textContent = count;
+
+  // Position counts
+  const posCounts = { GKP: 0, DEF: 0, MID: 0, FWD: 0 };
+  setupPicked.forEach(p => posCounts[p.position]++);
+  document.getElementById('setup-pos-count').innerHTML =
+    Object.entries(posCounts).map(([pos, n]) =>
+      `<span class="${posClass(pos)} pc-pos">${pos}: ${n}/${POS_LIMITS[pos]}</span>`
+    ).join('');
+
+  // Picked list
+  const pickedEl = document.getElementById('setup-picked');
+  if (!count) {
+    pickedEl.innerHTML = '<div class="empty">No players selected yet.</div>';
+  } else {
+    pickedEl.innerHTML = setupPicked.map((p, i) => `
+      <div class="picked-row">
+        <span class="${posClass(p.position)} pc-pos">${p.position}</span>
+        <div class="pr-info">
+          <div class="pr-name">${p.web_name || p.name}</div>
+          <div class="pr-sub">${p.team} · £${p.price.toFixed(1)}m</div>
+        </div>
+        <button class="remove-btn" onclick="removeSetupPlayer(${i})">×</button>
+      </div>`).join('');
+  }
+
+  // Enable submit when exactly 15 players and budget not exceeded
+  const valid = count === 15 && remaining >= 0;
+  document.getElementById('submit-setup-btn').disabled = !valid;
+}
+
+function removeSetupPlayer(i) {
+  setupPicked.splice(i, 1);
+  renderSetup();
+  _searchSetup();
+}
+
+function clearSetup() {
+  setupPicked = [];
+  renderSetup();
+}
+
+async function submitInitialSetup() {
+  if (setupPicked.length !== 15) return;
+  const btn = document.getElementById('submit-setup-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Submitting to FPL…';
+
+  const errors = [];
+  for (const player of setupPicked) {
+    try {
+      await api('/api/transfer', {
+        method: 'POST',
+        body: JSON.stringify({ element_in: player.id }),
+      });
+    } catch (e) {
+      errors.push(`${player.web_name}: ${e.message}`);
+    }
+  }
+
+  if (errors.length === 0) {
+    showToast('All 15 players submitted successfully!', 'success');
+    setupPicked = [];
+    renderSetup();
+    await loadSquad();
+    switchTab('squad');
+  } else {
+    showToast(`${errors.length} player(s) failed. Check console.`, 'error');
+    console.error('Setup errors:', errors);
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Submit to FPL';
+}
+
+// ── Captain tab ────────────────────────────────────────────────────────
+function renderCaptainGrid() {
+  if (!squad?.picks?.length) {
+    document.getElementById('captain-grid').innerHTML = '<div class="empty">No squad loaded.</div>';
+    return;
+  }
+  const starters = squad.picks.filter(p => p.position <= 11);
+  document.getElementById('captain-grid').innerHTML = starters.map(p => {
+    const isCap = p.element === captainEl || p.is_captain;
+    const isVC = p.element === vcEl || p.is_vice_captain;
+    if (!captainEl && p.is_captain) captainEl = p.element;
+    if (!vcEl && p.is_vice_captain) vcEl = p.element;
+    return `<div class="captain-card ${isCap ? 'is-cap' : isVC ? 'is-vc' : ''}"
+              onclick="toggleCaptain(${p.element})" data-id="${p.element}">
+      <div class="pc-name">${p.web_name || p.name}</div>
+      <div class="pc-sub"><span>${p.position} · ${p.team}</span></div>
+      ${isCap ? '<div class="cap-role c">Captain</div>' : isVC ? '<div class="cap-role vc">Vice Captain</div>' : ''}
+    </div>`;
+  }).join('');
+  document.getElementById('save-captain-btn').disabled = !captainEl;
+}
+
+function toggleCaptain(id) {
+  if (captainEl === id) {
+    // Already captain → remove
+    captainEl = null;
+  } else if (vcEl === id) {
+    // Is VC → make captain, clear VC
+    captainEl = id;
+    vcEl = null;
+  } else if (!captainEl) {
+    captainEl = id;
+  } else if (!vcEl) {
+    vcEl = id;
+  } else {
+    // Both set → replace captain, move old captain to VC
+    vcEl = captainEl;
+    captainEl = id;
+  }
+  renderCaptainGrid();
+}
+
+async function saveCaptain() {
+  if (!squad?.picks || !captainEl) return;
+  const btn = document.getElementById('save-captain-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Saving…';
+
+  const picks = squad.picks.map(p => ({
+    element: p.element,
+    position: p.position,
+    is_captain: p.element === captainEl,
+    is_vice_captain: p.element === vcEl,
+  }));
+
+  try {
+    await api('/api/picks', { method: 'POST', body: JSON.stringify({ picks }) });
+    showToast('Captain saved!', 'success');
+    await loadSquad();
+  } catch (e) {
+    showToast(e.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Save Captain Choice';
+  }
+}
+
+// ── Auto-check login on load ───────────────────────────────────────────
+(async () => {
+  try {
+    const s = await api('/api/status');
+    if (s.logged_in) {
+      document.getElementById('login-view').style.display = 'none';
+      document.getElementById('app-view').style.display = 'block';
+      const badge = document.getElementById('user-badge');
+      badge.textContent = s.name || 'Signed in';
+      badge.style.display = 'block';
+      await init();
+    }
+  } catch (e) { /* not logged in */ }
+})();
+</script>
+</body>
+</html>
