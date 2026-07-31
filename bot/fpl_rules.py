@@ -186,10 +186,20 @@ def chip_valid_gws(chip: str, half: int) -> range:
 # ---------------------------------------------------------------------------
 
 def to_tenths(value: float | int) -> int:
-    """Convert a £m float (7.5) to integer tenths (75), tolerating ints already
-    expressed in tenths only when they are clearly so (>= 20)."""
-    if isinstance(value, int) and value >= 20:
-        return value
+    """Convert a price in £m (7.5, or 100 for the budget) to integer tenths.
+
+    The input is **always** interpreted as millions, whether int or float, so
+    ``to_tenths(100) == 1000``. An earlier version guessed that large ints were
+    already tenths; that made ``to_tenths(100)`` return a £10m budget, which is
+    exactly the kind of silent, severe error this module exists to prevent.
+    Values that are already in tenths (FPL's ``now_cost``) should be used
+    directly and never passed through here.
+
+    >>> to_tenths(7.5)
+    75
+    >>> to_tenths(100)
+    1000
+    """
     return int(round(float(value) * 10))
 
 
