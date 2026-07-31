@@ -40,7 +40,7 @@ import pulp
 from .fpl_rules import (
     DEF, FWD, GKP, MAX_BANKED_FT, MAX_PLAYERS_PER_CLUB, MID,
     FORMATION_MINIMUMS, HIT_COST, RULES, SQUAD_COMPOSITION, SQUAD_SIZE,
-    STARTING_BUDGET_TENTHS, STARTING_XI_SIZE, to_tenths,
+    STARTING_XI_SIZE, to_tenths,
 )
 
 log = logging.getLogger(__name__)
@@ -307,6 +307,10 @@ class SquadOptimizer:
         Returns the recommended transfers in and out with the resulting squad.
         **Advisory only: this never executes a transfer.**
         """
+        # FPL caps the free-transfer bank at five, so a caller passing a larger
+        # number (or a stale value) cannot buy unlimited free transfers here.
+        free_transfers = int(min(max(free_transfers, 0), MAX_BANKED_FT))
+
         current = current_squad.reset_index(drop=True).copy()
         pool = player_pool_df.reset_index(drop=True).copy()
         if "element" not in pool.columns:

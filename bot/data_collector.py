@@ -206,6 +206,18 @@ def _get(url: str, expect: str = "json") -> Any:
             resp = get_session().get(url, timeout=REQUEST_TIMEOUT)
             resp.raise_for_status()
             return resp.json() if expect == "json" else resp.text
+        except requests.HTTPError as exc:
+            # 4xx responses are permanent -- a missing CSV will not appear on
+            # the third attempt, so retrying only wastes time and log noise.
+            status = getattr(exc.response, "status_code", None)
+            if status is not None and 400 <= status < 500:
+                raise DataFetchError(f"could not fetch {url}: {exc}") from exc
+            last_exc = exc
+            wait = RETRY_BACKOFF ** attempt
+            log.warning("fetch failed (%s/%s) %s: %s; retrying in %.0fs",
+                        attempt + 1, MAX_RETRIES, url, exc, wait)
+            if attempt < MAX_RETRIES - 1:
+                time.sleep(wait)
         except (requests.RequestException, json.JSONDecodeError) as exc:
             last_exc = exc
             wait = RETRY_BACKOFF ** attempt
@@ -439,47 +451,67 @@ def load_multi_season_history(seasons: tuple[str, ...] = ("2024-25", "2025-26"),
 # FPL-Core-Insights
 # ---------------------------------------------------------------------------
 
-#: Known resource -> path candidates within the FPL-Core-Insights repo. The repo
-#: reorganises occasionally, so each resource lists fallbacks that are tried in
-#: order.
-CORE_INSIGHTS_RESOURCES = {
-    "players": ("2025-2026/players.csv", "data/players.csv", "players.csv"),
-    "teams": ("2025-2026/teams.csv", "data/teams.csv", "teams.csv"),
-    "fixtures": ("2025-2026/fixtures.csv", "data/fixtures.csv", "fixtures.csv"),
-    "gameweeks": ("2025-2026/gameweeks.csv", "data/gameweeks.csv", "gameweeks.csv"),
-}
+#: Resources available per season directory, verified against the repo tree.
+#: The layout is ``data/{season}/{resource}.csv`` with the season written in
+#: full ("2025-2026", not "2025-26").
+CORE_INSIGHTS_RESOURCES = (
+    "players", "teams", "playerstats", "gameweek_summaries", "team_history",
+)
+
+#: Seasons with the flat per-resource CSV layout. The 2024-2025 directory uses a
+#: different, directory-per-resource structure and is not supported here.
+CORE_INSIGHTS_SEASONS = ("2025-2026", "2026-2027")
 
 
-def fetch_fpl_core_insights(resource: str = "players", force: bool = False
-                            ) -> pd.DataFrame:
-    """Secondary CSV warehouse (cross-season snapshots, Elo-style enrichment).
+def _core_insights_season(season: str) -> str:
+    """Normalise "2026-27" to the repo's full-year form "2026-2027"."""
+    if len(season) == 9 and season[4] == "-":
+        return season
+    start, end = season.split("-")
+    century = start[:2]
+    return f"{start}-{century}{end}" if len(end) == 2 else f"{start}-{end}"
 
-    Treated as best-effort: the upstream repo restructures its paths between
-    seasons, so several candidate paths are tried and a clear
-    :class:`DataFetchError` is raised if none resolve. Nothing in the pipeline
-    depends on this source -- it is enrichment only.
+
+def fetch_fpl_core_insights(resource: str = "players", season: str = "2026-2027",
+                            force: bool = False) -> pd.DataFrame:
+    """Secondary CSV warehouse -- cross-season snapshots and enrichment.
+
+    Layout verified against the repository tree: ``data/{season}/{resource}.csv``
+    where ``season`` is the full-year form ("2026-2027"). Available resources
+    are listed in :data:`CORE_INSIGHTS_RESOURCES`.
+
+    Notably this repo **does** carry a ``2026-2027`` directory, so it is the one
+    source here with current-season snapshots -- useful given that Vaastav
+    stopped weekly updates after 2024/25 and the FPL API has no gameweek data
+    until the season starts.
+
+    Nothing in the pipeline depends on this source; it is enrichment only, so a
+    failure raises a clear :class:`DataFetchError` rather than breaking a run.
     """
-    name = f"core_insights_{resource}.json"
+    season_dir = _core_insights_season(season)
+    name = f"core_insights_{season_dir}_{resource}.json"
     if not force:
         cached = _cache_read(name, ttl_hours=CACHE_TTL_HOURS * 4)
         if cached is not None:
             return pd.read_json(StringIO(cached), orient="split")
 
-    candidates = CORE_INSIGHTS_RESOURCES.get(resource, (f"{resource}.csv",))
-    errors = []
-    for path in candidates:
-        try:
-            text = _get(f"{CORE_INSIGHTS_BASE}/{path}", expect="text")
-        except DataFetchError as exc:
-            errors.append(f"{path}: {exc}")
-            continue
-        df = pd.read_csv(StringIO(text))
-        _cache_write(name, df.to_json(orient="split", date_format="iso"))
-        return df
+    if resource not in CORE_INSIGHTS_RESOURCES:
+        log.warning("resource %r is not one of the verified resources %s; "
+                    "attempting it anyway", resource, CORE_INSIGHTS_RESOURCES)
 
-    raise DataFetchError(
-        f"FPL-Core-Insights resource {resource!r} not found. Tried:\n  "
-        + "\n  ".join(errors))
+    url = f"{CORE_INSIGHTS_BASE}/data/{season_dir}/{resource}.csv"
+    try:
+        text = _get(url, expect="text")
+    except DataFetchError as exc:
+        raise DataFetchError(
+            f"FPL-Core-Insights {resource!r} for season {season_dir} not found "
+            f"at {url}. Known seasons: {CORE_INSIGHTS_SEASONS}; known "
+            f"resources: {CORE_INSIGHTS_RESOURCES}.") from exc
+
+    df = pd.read_csv(StringIO(text))
+    df.attrs["season"] = season_dir
+    _cache_write(name, df.to_json(orient="split", date_format="iso"))
+    return df
 
 
 # ---------------------------------------------------------------------------
