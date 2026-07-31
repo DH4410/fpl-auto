@@ -750,7 +750,7 @@ function showLoginMsg(msg, type) {
 
 function onLoggedIn(name) {
   document.getElementById('login').style.display = 'none';
-  document.getElementById('app').style.display = '';
+  document.getElementById('app').style.display = 'block';
   document.getElementById('user-chip').textContent = name || 'Signed in';
   init();
 }
@@ -773,7 +773,20 @@ async function loadSquad() {
     renderSquad();
     updateHeaderInfo();
   } catch (e) {
-    document.getElementById('squad-grid').innerHTML = `<div class="empty">${e.message}</div>`;
+    if (e.message.includes('No FPL team')) {
+      document.getElementById('squad-grid').innerHTML = `
+        <div style="background:#fff;border:1.5px solid var(--border);border-radius:var(--r);padding:1.25rem 1rem;text-align:center;">
+          <div style="font-size:1rem;font-weight:700;color:var(--text);margin-bottom:.4rem;">No FPL squad yet for 2026/27</div>
+          <p style="font-size:.85rem;color:var(--muted);line-height:1.55;margin-bottom:.85rem;">
+            Create your team on
+            <a href="https://fantasy.premierleague.com" target="_blank" style="color:var(--primary-d);">fantasy.premierleague.com</a>,
+            then come back here to manage it — or use the Setup tab to pick your 15 players.
+          </p>
+          <button class="btn btn-green btn-sm" onclick="switchTab('setup')">Go to Setup</button>
+        </div>`;
+    } else {
+      document.getElementById('squad-grid').innerHTML = `<div class="empty">${e.message}</div>`;
+    }
   }
 }
 
