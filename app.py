@@ -48,15 +48,18 @@ def _load_session():
 def _enrich_picks(picks: list, bootstrap: dict) -> list:
     """Add player name, team, position, and price to each pick dict."""
     players_by_id = {p["id"]: p for p in bootstrap["elements"]}
-    teams_by_id = {t["id"]: t["name"] for t in bootstrap["teams"]}
+    teams_by_id = {t["id"]: t for t in bootstrap["teams"]}
     pos_map = {1: "GKP", 2: "DEF", 3: "MID", 4: "FWD"}
     for pick in picks:
         p = players_by_id.get(pick.get("element"), {})
         pick["name"] = f"{p.get('first_name', '')} {p.get('second_name', '')}".strip()
         pick["web_name"] = p.get("web_name", pick["name"])
-        pick["team"] = teams_by_id.get(p.get("team"), "")
-        pick["pos"] = pos_map.get(p.get("element_type"), "")  # GKP/DEF/MID/FWD — keeps original "position" (lineup slot 1-15) intact
+        t = teams_by_id.get(p.get("team"), {})
+        pick["team"] = t.get("short_name") or t.get("name", "")
+        pick["team_code"] = t.get("code", 0)
+        pick["pos"] = pos_map.get(p.get("element_type"), "")
         pick["price"] = p.get("now_cost", 0) / 10
+        pick["photo"] = p.get("photo", "").replace(".jpg", "")
     return picks
 
 
@@ -220,6 +223,22 @@ def get_team():
         team_data = fpl_api.my_team(_state["session"], _state["token"], _state["entry_id"])
         if _state["bootstrap"] and team_data.get("picks"):
             team_data["picks"] = _enrich_picks(team_data["picks"], _state["bootstrap"])
+
+        # Detect pre-season (no gameweek has started yet → unlimited free transfers)
+        events = (_state["bootstrap"] or {}).get("events", [])
+        team_data["is_preseason"] = not any(e.get("is_current") or e.get("finished") for e in events)
+
+        # Add entry info: team name, overall rank, total points
+        try:
+            ei = fpl_api.entry_info(_state["session"], _state["token"], _state["entry_id"])
+            team_data["entry_info"] = {
+                "team_name": ei.get("name", ""),
+                "rank": ei.get("summary_overall_rank"),
+                "total_points": ei.get("summary_overall_points", 0),
+            }
+        except Exception:
+            team_data["entry_info"] = {}
+
         return jsonify(team_data)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
