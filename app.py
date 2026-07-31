@@ -1,6 +1,7 @@
 """FPL Auto — local Flask web app for managing your Fantasy Premier League team."""
 import json
 import os
+import threading
 
 from dotenv import load_dotenv
 from flask import Flask, jsonify, render_template, request
@@ -20,6 +21,9 @@ _state = {
     "entry_id": None,
     "bootstrap": None,  # cached on login
 }
+
+# Browser-login async state (Playwright blocks a thread)
+_browser_login = {"status": "idle", "error": None}
 
 SESSION_FILE = os.path.join(os.path.dirname(__file__), ".session.json")
 
@@ -51,7 +55,7 @@ def _enrich_picks(picks: list, bootstrap: dict) -> list:
         pick["name"] = f"{p.get('first_name', '')} {p.get('second_name', '')}".strip()
         pick["web_name"] = p.get("web_name", pick["name"])
         pick["team"] = teams_by_id.get(p.get("team"), "")
-        pick["position"] = pos_map.get(p.get("element_type"), "")
+        pick["pos"] = pos_map.get(p.get("element_type"), "")  # GKP/DEF/MID/FWD — keeps original "position" (lineup slot 1-15) intact
         pick["price"] = p.get("now_cost", 0) / 10
     return picks
 
@@ -283,6 +287,47 @@ def do_picks():
         return jsonify({"error": str(e)}), 500
 
 
+@app.route("/api/login/browser", methods=["POST"])
+def browser_login_start():
+    """Kicks off a background thread that opens a Chromium browser for login."""
+    if _browser_login["status"] == "pending":
+        return jsonify({"status": "pending"})
+
+    def run():
+        _browser_login["status"] = "pending"
+        _browser_login["error"] = None
+        try:
+            token, session = fpl_auth.login_browser()
+            _state["token"] = token
+            _state["session"] = session
+            user = fpl_api.me(session, token)
+            _state["entry_id"] = user["player"].get("entry")
+            _state["bootstrap"] = fpl_api.bootstrap(session)
+            _save_session()
+            _browser_login["status"] = "done"
+        except Exception as e:
+            _browser_login["status"] = "error"
+            _browser_login["error"] = str(e)
+
+    threading.Thread(target=run, daemon=True).start()
+    return jsonify({"status": "pending"})
+
+
+@app.route("/api/login/browser/poll")
+def browser_login_poll():
+    """Frontend polls this until status is 'done' or 'error'."""
+    status = _browser_login["status"]
+    if status == "done":
+        _browser_login["status"] = "idle"
+        try:
+            user = fpl_api.me(_state["session"], _state["token"])
+            name = f"{user['player'].get('first_name', '')} {user['player'].get('last_name', '')}".strip()
+            return jsonify({"status": "done", "name": name, "entry_id": _state["entry_id"]})
+        except Exception as e:
+            return jsonify({"status": "error", "error": str(e)})
+    return jsonify({"status": status, "error": _browser_login.get("error")})
+
+
 @app.route("/api/entry")
 def get_entry():
     if not _state["token"] or not _state["entry_id"]:
@@ -297,4 +342,4 @@ def get_entry():
 if __name__ == "__main__":
     _load_session()
     print("FPL Auto running at http://localhost:5000")
-    app.run(debug=False, port=5000)
+    app.run(debug=False, port=5000, threaded=True)

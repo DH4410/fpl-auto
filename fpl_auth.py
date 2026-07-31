@@ -150,3 +150,89 @@ def login(email: str, password: str) -> tuple[str, requests.Session]:
     access_token = resp.json()["access_token"]
 
     return access_token, session
+
+
+def login_browser() -> tuple[str, requests.Session]:
+    """
+    Opens a real Chromium browser so the user can log in with any method
+    (Google, Apple, email/password). Captures the OAuth code automatically
+    once login completes and exchanges it for an access token.
+    """
+    try:
+        from playwright.sync_api import sync_playwright
+    except ImportError:
+        raise RuntimeError(
+            "Browser login requires Playwright.\n"
+            "Run these two commands once:\n"
+            "  pip install playwright\n"
+            "  python -m playwright install chromium"
+        )
+
+    from urllib.parse import urlencode, unquote
+
+    verifier = _verifier()
+    state = uuid.uuid4().hex
+    auth_url = f"{_AUTH_BASE}/as/authorize?" + urlencode({
+        "client_id": _CLIENT_ID,
+        "redirect_uri": _REDIRECT_URI,
+        "response_type": "code",
+        "scope": "openid profile email offline_access",
+        "state": state,
+        "code_challenge": _challenge(verifier),
+        "code_challenge_method": "S256",
+    })
+
+    captured = []  # will hold [auth_code] once intercepted
+
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch(headless=False)
+        ctx = browser.new_context()
+        page = ctx.new_page()
+
+        def on_route(route):
+            url = route.request.url
+            if "fantasy.premierleague.com" in url and "code=" in url and not captured:
+                m = re.search(r"[?&]code=([^&]+)", url)
+                if m:
+                    captured.append(unquote(m.group(1)))
+            try:
+                route.continue_()
+            except Exception:
+                pass
+
+        # Intercept the redirect back to FPL that carries the auth code
+        ctx.route("https://fantasy.premierleague.com*", on_route)
+        page.goto(auth_url)
+
+        import time
+        deadline = time.time() + 300  # 5-minute window for user to log in
+        while not captured:
+            if time.time() > deadline:
+                break
+            try:
+                page.wait_for_timeout(500)
+            except Exception:
+                break  # browser closed
+
+        try:
+            browser.close()
+        except Exception:
+            pass
+
+    if not captured:
+        raise RuntimeError("Login was cancelled or timed out (5 minutes).")
+
+    # Exchange auth code for access token
+    session = requests.Session()
+    resp = session.post(
+        f"{_AUTH_BASE}/as/token",
+        data={
+            "grant_type": "authorization_code",
+            "redirect_uri": _REDIRECT_URI,
+            "code": captured[0],
+            "code_verifier": verifier,
+            "client_id": _CLIENT_ID,
+        },
+    )
+    resp.raise_for_status()
+    return resp.json()["access_token"], session
