@@ -1,5 +1,6 @@
 .env
 .session.json
+.chrome-profile/
 __pycache__/
 *.pyc
 *.pyo

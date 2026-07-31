@@ -5,11 +5,15 @@ The old POST-to-users.premierleague.com flow is deprecated.
 """
 import base64
 import hashlib
+import os
 import re
 import secrets
 import uuid
 
 import requests
+
+# Persistent Chrome profile so Google remembers your session between logins
+_PROFILE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".chrome-profile")
 
 _AUTH_BASE = "https://account.premierleague.com"
 _CLIENT_ID = "bfcbaf69-aade-4c1b-8f00-c1cb8a193030"
@@ -154,9 +158,13 @@ def login(email: str, password: str) -> tuple[str, requests.Session]:
 
 def login_browser() -> tuple[str, requests.Session]:
     """
-    Opens a real Chromium browser so the user can log in with any method
-    (Google, Apple, email/password). Captures the OAuth code automatically
-    once login completes and exchanges it for an access token.
+    Opens Google Chrome with a persistent profile so the user's Google session
+    is remembered between logins. First time: sign in normally. After that:
+    Chrome auto-signs you in or shows a one-click account picker.
+
+    Uses channel="chrome" (your real Chrome install) so Google's security
+    check doesn't block it. Falls back to Playwright's Chromium if Chrome
+    is not found on this machine.
     """
     try:
         from playwright.sync_api import sync_playwright
@@ -182,12 +190,21 @@ def login_browser() -> tuple[str, requests.Session]:
         "code_challenge_method": "S256",
     })
 
-    captured = []  # will hold [auth_code] once intercepted
+    captured = []
+
+    _launch_args = dict(
+        user_data_dir=_PROFILE_DIR,
+        headless=False,
+        args=["--disable-blink-features=AutomationControlled"],
+    )
 
     with sync_playwright() as pw:
-        browser = pw.chromium.launch(headless=False)
-        ctx = browser.new_context()
-        page = ctx.new_page()
+        # Try real Chrome first (passes Google's security check).
+        # Fall back to Playwright's Chromium if Chrome isn't installed.
+        try:
+            ctx = pw.chromium.launch_persistent_context(channel="chrome", **_launch_args)
+        except Exception:
+            ctx = pw.chromium.launch_persistent_context(**_launch_args)
 
         def on_route(route):
             url = route.request.url
@@ -200,22 +217,22 @@ def login_browser() -> tuple[str, requests.Session]:
             except Exception:
                 pass
 
-        # Intercept the redirect back to FPL that carries the auth code
         ctx.route("https://fantasy.premierleague.com*", on_route)
+        page = ctx.new_page()
         page.goto(auth_url)
 
         import time
-        deadline = time.time() + 300  # 5-minute window for user to log in
+        deadline = time.time() + 300
         while not captured:
             if time.time() > deadline:
                 break
             try:
                 page.wait_for_timeout(500)
             except Exception:
-                break  # browser closed
+                break
 
         try:
-            browser.close()
+            ctx.close()
         except Exception:
             pass
 
