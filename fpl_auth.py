@@ -12,12 +12,6 @@ import uuid
 
 import requests
 
-# Prefer the user's real Chrome profile so their Google session is already there.
-# Falls back to our own persistent profile if Chrome is currently running (profile locked).
-_CHROME_USER_DATA = os.path.join(
-    os.environ.get("LOCALAPPDATA", ""),
-    "Google", "Chrome", "User Data",
-)
 _PROFILE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".chrome-profile")
 
 _AUTH_BASE = "https://account.premierleague.com"
@@ -163,27 +157,19 @@ def login(email: str, password: str) -> tuple[str, requests.Session]:
 
 def login_browser() -> tuple[str, requests.Session]:
     """
-    Opens Chrome, navigates to the FPL login page, and captures the OAuth
-    code automatically once the user signs in (Google, Apple, or email).
-
-    Profile priority:
-      1. User's real Chrome profile (LOCALAPPDATA/Google/Chrome/User Data)
-         → their Google session is already there, so login may be instant.
-      2. Our own persistent profile (.chrome-profile/) if Chrome is running
-         (Chrome locks its profile when open).
-      3. Playwright's Chromium as a last resort.
+    Opens a separate Chrome window (isolated from the user's Chrome) for login.
+    Captures the OAuth code from the redirect URL, then closes the window.
+    The profile is persistent so Google login is remembered next time.
     """
     try:
         from playwright.sync_api import sync_playwright
     except ImportError:
         raise RuntimeError(
             "Browser login requires Playwright.\n"
-            "Run these two commands once:\n"
-            "  pip install playwright\n"
-            "  python -m playwright install chromium"
+            "Run: pip install playwright && python -m playwright install chromium"
         )
-
     from urllib.parse import urlencode, unquote
+    import time
 
     verifier = _verifier()
     state = uuid.uuid4().hex
@@ -200,43 +186,37 @@ def login_browser() -> tuple[str, requests.Session]:
     captured = []
 
     def _grab(url: str):
-        """Extract auth code from any FPL redirect URL."""
         if not captured and "fantasy.premierleague.com" in url and "code=" in url:
             m = re.search(r"[?&]code=([^&]+)", url)
             if m:
                 captured.append(unquote(m.group(1)))
 
-    def _launch(pw, profile_dir, channel=None):
-        kwargs = dict(
-            user_data_dir=profile_dir,
-            headless=False,
-            args=["--disable-blink-features=AutomationControlled"],
-        )
-        if channel:
-            kwargs["channel"] = channel
-        return pw.chromium.launch_persistent_context(**kwargs)
-
     with sync_playwright() as pw:
-        # Try user's real Chrome profile first, then our profile, then Chromium
-        ctx = None
-        for profile, channel in [
-            (_CHROME_USER_DATA if os.path.isdir(_CHROME_USER_DATA) else None, "chrome"),
-            (_PROFILE_DIR, "chrome"),
-            (_PROFILE_DIR, None),
-        ]:
-            if profile is None:
-                continue
-            try:
-                ctx = _launch(pw, profile, channel)
-                break
-            except Exception:
-                continue
+        # Use our own isolated profile with the real Chrome binary.
+        # channel="chrome" passes Google's "insecure browser" check.
+        # We never touch the user's existing Chrome profile or tabs.
+        try:
+            ctx = pw.chromium.launch_persistent_context(
+                user_data_dir=_PROFILE_DIR,
+                channel="chrome",
+                headless=False,
+                args=["--disable-blink-features=AutomationControlled"],
+            )
+        except Exception:
+            # Chrome not installed; fall back to Playwright's Chromium.
+            ctx = pw.chromium.launch_persistent_context(
+                user_data_dir=_PROFILE_DIR,
+                headless=False,
+                args=["--disable-blink-features=AutomationControlled"],
+            )
 
-        if ctx is None:
-            raise RuntimeError("Could not launch Chrome or Chromium. Check your Playwright install.")
+        # Reuse an existing tab or open a fresh one
+        page = ctx.pages[0] if ctx.pages else ctx.new_page()
 
-        # ── Three capture methods so we can't miss the auth code ─────────
-        # 1. Route interception: regex avoids the glob-path-slash bug
+        # Capture method 1: framenavigated fires before the SPA strips ?code= from URL
+        page.on("framenavigated", lambda frame: _grab(frame.url) if not frame.parent_frame else None)
+
+        # Capture method 2: route interception catches the redirect at network level
         def on_route(route):
             _grab(route.request.url)
             try:
@@ -246,17 +226,8 @@ def login_browser() -> tuple[str, requests.Session]:
 
         ctx.route(re.compile(r"https://fantasy\.premierleague\.com"), on_route)
 
-        page = ctx.new_page()
-
-        # 2. Request events: fires for every outgoing request (including redirects)
-        page.on("request", lambda req: _grab(req.url))
-
-        # 3. Frame navigation: fires before the SPA can strip the code from the URL
-        page.on("framenavigated", lambda frame: _grab(frame.url) if not frame.parent_frame else None)
-
         page.goto(auth_url)
 
-        import time
         deadline = time.time() + 300
         while not captured:
             if time.time() > deadline:
@@ -264,7 +235,7 @@ def login_browser() -> tuple[str, requests.Session]:
             try:
                 page.wait_for_timeout(500)
             except Exception:
-                break  # browser closed by user
+                break
 
         try:
             ctx.close()
@@ -272,9 +243,8 @@ def login_browser() -> tuple[str, requests.Session]:
             pass
 
     if not captured:
-        raise RuntimeError("Login was cancelled or timed out (5 minutes).")
+        raise RuntimeError("Login cancelled or timed out (5 min).")
 
-    # Exchange auth code for access token
     session = requests.Session()
     resp = session.post(
         f"{_AUTH_BASE}/as/token",
