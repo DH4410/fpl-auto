@@ -1112,8 +1112,23 @@ def element_summaries_to_features(
             weighted = 0.0
             for season_row, weight in zip(recent, w):
                 raw = float(season_row.get(stat) or 0)
-                starts = max(float(season_row.get("starts") or 0), 1.0)
-                weighted += weight * (raw / starts)
+                minutes_s = float(season_row.get("minutes") or 0)
+                starts_s = float(season_row.get("starts") or 0)
+
+                if stat == "minutes":
+                    # Per-GW average including non-playing weeks (38 GW season)
+                    denom = 38.0
+                elif stat == "clean_sheets":
+                    # CS is per-start; sub appearances rarely qualify
+                    denom = max(starts_s, 1.0)
+                else:
+                    # Per-90-minute rate: scales correctly for 90-min starters and
+                    # discounts fringe/bench players by their actual time on pitch.
+                    # Using starts as denominator breaks for 0-start players:
+                    # max(0,1)=1 inflates their entire season total into one game.
+                    denom = max(minutes_s / 90.0, 1.0)
+
+                weighted += weight * (raw / denom)
             row[ewma_col] = weighted
 
         row["fpl_pts_per_game"] = row.get("ewma_total_points", 0.0)
