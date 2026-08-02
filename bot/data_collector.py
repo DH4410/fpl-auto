@@ -77,6 +77,32 @@ CORE_INSIGHTS_BASE = (
 CACHE_DIR = Path(__file__).resolve().parent / "cache"
 CACHE_TTL_HOURS = 6
 
+#: All historical seasons available on Vaastav, from oldest to newest.
+#: 2019-20 was COVID-affected (season finished in neutral venues, no fans from GW29+),
+#: but the data is clean and usable for model training.
+#: DC columns only exist from 2025-26 onward.
+ALL_TRAINING_SEASONS = (
+    "2019-20",
+    "2020-21",
+    "2021-22",
+    "2022-23",
+    "2023-24",
+    "2024-25",
+    "2025-26",
+)
+
+#: Seasons to use by default (last 5 complete seasons give ~180k rows).
+#: Excludes 2019-20 by default because COVID-era data has unusual patterns
+#: (no-crowd games, compressed fixtures) that differ from normal football.
+DEFAULT_TRAINING_SEASONS = (
+    "2020-21",
+    "2021-22",
+    "2022-23",
+    "2023-24",
+    "2024-25",
+    "2025-26",
+)
+
 REQUEST_TIMEOUT = 30
 MAX_RETRIES = 3
 RETRY_BACKOFF = 2.0
@@ -408,7 +434,7 @@ def fetch_vaastav_players_raw(season: str = "2024-25", force: bool = False
     return df
 
 
-def load_multi_season_history(seasons: tuple[str, ...] = ("2024-25", "2025-26"),
+def load_multi_season_history(seasons: tuple[str, ...] = DEFAULT_TRAINING_SEASONS,
                               force: bool = False) -> pd.DataFrame:
     """Concatenate several seasons of gameweek data with an explicit NaN policy.
 
@@ -784,12 +810,172 @@ def fetch_soccerdata_fbref(season: str = "2024-25", stat_type: str = "standard"
     return fbref.read_player_season_stats(stat_type=stat_type).reset_index()
 
 
-# TODO(understat): the free `understat` package (async, scrapes understat.com,
-# no key) provides shot-level xG with shot coordinates. That would enable the
-# spatial/shot-quality upgrade described in research/starting_point/README.md.
-# Not wired in here because it needs an asyncio entry point and the same fuzzy
-# name matching as FBref, and the FPL API's own `expected_goals` already covers
-# the aggregate case this pipeline consumes.
+# ---------------------------------------------------------------------------
+# Vaastav understat xG (shot-level, per player per season)
+# ---------------------------------------------------------------------------
+
+def fetch_vaastav_understat(season: str = "2024-25", force: bool = False
+                            ) -> pd.DataFrame:
+    """Season-level understat xG/xA/npxG data from Vaastav's repo.
+
+    Vaastav mirrors understat data in ``data/{season}/understat/understat_plus.csv``
+    (or ``understat.csv`` for older seasons). Returns a DataFrame with columns
+    including ``player``, ``xG``, ``xA``, ``npxG``, ``xGChain``, ``xGBuildup``,
+    ``time`` (minutes played) and ``team``.
+
+    No account or key required. Returns an empty DataFrame if the file is absent
+    for the requested season.
+    """
+    name = f"vaastav_{season}_understat.json"
+    if not force:
+        cached = _cache_read(name, ttl_hours=CACHE_TTL_HOURS * 28)
+        if cached is not None:
+            return pd.read_json(StringIO(cached), orient="split")
+
+    # Vaastav uses different filenames across seasons
+    for fname in ("understat_plus.csv", "understat.csv"):
+        url = f"{VAASTAV_BASE}/{season}/understat/{fname}"
+        try:
+            text = _get(url, expect="text")
+            df = pd.read_csv(StringIO(text))
+            df["season"] = season
+            _cache_write(name, df.to_json(orient="split", date_format="iso"))
+            return df
+        except DataFetchError:
+            continue
+
+    log.info("vaastav understat not available for season %s", season)
+    return pd.DataFrame()
+
+
+def fetch_vaastav_cleaned(season: str = "2024-25", force: bool = False
+                          ) -> pd.DataFrame:
+    """Season-total cleaned player rows from Vaastav (cleaned_players.csv).
+
+    Useful for whole-season statistics and positional priors, especially for
+    seasons without per-gameweek data in the main merged_gw.csv.
+    """
+    name = f"vaastav_{season}_cleaned.json"
+    if not force:
+        cached = _cache_read(name, ttl_hours=CACHE_TTL_HOURS * 28)
+        if cached is not None:
+            return pd.read_json(StringIO(cached), orient="split")
+    try:
+        text = _get(f"{VAASTAV_BASE}/{season}/cleaned_players.csv", expect="text")
+    except DataFetchError as exc:
+        log.warning("vaastav cleaned_players not available for %s: %s", season, exc)
+        return pd.DataFrame()
+    df = pd.read_csv(StringIO(text))
+    df["season"] = season
+    _cache_write(name, df.to_json(orient="split", date_format="iso"))
+    return df
+
+
+def load_understat_history(seasons: tuple[str, ...] = DEFAULT_TRAINING_SEASONS,
+                           force: bool = False) -> pd.DataFrame:
+    """Concatenate Vaastav understat xG data for multiple seasons.
+
+    Returns empty DataFrame if no seasons have understat data. Column ``season``
+    allows groupby per season. ``player`` is the player name as used by understat
+    (not FPL ids -- fuzzy matching needed to join).
+    """
+    frames = []
+    for s in seasons:
+        df = fetch_vaastav_understat(s, force=force)
+        if not df.empty:
+            frames.append(df)
+    if not frames:
+        log.warning("no understat data found for seasons %s", seasons)
+        return pd.DataFrame()
+    return pd.concat(frames, ignore_index=True, sort=False)
+
+
+# ---------------------------------------------------------------------------
+# ESPN news (free, no key, supplementary signal)
+# ---------------------------------------------------------------------------
+
+ESPN_BASE = "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1"
+
+
+def fetch_espn_news(limit: int = 100, force: bool = False) -> list[dict]:
+    """Latest Premier League news from the unofficial ESPN public API.
+
+    Returns a list of article dicts with keys: headline, description, published.
+    Uses the same ``/api/bootstrap-static/`` style: public, unauthenticated.
+
+    The endpoint ``/teams/{id}/injuries`` is documented but returns empty for
+    soccer -- use the FPL ``news`` field on each element for injury status.
+    """
+    name = "espn_news.json"
+    if not force:
+        cached = _cache_read(name, ttl_hours=1)
+        if cached is not None:
+            return cached
+    try:
+        resp = get_session().get(
+            f"{ESPN_BASE}/news",
+            params={"limit": limit},
+            timeout=REQUEST_TIMEOUT,
+        )
+        resp.raise_for_status()
+        articles = []
+        for a in resp.json().get("articles", []):
+            articles.append({
+                "headline": a.get("headline", ""),
+                "description": a.get("description", ""),
+                "published": a.get("published", ""),
+            })
+        _cache_write(name, articles)
+        return articles
+    except Exception as exc:  # noqa: BLE001
+        log.warning("ESPN news fetch failed: %s", exc)
+        return []
+
+
+def fetch_espn_scoreboard(date_str: str | None = None, force: bool = False
+                          ) -> list[dict]:
+    """ESPN Premier League scoreboard for a date (YYYYMMDD) or today.
+
+    Returns a list of match dicts with home team, away team, score and event id.
+    Useful for mapping ESPN event ids to match results for the summary API.
+    """
+    params = {}
+    if date_str:
+        params["dates"] = date_str
+    name = f"espn_scoreboard_{date_str or 'today'}.json"
+    if not force:
+        cached = _cache_read(name, ttl_hours=0.5)
+        if cached is not None:
+            return cached
+    try:
+        resp = get_session().get(
+            f"{ESPN_BASE}/scoreboard",
+            params=params,
+            timeout=REQUEST_TIMEOUT,
+        )
+        resp.raise_for_status()
+        events = []
+        for ev in resp.json().get("events", []):
+            comps = ev.get("competitions", [{}])
+            comp = comps[0] if comps else {}
+            competitors = comp.get("competitors", [])
+            home = next((c for c in competitors if c.get("homeAway") == "home"), {})
+            away = next((c for c in competitors if c.get("homeAway") == "away"), {})
+            events.append({
+                "event_id": ev.get("id"),
+                "date": ev.get("date", ""),
+                "home_team": home.get("team", {}).get("displayName", ""),
+                "away_team": away.get("team", {}).get("displayName", ""),
+                "home_score": home.get("score"),
+                "away_score": away.get("score"),
+                "status": ev.get("status", {}).get("type", {}).get("name", ""),
+            })
+        _cache_write(name, events)
+        return events
+    except Exception as exc:  # noqa: BLE001
+        log.warning("ESPN scoreboard fetch failed: %s", exc)
+        return []
+
 
 # TODO(transfermarkt): preseason arrivals and departures are not in any FPL
 # feed, so a promoted or heavily rebuilt squad looks identical to a stable one.

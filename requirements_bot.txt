@@ -52,3 +52,8 @@ requests>=2.31.0
 # data_collector.fetch_soccerdata_fbref; it is heavy and self-rate-limits, and
 # nothing in the pipeline depends on it.
 # soccerdata>=1.6.0
+
+# --- fuzzy name matching (optional, for ESPN→FPL player matching) ------------
+# Used by news_collector.build_espn_fpl_map for better name matching.
+# The module works without it using token-overlap scoring; install for >5% lift.
+# rapidfuzz>=3.0.0
