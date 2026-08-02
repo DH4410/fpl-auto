@@ -283,6 +283,7 @@ class SeasonBacktester:
                     and CHIP_WILDCARD not in chips_used
                 ):
                     try:
+                        pre_wc_ids = set(squad_ids)  # old squad, before wildcard replaces it
                         res = self.opt.optimize_initial_squad(
                             pool, self.budget + bank, "expected_points"
                         )
@@ -297,8 +298,7 @@ class SeasonBacktester:
                         chip = CHIP_WILDCARD
                         chips_used.add(CHIP_WILDCARD)
                         free_transfers = 1
-                        n_transfers = sum(1 for e in squad_ids
-                                          if e not in set(squad_ids))
+                        n_transfers = sum(1 for e in squad_ids if e not in pre_wc_ids)
                     except Exception as exc:
                         log.warning("GW%d wildcard MIP failed: %s", gw, exc)
 
