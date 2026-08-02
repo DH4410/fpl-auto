@@ -384,7 +384,10 @@ def compare_strategies(
             df = backtester.run(strategy=strat)
             frames.append(df)
         except Exception as exc:
+            import traceback
             log.error("Strategy %r failed: %s", strat, exc)
+            print(f"[backtester] strategy '{strat}' failed: {exc}")
+            traceback.print_exc()
     if not frames:
         return pd.DataFrame()
     return pd.concat(frames, ignore_index=True)
