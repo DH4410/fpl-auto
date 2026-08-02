@@ -984,3 +984,143 @@ def fetch_espn_scoreboard(date_str: str | None = None, force: bool = False
 # to widen uncertainty on rebuilt teams. Until then,
 # feature_engineering.promoted_team_priors handles the promoted-club case with
 # worst-quartile priors.
+
+
+# ---------------------------------------------------------------------------
+# FPL element-summary — per-player history keyed to CURRENT element IDs
+# ---------------------------------------------------------------------------
+# FPL resets element IDs each season (confirmed: Raya=1, Saka=12 in 2026/27,
+# completely different from their 2025-26 IDs). Matching current IDs against
+# Vaastav historical data therefore produces wrong features for every player.
+# The element-summary endpoint returns history_past keyed to the CURRENT
+# element ID, so it is the correct source for inference-time features.
+
+#: Map from element-summary history_past field names to the EWMA column names
+#: the ML models expect. Right-hand names must match feature_engineering output.
+_HISTORY_PAST_TO_EWMA: dict[str, str] = {
+    "expected_goals":                  "ewma_expected_goals",
+    "expected_assists":                "ewma_expected_assists",
+    "expected_goal_involvements":      "ewma_expected_goal_involvements",
+    "expected_goals_conceded":         "ewma_expected_goals_conceded",
+    "goals_scored":                    "ewma_goals_scored",
+    "assists":                         "ewma_assists",
+    "clean_sheets":                    "ewma_clean_sheets",
+    "saves":                           "ewma_saves",
+    "goals_conceded":                  "ewma_goals_conceded",
+    "bonus":                           "ewma_bonus",
+    "bps":                             "ewma_bps",
+    "minutes":                         "ewma_minutes",
+    "total_points":                    "ewma_total_points",
+    "influence":                       "ewma_influence",
+    "creativity":                      "ewma_creativity",
+    "threat":                          "ewma_threat",
+    "ict_index":                       "ewma_ict_index",
+    "clearances_blocks_interceptions": "ewma_clearances_blocks_interceptions",
+    "recoveries":                      "ewma_recoveries",
+    "tackles":                         "ewma_tackles",
+    "defensive_contribution":          "ewma_defensive_contribution",
+}
+
+
+def fetch_element_summary(player_id: int, force: bool = False) -> dict:
+    """Fetch /api/element-summary/{id}/ with 24-hour caching.
+
+    Returns a dict with keys ``history`` (current-season GW rows, empty before
+    the season starts), ``history_past`` (one row per past season with full
+    cumulative stats) and ``fixtures`` (upcoming matches).
+
+    ``history_past`` is indexed by the current element ID, making it the
+    correct source for inference features after a season-wide ID reset.
+    """
+    name = f"element_summary_{int(player_id)}.json"
+    if not force:
+        cached = _cache_read(name, ttl_hours=24)
+        if cached is not None:
+            return json.loads(cached) if isinstance(cached, str) else cached
+    try:
+        data = _get(f"{FPL_BASE}/element-summary/{int(player_id)}/", expect="json")
+    except DataFetchError as exc:
+        log.warning("element-summary %d failed: %s", player_id, exc)
+        return {"history": [], "history_past": [], "fixtures": []}
+    _cache_write(name, json.dumps(data))
+    return data
+
+
+def fetch_element_summaries_bulk(
+    player_ids,
+    force: bool = False,
+    batch_delay: float = 0.05,
+) -> dict:
+    """Fetch element-summary for every player ID in *player_ids*.
+
+    Reads from the 24-hour cache first; only uncached players hit the network.
+    A small *batch_delay* (seconds per 10 requests) avoids spiking the FPL
+    API on a cold run. Returns ``{player_id: summary_dict}``.
+    """
+    results: dict = {}
+    fresh = 0
+    for i, pid in enumerate(player_ids):
+        pid = int(pid)
+        name = f"element_summary_{pid}.json"
+        cached = _cache_read(name, ttl_hours=24) if not force else None
+        if cached is not None:
+            results[pid] = json.loads(cached) if isinstance(cached, str) else cached
+        else:
+            results[pid] = fetch_element_summary(pid, force=force)
+            fresh += 1
+            if batch_delay and fresh % 10 == 0:
+                time.sleep(batch_delay)
+        if (i + 1) % 100 == 0:
+            log.debug("element summaries: %d/%d done", i + 1, len(player_ids))
+    log.info("element summaries: %d total, %d freshly fetched", len(results), fresh)
+    return results
+
+
+def element_summaries_to_features(
+    summaries: dict,
+    recent_seasons: int = 2,
+    recency_weights: tuple = (0.7, 0.3),
+) -> "pd.DataFrame":
+    """Convert element-summary history_past into per-game inference features.
+
+    For each player, takes the most recent *recent_seasons* from history_past,
+    computes per-game averages (stat / starts.clip(1)), and blends them with
+    *recency_weights* (index 0 = most recent season).
+
+    Returns a DataFrame indexed by current element ID with EWMA-named columns
+    (``ewma_expected_goals``, ``ewma_minutes``, etc.) that match what the ML
+    models were trained on, plus ``fpl_pts_per_game`` and ``fpl_starts``.
+    """
+    rows: list[dict] = []
+    for pid, summary in summaries.items():
+        past = summary.get("history_past", [])
+        if not past:
+            continue
+        past_sorted = sorted(past, key=lambda r: r.get("season_name", ""), reverse=True)
+        recent = past_sorted[:recent_seasons]
+        if not recent:
+            continue
+
+        w = list(recency_weights[:len(recent)])
+        w_sum = sum(w)
+        if w_sum == 0:
+            continue
+        w = [x / w_sum for x in w]
+
+        row: dict = {"element": int(pid)}
+        for stat, ewma_col in _HISTORY_PAST_TO_EWMA.items():
+            weighted = 0.0
+            for season_row, weight in zip(recent, w):
+                raw = float(season_row.get(stat) or 0)
+                starts = max(float(season_row.get("starts") or 0), 1.0)
+                weighted += weight * (raw / starts)
+            row[ewma_col] = weighted
+
+        row["fpl_pts_per_game"] = row.get("ewma_total_points", 0.0)
+        row["fpl_starts"] = float(recent[0].get("starts") or 0)
+        row["fpl_season_count"] = len(past)
+        rows.append(row)
+
+    if not rows:
+        return pd.DataFrame()
+    return pd.DataFrame(rows).set_index("element")
