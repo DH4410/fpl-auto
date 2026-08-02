@@ -32,4 +32,5 @@ __all__ = [
     "simulator",
     "optimizer",
     "rl_agent",
+    "news_collector",
 ]
