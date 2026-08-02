@@ -22,16 +22,17 @@ Run multiple strategies to compare total season points:
 from __future__ import annotations
 
 import logging
+import traceback
 from typing import Sequence
 
 import numpy as np
 import pandas as pd
 
 from .fpl_rules import (
-    CHIP_BENCH_BOOST, CHIP_FREE_HIT, CHIP_TRIPLE_CAPTAIN, CHIP_WILDCARD,
-    FREE_TRANSFERS_PER_GW, GKP, DEF, MID, FWD,
-    MAX_BANKED_FT, SQUAD_COMPOSITION, STARTING_XI_SIZE,
-    FPLRules, RULES,
+    CHIP_FREE_HIT, CHIP_WILDCARD,
+    GKP, DEF, MID, FWD,
+    SQUAD_COMPOSITION, STARTING_XI_SIZE,
+    FPLRules,
 )
 from .optimizer import SquadOptimizer
 
@@ -55,17 +56,39 @@ class SeasonBacktester:
         self.rules = FPLRules()
         self.opt = SquadOptimizer()
 
-        # Normalise element_type to int if it arrived as "GKP"/"DEF"/...
+        # ── validate required columns ─────────────────────────────────────
+        required = {"element", "GW", "season", "total_points", "value",
+                    "minutes", "team"}
+        missing = required - set(self.hist.columns)
+        if missing:
+            raise ValueError(
+                f"history_df is missing required columns: {sorted(missing)}\n"
+                f"Available: {sorted(self.hist.columns.tolist())}"
+            )
+
+        # ── normalise element_type ────────────────────────────────────────
         if "element_type" in self.hist.columns:
             self.hist["element_type"] = (
                 self.hist["element_type"]
-                .apply(lambda x: _POS_MAP.get(str(x), x) if not str(x).isdigit() else int(x))
+                .apply(lambda x: _POS_MAP.get(str(x), x)
+                       if not str(x).isdigit() else int(x))
                 .astype(int)
             )
         elif "position" in self.hist.columns:
-            self.hist["element_type"] = self.hist["position"].map(_POS_MAP).fillna(3).astype(int)
+            self.hist["element_type"] = (
+                self.hist["position"].map(_POS_MAP).fillna(MID).astype(int)
+            )
+        else:
+            raise ValueError(
+                "history_df needs 'element_type' (int) or 'position' (GKP/DEF/MID/FWD)"
+            )
 
-        # Encode team names as stable ints (optimizer needs int team IDs)
+        # Drop manager rows (element NaN or position not in standard set)
+        self.hist = self.hist[self.hist["element_type"].isin([GKP, DEF, MID, FWD])]
+        self.hist = self.hist.dropna(subset=["element"])
+        self.hist["element"] = self.hist["element"].astype(int)
+
+        # ── encode team as int for the MIP club-limit constraint ──────────
         if self.hist["team"].dtype == object:
             teams = sorted(self.hist["team"].dropna().unique())
             team_map = {t: i + 1 for i, t in enumerate(teams)}
@@ -73,12 +96,26 @@ class SeasonBacktester:
         else:
             self.hist["team_id"] = self.hist["team"].astype(int)
 
+        # ── display name column ───────────────────────────────────────────
+        for cand in ("web_name", "name", "second_name"):
+            if cand in self.hist.columns:
+                self.hist["_name"] = self.hist[cand]
+                break
+        else:
+            self.hist["_name"] = self.hist["element"].astype(str)
+
+        # ── value must be integer tenths (e.g. 65 = £6.5m) ──────────────
+        self.hist["value"] = pd.to_numeric(self.hist["value"], errors="coerce").fillna(50).astype(int)
+
+        print(f"[backtester] init OK — {len(self.hist):,} rows, "
+              f"seasons: {sorted(self.hist['season'].unique())}")
+
     # ------------------------------------------------------------------
     # Pool building
     # ------------------------------------------------------------------
 
     def _expected_pts(self, before_gw: int) -> pd.Series:
-        """Historical average pts per appearance, using only data before this GW."""
+        """Per-GW average points using only data strictly before this GW."""
         train = self.hist[
             (self.hist["season"] != self.test_season)
             | (self.hist["GW"] < before_gw)
@@ -86,49 +123,45 @@ class SeasonBacktester:
         return train.groupby("element")["total_points"].mean()
 
     def _build_pool(self, before_gw: int) -> pd.DataFrame:
-        """Player pool for GW `before_gw`, with prices and expected points."""
+        """Player pool for GW ``before_gw``, with prices and expected points."""
         exp = self._expected_pts(before_gw)
 
-        # Player metadata from test season: use the earliest available GW row
-        test = self.hist[self.hist["season"] == self.test_season]
+        test = self.hist[self.hist["season"] == self.test_season].copy()
         earliest = (
             test.sort_values("GW")
-            .groupby("element")
+            .groupby("element", as_index=False)
             .first()
-            .reset_index()
         )
-        # For prices: prefer the row just before this GW
+
+        # Use price from the previous GW if available
         if before_gw > 1:
             prev = test[test["GW"] == before_gw - 1]
             if not prev.empty:
-                price_lookup = prev.set_index("element")["value"].astype(int)
-                earliest["value"] = earliest["element"].map(price_lookup).fillna(earliest["value"])
+                price_lu = prev.set_index("element")["value"]
+                earliest["value"] = (
+                    earliest["element"].map(price_lu).fillna(earliest["value"])
+                )
 
-        meta = earliest[
-            ["element", "element_type", "team_id", "value"]
-        ].copy()
-        meta.columns = ["element", "element_type", "team", "now_cost"]
-
-        # Add display name
-        name_col = next((c for c in ("web_name", "name", "second_name") if c in earliest.columns), None)
-        if name_col:
-            meta["web_name"] = earliest[name_col].values
-        else:
-            meta["web_name"] = meta["element"].astype(str)
-
-        meta["expected_points"] = meta["element"].map(exp).fillna(2.0)
-        return meta.reset_index(drop=True)
+        pool = pd.DataFrame({
+            "element":        earliest["element"].astype(int),
+            "element_type":   earliest["element_type"].astype(int),
+            "team":           earliest["team_id"].astype(int),
+            "now_cost":       earliest["value"].astype(int),
+            "web_name":       earliest["_name"].fillna(earliest["element"].astype(str)),
+            "expected_points": earliest["element"].map(exp).fillna(2.0),
+        })
+        return pool.reset_index(drop=True)
 
     # ------------------------------------------------------------------
-    # Scoring
+    # Scoring helpers
     # ------------------------------------------------------------------
 
     def _gw_actuals(self, gw: int) -> tuple[dict, dict]:
-        """(points_by_player, minutes_by_player) from actual Vaastav data."""
+        """Return (points_by_element, minutes_by_element) for a GW."""
         rows = self.hist[
             (self.hist["season"] == self.test_season) & (self.hist["GW"] == gw)
         ]
-        pts = rows.set_index("element")["total_points"].fillna(0).astype(int).to_dict()
+        pts  = rows.set_index("element")["total_points"].fillna(0).astype(int).to_dict()
         mins = rows.set_index("element")["minutes"].fillna(0).astype(int).to_dict()
         return pts, mins
 
@@ -142,13 +175,9 @@ class SeasonBacktester:
         pool: pd.DataFrame,
         bank: float,
     ) -> tuple[pd.DataFrame, float, bool]:
-        """Transfer out the squad's weakest player, in the pool's best replacement.
-
-        Returns (new_squad, new_bank, transfer_made).
-        """
+        """Sell the weakest player, buy the best affordable replacement."""
         pool_idx = pool.set_index("element")
 
-        # Player to sell: lowest expected pts among current squad
         squad = squad_df.copy()
         squad["_exp"] = squad["element"].map(
             pool_idx["expected_points"]
@@ -161,10 +190,11 @@ class SeasonBacktester:
         )
         budget_tenths = out_sell_tenths + int(round(bank * 10))
 
-        # Find replacement: same position, not in squad, within budget, max-3-club
         pos = int(out_row["element_type"])
         owned = set(squad["element"].astype(int)) - {int(out_row["element"])}
-        club_counts = squad[squad["element"] != int(out_row["element"])]["team"].value_counts()
+        club_counts = (
+            squad[squad["element"] != int(out_row["element"])]["team"].value_counts()
+        )
 
         cands = pool[
             (pool["element_type"] == pos)
@@ -192,9 +222,9 @@ class SeasonBacktester:
     # ------------------------------------------------------------------
 
     def _fallback_squad(self, pool: pd.DataFrame) -> pd.DataFrame:
-        """Greedy positional fill when the MIP fails."""
+        """Greedy positional fill — used when the MIP solver fails."""
         pool = pool.sort_values("expected_points", ascending=False)
-        slots = dict(SQUAD_COMPOSITION)  # {GKP:2, DEF:5, MID:5, FWD:3}
+        slots = dict(SQUAD_COMPOSITION)
         used = {k: 0 for k in slots}
         rows = []
         for _, r in pool.iterrows():
@@ -205,28 +235,37 @@ class SeasonBacktester:
             if sum(used.values()) == 15:
                 break
         df = pd.DataFrame(rows)
+        if df.empty:
+            raise RuntimeError("fallback squad is empty — pool has too few players")
         df["purchase_price"] = df["now_cost"].astype(int)
         return df.reset_index(drop=True)
+
+    def _best_xi_from_pool(
+        self, squad_ids: list[int], pool: pd.DataFrame
+    ) -> tuple[list[int], list[int], int, int]:
+        """Pick XI/bench/captain without the MIP solver (pure ranking fallback)."""
+        pool_idx = pool.set_index("element")
+        in_pool = [e for e in squad_ids if e in pool_idx.index]
+        ranked = sorted(in_pool, key=lambda e: -float(pool_idx["expected_points"].get(e, 0)))
+
+        xi, bench = ranked[:STARTING_XI_SIZE], ranked[STARTING_XI_SIZE:]
+        capt = xi[0] if xi else 0
+        vice = xi[1] if len(xi) > 1 else capt
+        return xi, bench, capt, vice
 
     # ------------------------------------------------------------------
     # Core simulation
     # ------------------------------------------------------------------
 
     def run(self, strategy: str = "1ft") -> pd.DataFrame:
-        """Simulate a full season and return per-GW results.
-
-        Parameters
-        ----------
-        strategy : str
-            "passive"     -- never transfer
-            "1ft"         -- 1 greedy free transfer per GW
-            "wildcard20"  -- 1ft for GWs 1-19, wildcard at GW20, 1ft after
-        """
+        """Simulate a full season and return per-GW results."""
         test_gws = sorted(
             self.hist.loc[self.hist["season"] == self.test_season, "GW"].unique()
         )
         if not test_gws:
             raise ValueError(f"No data for test season {self.test_season!r}")
+
+        print(f"[backtester] {strategy}: running {len(test_gws)} GWs ...")
 
         results = []
         squad_df: pd.DataFrame | None = None
@@ -240,130 +279,141 @@ class SeasonBacktester:
         vice_id: int = 0
 
         for gw in test_gws:
-            pool = self._build_pool(before_gw=gw)
-            chip: str | None = None
-            n_transfers = 0
+            try:
+                pool = self._build_pool(before_gw=gw)
+                chip: str | None = None
+                n_transfers = 0
 
-            # ---- decide squad for this GW --------------------------------
-            if squad_df is None:
-                # GW1: initial squad via MIP
-                try:
-                    res = self.opt.optimize_initial_squad(
-                        pool, self.budget, "expected_points"
-                    )
-                    squad_ids = [p["element"] for p in res["squad"]]
-                    squad_df = pool[pool["element"].isin(squad_ids)].copy()
-                    squad_df["purchase_price"] = squad_df["now_cost"].astype(int)
-                    bank = self.budget - squad_df["now_cost"].sum() / 10.0
-                    xi_ids    = [p["element"] for p in res["starting_xi"]]
-                    bench_ids = [p["element"] for p in res["bench"]]
-                    captain_id = res["captain"]
-                    vice_id    = res["vice_captain"]
-                    n_transfers = 0
-                except Exception as exc:
-                    log.warning("GW%d MIP failed (%s); using greedy fallback", gw, exc)
-                    squad_df = self._fallback_squad(pool)
-                    squad_ids = squad_df["element"].tolist()
-                    xi_ids    = squad_ids[:STARTING_XI_SIZE]
-                    bench_ids = squad_ids[STARTING_XI_SIZE:]
-                    best_in_xi = max(xi_ids, key=lambda e: float(
-                        pool.set_index("element")["expected_points"].get(e, 0)))
-                    second = max((e for e in xi_ids if e != best_in_xi), key=lambda e: float(
-                        pool.set_index("element")["expected_points"].get(e, 0)))
-                    captain_id, vice_id = best_in_xi, second
-                    bank = 0.0
-
-            else:
-                squad_ids = squad_df["element"].astype(int).tolist()
-
-                # Wildcard at GW20 if the strategy says so
-                if (
-                    strategy == "wildcard20"
-                    and gw == 20
-                    and CHIP_WILDCARD not in chips_used
-                ):
+                # ── decide squad ──────────────────────────────────────────
+                if squad_df is None:
+                    # GW1: build initial squad via MIP (fallback to greedy)
                     try:
-                        pre_wc_ids = set(squad_ids)  # old squad, before wildcard replaces it
                         res = self.opt.optimize_initial_squad(
-                            pool, self.budget + bank, "expected_points"
+                            pool, self.budget, "expected_points"
                         )
                         squad_ids = [p["element"] for p in res["squad"]]
                         squad_df = pool[pool["element"].isin(squad_ids)].copy()
                         squad_df["purchase_price"] = squad_df["now_cost"].astype(int)
-                        bank = (self.budget + bank) - squad_df["now_cost"].sum() / 10.0
+                        bank = self.budget - squad_df["now_cost"].sum() / 10.0
                         xi_ids    = [p["element"] for p in res["starting_xi"]]
                         bench_ids = [p["element"] for p in res["bench"]]
                         captain_id = res["captain"]
                         vice_id    = res["vice_captain"]
-                        chip = CHIP_WILDCARD
-                        chips_used.add(CHIP_WILDCARD)
-                        free_transfers = 1
-                        n_transfers = sum(1 for e in squad_ids if e not in pre_wc_ids)
                     except Exception as exc:
-                        log.warning("GW%d wildcard MIP failed: %s", gw, exc)
+                        print(f"[backtester] GW{gw} MIP failed ({exc}); using greedy fallback")
+                        squad_df = self._fallback_squad(pool)
+                        squad_ids = squad_df["element"].astype(int).tolist()
+                        xi_ids, bench_ids, captain_id, vice_id = (
+                            self._best_xi_from_pool(squad_ids, pool)
+                        )
+                        bank = max(0.0, self.budget - squad_df["now_cost"].sum() / 10.0)
 
-                elif strategy != "passive":
-                    # One greedy transfer
-                    new_squad, new_bank, made = self._greedy_transfer(
-                        squad_df, pool, bank
-                    )
-                    if made:
-                        squad_df = new_squad
-                        bank = new_bank
-                        n_transfers = 1
+                else:
                     squad_ids = squad_df["element"].astype(int).tolist()
 
-                # Re-optimise XI from the (possibly updated) squad
-                try:
-                    exp_s = pool.set_index("element")["expected_points"]
-                    squad_with_pts = squad_df.copy()
-                    squad_with_pts["expected_points"] = (
-                        squad_with_pts["element"].map(exp_s).fillna(0)
-                    )
-                    res_xi = self.opt.optimize_starting_xi(
-                        squad_with_pts, "expected_points"
-                    )
-                    xi_ids    = [p["element"] for p in res_xi["starting_xi"]]
-                    bench_ids = [p["element"] for p in res_xi["bench"]]
-                    captain_id = res_xi["captain"]
-                    vice_id    = res_xi["vice_captain"]
-                except Exception as exc:
-                    log.warning("GW%d XI opt failed (%s); keeping previous XI", gw, exc)
+                    # Wildcard at GW20
+                    if (
+                        strategy == "wildcard20"
+                        and gw == 20
+                        and CHIP_WILDCARD not in chips_used
+                    ):
+                        try:
+                            pre_wc_ids = set(squad_ids)
+                            res = self.opt.optimize_initial_squad(
+                                pool, self.budget + bank, "expected_points"
+                            )
+                            squad_ids = [p["element"] for p in res["squad"]]
+                            squad_df = pool[pool["element"].isin(squad_ids)].copy()
+                            squad_df["purchase_price"] = squad_df["now_cost"].astype(int)
+                            bank = (self.budget + bank) - squad_df["now_cost"].sum() / 10.0
+                            xi_ids    = [p["element"] for p in res["starting_xi"]]
+                            bench_ids = [p["element"] for p in res["bench"]]
+                            captain_id = res["captain"]
+                            vice_id    = res["vice_captain"]
+                            chip = CHIP_WILDCARD
+                            chips_used.add(CHIP_WILDCARD)
+                            free_transfers = 1
+                            n_transfers = sum(1 for e in squad_ids if e not in pre_wc_ids)
+                        except Exception as exc:
+                            print(f"[backtester] GW{gw} wildcard MIP failed ({exc}); skipping")
 
-            # ---- score actual GW -----------------------------------------
-            points_by_player, played_minutes = self._gw_actuals(gw)
-            pos_map = squad_df.set_index("element")["element_type"].astype(int).to_dict()
+                    elif strategy != "passive":
+                        new_squad, new_bank, made = self._greedy_transfer(
+                            squad_df, pool, bank
+                        )
+                        if made:
+                            squad_df = new_squad
+                            bank = new_bank
+                            n_transfers = 1
+                        squad_ids = squad_df["element"].astype(int).tolist()
 
-            xi_dicts    = [{"element": e, "element_type": pos_map.get(e, MID)} for e in xi_ids]
-            bench_dicts = [{"element": e, "element_type": pos_map.get(e, MID)} for e in bench_ids]
+                    # Re-optimise XI each week
+                    try:
+                        exp_s = pool.set_index("element")["expected_points"]
+                        squad_with_pts = squad_df.copy()
+                        squad_with_pts["expected_points"] = (
+                            squad_with_pts["element"].map(exp_s).fillna(0)
+                        )
+                        res_xi = self.opt.optimize_starting_xi(
+                            squad_with_pts, "expected_points"
+                        )
+                        xi_ids    = [p["element"] for p in res_xi["starting_xi"]]
+                        bench_ids = [p["element"] for p in res_xi["bench"]]
+                        captain_id = res_xi["captain"]
+                        vice_id    = res_xi["vice_captain"]
+                    except Exception as exc:
+                        print(f"[backtester] GW{gw} XI-opt failed ({exc}); using ranking fallback")
+                        xi_ids, bench_ids, captain_id, vice_id = (
+                            self._best_xi_from_pool(squad_ids, pool)
+                        )
 
-            gw_result = self.rules.score_gameweek(
-                xi_dicts, bench_dicts, points_by_player,
-                captain_id, vice_id, played_minutes,
-                chip, n_transfers, free_transfers,
-            )
-            cumulative += gw_result["total"]
+                # ── score actual GW ───────────────────────────────────────
+                points_by_player, played_minutes = self._gw_actuals(gw)
+                pos_map = (
+                    squad_df.set_index("element")["element_type"].astype(int).to_dict()
+                )
 
-            results.append({
-                "gw":            gw,
-                "strategy":      strategy,
-                "pts":           gw_result["total"],
-                "xi_pts":        gw_result["xi_points"],
-                "captain_bonus": gw_result["captain_points"],
-                "hits":          gw_result["hits"],
-                "bench_pts":     gw_result["bench_points"],
-                "chip":          chip,
-                "n_transfers":   n_transfers,
-                "captain_id":    captain_id,
-                "free_transfers":free_transfers,
-                "bank":          round(bank, 1),
-                "cumulative":    cumulative,
-            })
+                xi_dicts    = [{"element": e, "element_type": pos_map.get(e, MID)} for e in xi_ids]
+                bench_dicts = [{"element": e, "element_type": pos_map.get(e, MID)} for e in bench_ids]
 
-            # Roll FT bank: one new FT per week, capped at 5
-            # roll_free_transfers(banked, used) -> min(5, max(0, banked-used) + 1)
-            used_ft = n_transfers if chip not in (CHIP_WILDCARD, CHIP_FREE_HIT) else 0
-            free_transfers = self.rules.roll_free_transfers(free_transfers, used_ft)
+                gw_result = self.rules.score_gameweek(
+                    xi_dicts, bench_dicts, points_by_player,
+                    captain_id, vice_id, played_minutes,
+                    chip, n_transfers, free_transfers,
+                )
+                cumulative += gw_result["total"]
+
+                results.append({
+                    "gw":             gw,
+                    "strategy":       strategy,
+                    "pts":            gw_result["total"],
+                    "xi_pts":         gw_result["xi_points"],
+                    "captain_bonus":  gw_result["captain_points"],
+                    "hits":           gw_result["hits"],
+                    "bench_pts":      gw_result["bench_points"],
+                    "chip":           chip,
+                    "n_transfers":    n_transfers,
+                    "captain_id":     captain_id,
+                    "free_transfers": free_transfers,
+                    "bank":           round(bank, 1),
+                    "cumulative":     cumulative,
+                })
+
+                used_ft = n_transfers if chip not in (CHIP_WILDCARD, CHIP_FREE_HIT) else 0
+                free_transfers = self.rules.roll_free_transfers(free_transfers, used_ft)
+
+            except Exception as exc:
+                print(f"[backtester] GW{gw} strategy={strategy} FAILED: {exc}")
+                traceback.print_exc()
+                # Record 0-point blank for this GW so the season isn't lost
+                results.append({
+                    "gw": gw, "strategy": strategy,
+                    "pts": 0, "xi_pts": 0, "captain_bonus": 0,
+                    "hits": 0, "bench_pts": 0, "chip": None,
+                    "n_transfers": 0, "captain_id": 0,
+                    "free_transfers": free_transfers,
+                    "bank": round(bank, 1), "cumulative": cumulative,
+                })
 
         return pd.DataFrame(results)
 
@@ -379,14 +429,15 @@ def compare_strategies(
     """Run multiple strategies and return a combined per-GW DataFrame."""
     frames = []
     for strat in strategies:
-        log.info("Running strategy: %s", strat)
+        print(f"\n{'='*50}\nStrategy: {strat}\n{'='*50}")
         try:
             df = backtester.run(strategy=strat)
-            frames.append(df)
+            if not df.empty:
+                total = df["pts"].sum()
+                print(f"  → {strat}: {total} total pts over {len(df)} GWs")
+                frames.append(df)
         except Exception as exc:
-            import traceback
-            log.error("Strategy %r failed: %s", strat, exc)
-            print(f"[backtester] strategy '{strat}' failed: {exc}")
+            print(f"[backtester] strategy '{strat}' failed at top level: {exc}")
             traceback.print_exc()
     if not frames:
         return pd.DataFrame()
