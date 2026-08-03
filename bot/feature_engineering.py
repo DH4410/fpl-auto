@@ -528,6 +528,68 @@ def promoted_team_priors(teams_df: pd.DataFrame,
     return out
 
 
+def apply_promoted_team_adjustments(
+    squad_stats: "pd.DataFrame",
+    strength: "pd.DataFrame",
+    *,
+    xg_discount: float = 0.65,
+    minutes_discount: float = 0.92,
+    xg_caps: dict | None = None,
+    shrinkage_denominator: int = 25,
+) -> "pd.DataFrame":
+    """Apply league-quality and sample-size corrections to simulation inputs.
+
+    Two corrections are made:
+
+    1. **Promoted-team discount.** Championship xG translates to roughly 65%
+       in the Premier League. Any team whose ``is_prior`` flag is set in
+       ``strength`` (set by :func:`promoted_team_priors`) is treated as newly
+       promoted and gets discounted ``xg_per90``, ``xa_per90`` and
+       ``expected_minutes``.
+
+    2. **xG per-90 cap.** Hard upper bounds by position prevent one-off data
+       artefacts from dominating the simulation:
+
+       * GKP: 0.05   * DEF: 0.15   * MID: 0.32   * FWD: 0.60
+
+    Returns a copy of ``squad_stats`` with the corrections applied.
+    Log lines explain which teams and how many players were adjusted.
+    """
+    from .fpl_rules import GKP, DEF, MID, FWD
+
+    df = squad_stats.copy()
+
+    # -- 1. Promoted-team discount ----------------------------------------
+    if "is_prior" in strength.columns:
+        promoted_ids = set(strength.index[strength["is_prior"]].tolist())
+    else:
+        promoted_ids = set()
+
+    if promoted_ids:
+        mask = df["team"].isin(promoted_ids)
+        n = int(mask.sum())
+        log.info("promoted-team discount (%.0f%%) applied to %d players "
+                 "(teams %s)", xg_discount * 100, n, sorted(promoted_ids))
+        df.loc[mask, "xg_per90"] *= xg_discount
+        df.loc[mask, "xa_per90"] *= xg_discount
+        df.loc[mask, "expected_minutes"] *= minutes_discount
+
+    # -- 2. Hard xG/90 caps by position ----------------------------------
+    if xg_caps is None:
+        xg_caps = {GKP: 0.05, DEF: 0.15, MID: 0.32, FWD: 0.60}
+
+    for pos, cap in xg_caps.items():
+        pos_mask = df["element_type"] == pos
+        df.loc[pos_mask, "xg_per90"] = df.loc[pos_mask, "xg_per90"].clip(upper=cap)
+
+    # Sanity floor
+    df["xg_per90"] = df["xg_per90"].clip(lower=0.0)
+    df["xa_per90"] = df["xa_per90"].clip(lower=0.0)
+    df["expected_minutes"] = df["expected_minutes"].clip(lower=0.0, upper=90.0)
+
+    return df
+
+
 # ---------------------------------------------------------------------------
 # 5. Position encoding and the combined feature build
 # ---------------------------------------------------------------------------
