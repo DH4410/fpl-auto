@@ -174,6 +174,9 @@ class SquadOptimizer:
         prob += pulp.lpSum(squad) == SQUAD_SIZE
         prob += pulp.lpSum(start) == STARTING_XI_SIZE
         prob += pulp.lpSum(cost[i] * squad[i] for i in range(n)) <= budget_tenths
+        # Maximize budget utilization: require at least 97% spent so solver
+        # doesn't leave money on the table by buying cheap players.
+        prob += pulp.lpSum(cost[i] * squad[i] for i in range(n)) >= int(budget_tenths * 0.97)
 
         for i in range(n):
             prob += start[i] <= squad[i]      # cannot start a player you do not own
