@@ -1139,3 +1139,102 @@ def element_summaries_to_features(
     if not rows:
         return pd.DataFrame()
     return pd.DataFrame(rows).set_index("element")
+
+
+# ---------------------------------------------------------------------------
+# api-football.com  (paid, 100 req/day — cache aggressively)
+# ---------------------------------------------------------------------------
+
+API_FOOTBALL_BASE = "https://v3.football.api-sports.io"
+_PL_LEAGUE_ID = 39
+
+
+def fetch_api_football_injuries(api_key: str, season: int = 2026,
+                                league: int = _PL_LEAGUE_ID,
+                                force: bool = False) -> pd.DataFrame:
+    """Fetch current PL injury/suspension list from api-football.com.
+
+    Uses exactly **1 API request** and caches the response for 24 hours.
+    Returns a DataFrame with columns: player_name, player_id, team_name,
+    injury_type, reason, fixture_date.
+
+    The user has 100 requests/day on the free plan — do not call this in a
+    loop. Call once and reuse the cached result.
+
+    Match injuries to FPL players via fuzzy name matching (use
+    :func:`match_api_football_players` after calling this).
+    """
+    cache_name = f"api_football_injuries_{league}_{season}.json"
+    if not force:
+        cached = _cache_read(cache_name, ttl_hours=24)
+        if cached is not None:
+            rows = cached if isinstance(cached, list) else []
+            return pd.DataFrame(rows)
+
+    url = f"{API_FOOTBALL_BASE}/injuries"
+    params = {"league": league, "season": season}
+    headers = {
+        "x-rapidapi-key": api_key,
+        "x-rapidapi-host": "v3.football.api-sports.io",
+    }
+    try:
+        resp = get_session().get(url, headers=headers, params=params,
+                                 timeout=REQUEST_TIMEOUT)
+        resp.raise_for_status()
+        data = resp.json()
+    except Exception as exc:
+        log.warning("api-football injuries fetch failed: %s", exc)
+        return pd.DataFrame()
+
+    rows = []
+    for item in data.get("response", []):
+        player = item.get("player", {})
+        team = item.get("team", {})
+        fixture = item.get("fixture", {})
+        rows.append({
+            "player_name":    player.get("name", ""),
+            "player_id":      player.get("id"),
+            "team_name":      team.get("name", ""),
+            "team_id":        team.get("id"),
+            "injury_type":    item.get("injury", {}).get("type", ""),
+            "reason":         item.get("injury", {}).get("reason", ""),
+            "fixture_date":   fixture.get("date", ""),
+        })
+
+    _cache_write(cache_name, rows)
+    log.info("api-football: %d injuries fetched for league=%d season=%d",
+             len(rows), league, season)
+    return pd.DataFrame(rows)
+
+
+def match_api_football_players(injuries_df: pd.DataFrame,
+                               players_df: pd.DataFrame) -> pd.DataFrame:
+    """Map api-football player names to FPL element IDs.
+
+    Matches on lowercase containment: the api-football name must contain the
+    FPL ``web_name`` or vice versa. Returns ``injuries_df`` with an added
+    ``fpl_element`` column (NaN when unmatched).
+
+    Only one call to this function is needed — it is purely local matching,
+    no network requests.
+    """
+    if injuries_df.empty or players_df.empty:
+        return injuries_df.copy()
+
+    fpl_names = players_df.set_index("id")[
+        "web_name" if "web_name" in players_df.columns else "second_name"
+    ].str.lower().to_dict()
+
+    matched = []
+    for _, row in injuries_df.iterrows():
+        api_name = str(row.get("player_name", "")).lower()
+        hit = None
+        for fpl_id, fpl_name in fpl_names.items():
+            if fpl_name in api_name or api_name in fpl_name:
+                hit = fpl_id
+                break
+        matched.append(hit)
+
+    out = injuries_df.copy()
+    out["fpl_element"] = matched
+    return out
