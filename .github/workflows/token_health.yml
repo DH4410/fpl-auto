@@ -1,0 +1,84 @@
+name: Refresh Token Health Check
+
+on:
+  schedule:
+    # Run on the 1st of every month at 10:00 UTC
+    - cron: '0 10 1 * *'
+  workflow_dispatch:
+
+jobs:
+  check-token:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Check refresh token validity
+        id: token_check
+        env:
+          FPL_REFRESH_TOKEN: ${{ secrets.FPL_REFRESH_TOKEN }}
+        run: |
+          python - <<'EOF'
+          import os, sys, requests
+
+          token = os.environ.get("FPL_REFRESH_TOKEN", "").strip()
+          if not token:
+              print("::error::FPL_REFRESH_TOKEN secret is not set.")
+              sys.exit(1)
+
+          resp = requests.post(
+              "https://account.premierleague.com/as/token",
+              data={
+                  "grant_type": "refresh_token",
+                  "refresh_token": token,
+                  "client_id": "bfcbaf69-aade-4c1b-8f00-c1cb8a193030",
+              },
+              timeout=15,
+          )
+
+          if resp.status_code == 400:
+              print("::error::FPL refresh token has EXPIRED. Open the local app, log in with Google, visit /api/refresh-token, and update the FPL_REFRESH_TOKEN secret.")
+              sys.exit(1)
+
+          resp.raise_for_status()
+          print("Refresh token is valid.")
+          EOF
+
+      - name: Open issue if token is expiring/expired
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: 'fpl-token-expired',
+              state: 'open',
+            });
+            if (issues.length === 0) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: '⚠️ FPL Refresh Token Expired — Action Required',
+                labels: ['fpl-token-expired'],
+                body: `## Your FPL automation token has expired\n\n` +
+                  `The monthly token health check failed. Your automated transfers will not work until you renew it.\n\n` +
+                  `### How to fix (2 minutes)\n\n` +
+                  `1. Open a terminal in the \`fpl-auto\` folder and run \`python app.py\`\n` +
+                  `2. Open **http://localhost:5000** in your browser\n` +
+                  `3. Click **"Sign in with Google / Apple"** and log in\n` +
+                  `4. Visit **http://localhost:5000/api/refresh-token** and copy the token\n` +
+                  `5. Go to **GitHub → Settings → Secrets → Actions**\n` +
+                  `6. Update the **\`FPL_REFRESH_TOKEN\`** secret with the new value\n\n` +
+                  `Once updated, close this issue and re-run the Post-GW workflow to confirm it works.`,
+              });
+            }

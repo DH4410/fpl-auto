@@ -150,9 +150,8 @@ def login(email: str, password: str) -> tuple[str, requests.Session]:
         },
     )
     resp.raise_for_status()
-    access_token = resp.json()["access_token"]
-
-    return access_token, session
+    token_data = resp.json()
+    return token_data["access_token"], session
 
 
 def login_browser() -> tuple[str, requests.Session]:
@@ -257,4 +256,40 @@ def login_browser() -> tuple[str, requests.Session]:
         },
     )
     resp.raise_for_status()
-    return resp.json()["access_token"], session
+    token_data = resp.json()
+    # Store refresh token globally so callers can retrieve it
+    _last_refresh_token["value"] = token_data.get("refresh_token", "")
+    return token_data["access_token"], session
+
+
+# Holds the refresh token from the most recent login_browser() call.
+# app.py reads this immediately after login to persist it.
+_last_refresh_token: dict = {"value": ""}
+
+
+def refresh_login(refresh_token: str) -> tuple[str, requests.Session]:
+    """
+    Exchange a saved refresh token for a new access token.
+    Works for Google-linked FPL accounts — no browser or password needed.
+    Refresh tokens typically last 30-60 days before needing a new browser login.
+    """
+    session = requests.Session()
+    resp = session.post(
+        f"{_AUTH_BASE}/as/token",
+        data={
+            "grant_type": "refresh_token",
+            "refresh_token": refresh_token,
+            "client_id": _CLIENT_ID,
+        },
+    )
+    if resp.status_code == 400:
+        raise RuntimeError(
+            "Refresh token expired or invalid. Log in via the web app again "
+            "to get a new one, then update the FPL_REFRESH_TOKEN secret."
+        )
+    resp.raise_for_status()
+    token_data = resp.json()
+    # Update stored refresh token if a new one was issued
+    if token_data.get("refresh_token"):
+        _last_refresh_token["value"] = token_data["refresh_token"]
+    return token_data["access_token"], session

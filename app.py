@@ -28,9 +28,19 @@ _browser_login = {"status": "idle", "error": None}
 SESSION_FILE = os.path.join(os.path.dirname(__file__), ".session.json")
 
 
-def _save_session():
+def _save_session(refresh_token: str = None):
+    data = {"token": _state["token"], "entry_id": _state["entry_id"]}
+    if refresh_token:
+        data["refresh_token"] = refresh_token
+    elif os.path.exists(SESSION_FILE):
+        try:
+            existing = json.load(open(SESSION_FILE))
+            if existing.get("refresh_token"):
+                data["refresh_token"] = existing["refresh_token"]
+        except Exception:
+            pass
     with open(SESSION_FILE, "w") as f:
-        json.dump({"token": _state["token"], "entry_id": _state["entry_id"]}, f)
+        json.dump(data, f)
 
 
 def _load_session():
@@ -43,6 +53,15 @@ def _load_session():
         _state["entry_id"] = data.get("entry_id")
     except Exception:
         pass
+
+
+def _get_saved_refresh_token() -> str:
+    if not os.path.exists(SESSION_FILE):
+        return ""
+    try:
+        return json.load(open(SESSION_FILE)).get("refresh_token", "")
+    except Exception:
+        return ""
 
 
 def _enrich_picks(picks: list, bootstrap: dict) -> list:
@@ -356,7 +375,9 @@ def browser_login_start():
             user = fpl_api.me(session, token)
             _state["entry_id"] = user["player"].get("entry")
             _state["bootstrap"] = fpl_api.bootstrap(session)
-            _save_session()
+            # Save refresh token so GitHub Actions can use it without a browser
+            refresh_token = fpl_auth._last_refresh_token.get("value", "")
+            _save_session(refresh_token=refresh_token)
             _browser_login["status"] = "done"
         except Exception as e:
             _browser_login["status"] = "error"
@@ -390,6 +411,17 @@ def get_entry():
         return jsonify(info)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/refresh-token")
+def get_refresh_token():
+    """Returns the saved refresh token so you can add it to GitHub Secrets."""
+    token = _get_saved_refresh_token()
+    if not token:
+        return jsonify({
+            "error": "No refresh token saved yet. Log in via 'Sign in with Google / Apple' first."
+        }), 404
+    return jsonify({"refresh_token": token})
 
 
 @app.route("/api/predict")

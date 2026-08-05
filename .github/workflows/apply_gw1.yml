@@ -36,8 +36,9 @@ jobs:
 
       - name: Apply initial GW1 squad
         env:
-          FPL_EMAIL:    ${{ secrets.FPL_EMAIL }}
-          FPL_PASSWORD: ${{ secrets.FPL_PASSWORD }}
+          FPL_REFRESH_TOKEN: ${{ secrets.FPL_REFRESH_TOKEN }}
+          FPL_EMAIL:         ${{ secrets.FPL_EMAIL }}
+          FPL_PASSWORD:      ${{ secrets.FPL_PASSWORD }}
         run: |
           DRY_ARG="--dry-run"
           if [ "${{ github.event.inputs.dry_run }}" = "false" ]; then

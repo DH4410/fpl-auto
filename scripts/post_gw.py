@@ -69,15 +69,21 @@ def main() -> None:
     args = parser.parse_args()
 
     # --- Authenticate ---
-    email = os.environ.get("FPL_EMAIL", DEFAULT_EMAIL)
-    password = os.environ.get("FPL_PASSWORD") or input("FPL password: ").strip()
-    if not password:
-        print("ERROR: FPL_PASSWORD is required.")
-        sys.exit(1)
-
-    print(f"Logging in as {email}...")
-    token, session = fpl_auth.login(email, password)
-    print("Login OK.")
+    # Try refresh token first (works for Google-linked accounts, no password needed).
+    refresh_token = os.environ.get("FPL_REFRESH_TOKEN", "").strip()
+    if refresh_token:
+        print("Logging in via refresh token...")
+        token, session = fpl_auth.refresh_login(refresh_token)
+        print("Login OK (refresh token).")
+    else:
+        email = os.environ.get("FPL_EMAIL", DEFAULT_EMAIL)
+        password = os.environ.get("FPL_PASSWORD") or input("FPL password: ").strip()
+        if not password:
+            print("ERROR: Set FPL_REFRESH_TOKEN or FPL_PASSWORD.")
+            sys.exit(1)
+        print(f"Logging in as {email}...")
+        token, session = fpl_auth.login(email, password)
+        print("Login OK.")
 
     _pause(4, 9)  # human pause after login
 
