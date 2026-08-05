@@ -310,7 +310,11 @@ class PlayerAttributor:
         p_60 = np.clip(np.asarray(p60, dtype=float)[:, None], 0.0, 1.0)
 
         # P(appears at all): consistent with expected minutes given the regimes.
-        p_play = np.clip(exp_min / 25.0, 0.0, 1.0)
+        # Divisor 50 = approximate average minutes when playing (mix of full games
+        # and cameo appearances). Using 25 made any player with exp_min ≥ 25
+        # guaranteed to appear every game, which inflates rotation/squad players
+        # (e.g. McBurnie at 31 min was treated as always playing).
+        p_play = np.clip(exp_min / 50.0, 0.0, 1.0)
         p_play = np.maximum(p_play, p_60)
         p_cameo = np.clip(p_play - p_60, 0.0, 1.0)
 
