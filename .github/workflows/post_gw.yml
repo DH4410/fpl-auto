@@ -1,36 +1,48 @@
-name: Post-GW Analysis
+name: Post-GW Analysis & Auto-Transfer
 
 on:
   schedule:
-    # Monday 09:00 UTC — covers Sunday/Monday fixtures
+    # Monday 09:00 UTC — covers Sunday fixtures
     - cron: '0 9 * * 1'
-    # Wednesday 09:00 UTC — covers Tuesday/Wednesday midweek fixtures
+    # Wednesday 09:00 UTC — covers Tuesday/Wednesday midweek
     - cron: '0 9 * * 3'
-    # Thursday 09:00 UTC — covers Wednesday double-headers
+    # Thursday 09:00 UTC — double-header cover
     - cron: '0 9 * * 4'
   workflow_dispatch:
     inputs:
       gw:
-        description: 'Gameweek number to analyze (leave blank for last finished)'
+        description: 'GW number to analyze (blank = auto-detect)'
         required: false
+      dry_run:
+        description: 'Dry run only (no transfers submitted)?'
+        type: boolean
+        default: false
 
 jobs:
-  analyze:
+  post-gw:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: Set up Python 3.11
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: pip install requests pandas numpy
+        run: |
+          pip install requests pandas numpy xgboost lightgbm pulp scipy tabulate python-dotenv
 
-      - name: Run post-GW public analysis
+      # Random startup delay (3–18 min) so runs don't look machine-regular
+      - name: Human-like startup delay
+        run: |
+          DELAY=$(python -c "import random; print(random.randint(180, 1080))")
+          echo "Waiting ${DELAY}s before starting..."
+          sleep $DELAY
+
+      - name: Run public GW analysis (no auth required)
         env:
           FPL_ENTRY_ID: ${{ secrets.FPL_ENTRY_ID }}
         run: |
@@ -38,13 +50,37 @@ jobs:
           if [ -n "${{ github.event.inputs.gw }}" ]; then
             GW_ARG="--gw ${{ github.event.inputs.gw }}"
           fi
-          python scripts/analyze_gw_public.py $GW_ARG
+          python scripts/analyze_gw_public.py $GW_ARG || echo "Public analysis skipped (no finished GW yet)"
+
+      # Another pause between analysis and transfer submission
+      - name: Pause before transfer
+        run: |
+          DELAY=$(python -c "import random; print(random.randint(120, 480))")
+          echo "Waiting ${DELAY}s before transfer step..."
+          sleep $DELAY
+
+      - name: Submit recommended transfer
+        env:
+          FPL_EMAIL:    ${{ secrets.FPL_EMAIL }}
+          FPL_PASSWORD: ${{ secrets.FPL_PASSWORD }}
+        run: |
+          GW_ARG=""
+          if [ -n "${{ github.event.inputs.gw }}" ]; then
+            GW_ARG="--gw ${{ github.event.inputs.gw }}"
+          fi
+
+          DRY_ARG=""
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
+            DRY_ARG="--dry-run"
+          fi
+
+          python scripts/post_gw.py $GW_ARG --auto $DRY_ARG || echo "Transfer step failed — check logs. Auth may need browser login."
 
       - name: Commit updated reports
         run: |
           git config user.name  "FPL Auto Bot"
           git config user.email "bot@fplauto.local"
           git add reports/
-          git diff --cached --quiet && echo "No changes to commit" || \
-            git commit -m "auto: post-GW reflection update [skip ci]"
+          git diff --cached --quiet && echo "No report changes" || \
+            git commit -m "auto: GW analysis + transfer report [skip ci]"
           git push

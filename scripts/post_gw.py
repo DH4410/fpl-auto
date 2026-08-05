@@ -2,51 +2,70 @@
 """
 Post-GW transfer analysis and optional auto-apply.
 
-Run after each gameweek finishes to get the bot's transfer recommendation
-and optionally submit it.
-
 Usage:
-    python scripts/post_gw.py --gw <N> [--dry-run] [--auto]
+    python scripts/post_gw.py [--gw N] [--dry-run] [--auto]
 
-    --gw N       Gameweek to plan FOR (the NEXT gameweek to be played)
-    --dry-run    Fetch and plan, but do not submit any transfers
+    --gw N       Gameweek to plan FOR (next GW to be played).
+                 If omitted, auto-detects from bootstrap (last finished GW + 1).
+    --dry-run    Fetch and plan, but do not submit any transfers.
     --auto       Apply recommended transfer without confirmation prompt
-                 (skips hits — only applies if 0 hits needed)
+                 (only if 0 hits required; skips if hits needed).
 
-Credentials:
-    FPL_EMAIL     env var (default: dimahuang10@gmail.com)
-    FPL_PASSWORD  env var (required)
+Credentials (read from environment / .env):
+    FPL_EMAIL     defaults to Dimahuang8@gmail.com
+    FPL_PASSWORD  required
 
 What it does:
-    1. Logs in and fetches your current squad + bank from the FPL API.
+    1. Logs in, fetches your squad + bank.
     2. Runs the 6-GW rolling MILP planner on fresh data.
     3. Writes a report to reports/season_plan_latest.{md,csv}.
-    4. Prints the recommended transfer (or "Roll" if none needed).
-    5. With --auto and 0 hits, submits the transfer automatically.
+    4. Prints the recommended transfer.
+    5. With --auto and 0 hits, submits the transfer with human-like delays.
 """
 import argparse
 import os
+import random
 import sys
+import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from dotenv import load_dotenv
+load_dotenv()
 
 import fpl_auth
 import fpl_api
 from bot.updater import SeasonUpdater
 
-DEFAULT_EMAIL = "dimahuang10@gmail.com"
+DEFAULT_EMAIL = "Dimahuang8@gmail.com"
 REPORTS_DIR = Path(__file__).resolve().parents[1] / "reports"
+
+
+def _pause(lo: float, hi: float) -> None:
+    """Random sleep to mimic human timing between API calls."""
+    t = random.uniform(lo, hi)
+    print(f"  [waiting {t:.1f}s]")
+    time.sleep(t)
+
+
+def _detect_next_gw(session) -> int:
+    """Find the next GW to plan for (last finished + 1) from bootstrap."""
+    bs = fpl_api.bootstrap(session)
+    finished = [e for e in bs["events"] if e.get("finished")]
+    if not finished:
+        return 1
+    return finished[-1]["id"] + 1
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Post-GW FPL analysis.")
-    parser.add_argument("--gw", type=int, required=True,
-                        help="Next gameweek to plan for (e.g. 2 after GW1 finishes)")
+    parser.add_argument("--gw", type=int,
+                        help="Next GW to plan for. Omit to auto-detect from bootstrap.")
     parser.add_argument("--dry-run", action="store_true",
-                        help="Fetch and plan, but do not call any write endpoints")
+                        help="Fetch and plan, skip API writes.")
     parser.add_argument("--auto", action="store_true",
-                        help="Auto-apply the 1st recommended transfer (only if 0 hits)")
+                        help="Auto-apply recommended transfer (0-hit only).")
     args = parser.parse_args()
 
     # --- Authenticate ---
@@ -58,22 +77,38 @@ def main() -> None:
 
     print(f"Logging in as {email}...")
     token, session = fpl_auth.login(email, password)
+    print("Login OK.")
+
+    _pause(4, 9)  # human pause after login
+
+    # --- Resolve GW ---
+    if args.gw:
+        next_gw = args.gw
+    else:
+        print("Auto-detecting current gameweek...")
+        next_gw = _detect_next_gw(session)
+        print(f"  → planning for GW{next_gw}")
+
+    _pause(2, 5)
 
     me = fpl_api.me(session, token)
     entry_id = me["player"]["entry"]
-    print(f"Entry ID: {entry_id} | Planning for GW{args.gw}")
+    print(f"Entry ID: {entry_id} | Planning for GW{next_gw}")
 
-    # --- Fetch current squad ---
+    _pause(2, 4)
+
     my_team = fpl_api.my_team(session, token, entry_id)
     entry_info = fpl_api.entry_info(session, token, entry_id)
 
     picks = my_team.get("picks", [])
     bank_tenths = entry_info.get("last_deadline_bank", 0)
-    print(f"Current squad: {len(picks)} players | Bank: £{bank_tenths / 10:.1f}m")
+    print(f"Squad: {len(picks)} players | Bank: £{bank_tenths / 10:.1f}m")
+
+    _pause(3, 7)
 
     # --- Run planner ---
     updater = SeasonUpdater(horizon=6, verbose=True)
-    plan = updater.run(current_gw=args.gw, my_team=my_team, entry_info=entry_info)
+    plan = updater.run(current_gw=next_gw, my_team=my_team, entry_info=entry_info)
 
     # --- Print report ---
     paths = plan.get("report_paths", {})
@@ -100,18 +135,17 @@ def main() -> None:
 
     t_in  = transfers_in[0]
     t_out = transfers_out[0]
-    print(f"\nRecommended transfer: OUT {t_out['name']} (£{t_out['selling_price']}m) "
-          f"-> IN {t_in['name']} (£{t_in['cost']}m)")
+    print(f"\nRecommended: OUT {t_out['name']} (£{t_out.get('selling_price', '?')}m) "
+          f"→ IN {t_in['name']} (£{t_in.get('cost', '?')}m)")
     if hits > 0:
-        print(f"WARNING: {hits} hit(s) required (-{plan['hit_cost']} pts). Careful before applying.")
+        print(f"WARNING: {hits} hit(s) required (-{plan.get('hit_cost', hits*4)} pts).")
 
     if args.dry_run:
         print("[DRY RUN] Skipping transfer submission.")
         return
 
-    # --- Confirm and apply ---
     if hits > 0 and args.auto:
-        print("Auto mode: skipping hit transfer (review manually).")
+        print("Auto mode: skipping hit transfer — review manually.")
         return
 
     if not args.auto:
@@ -120,13 +154,15 @@ def main() -> None:
             print("Cancelled.")
             return
 
+    _pause(6, 14)  # longer human pause before submitting
+
     sell_price = int(t_out.get("selling_price", 0) * 10)
     buy_price  = int(t_in.get("cost", 0) * 10)
 
     print("Submitting transfer...")
     result = fpl_api.transfer(
         session, token, entry_id,
-        event=args.gw,
+        event=next_gw,
         transfers=[{
             "element_in":     t_in["element"],
             "element_out":    t_out["element"],
@@ -136,6 +172,8 @@ def main() -> None:
         chip=chip,
     )
     print(f"Transfer accepted: {result}")
+
+    _pause(3, 6)  # pause after write
 
     if chip:
         print(f"Chip activated: {chip}")

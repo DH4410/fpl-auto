@@ -1,0 +1,46 @@
+name: Apply GW1 Initial Squad
+
+# Run this ONCE before GW1 deadline to set your initial 15-player squad.
+# Trigger manually from GitHub → Actions → "Apply GW1 Initial Squad" → Run workflow.
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run (print squad, skip API submission)?'
+        type: boolean
+        default: true   # default to safe — flip to false when ready to commit
+
+jobs:
+  apply-squad:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests python-dotenv
+
+      # Startup delay so it doesn't look instant
+      - name: Human-like startup delay
+        run: |
+          DELAY=$(python -c "import random; print(random.randint(60, 300))")
+          echo "Waiting ${DELAY}s..."
+          sleep $DELAY
+
+      - name: Apply initial GW1 squad
+        env:
+          FPL_EMAIL:    ${{ secrets.FPL_EMAIL }}
+          FPL_PASSWORD: ${{ secrets.FPL_PASSWORD }}
+        run: |
+          DRY_ARG="--dry-run"
+          if [ "${{ github.event.inputs.dry_run }}" = "false" ]; then
+            DRY_ARG="--auto"
+          fi
+          python scripts/apply_team.py $DRY_ARG
