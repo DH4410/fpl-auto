@@ -20,9 +20,13 @@ simulator          Module 3 — bivariate-Poisson match simulation and player
 optimizer          Module 4 — MIP squad/XI/transfer/chip optimisation via PuLP
                    with a HiGHS-or-CBC solver (never Gurobi).
 rl_agent           Module 5 — PPO chip-timing agent over a Gymnasium env.
+season_forecaster  Module 6 — lightweight per-player, per-GW xPts projection.
+season_planner     Module 7 — rolling-horizon MILP season planner.
+chip_planner       Module 8 — marginal chip value and timing.
+updater            Module 9 — post-matchday automated pipeline orchestrator.
 """
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 __all__ = [
     "fpl_rules",
@@ -33,4 +37,8 @@ __all__ = [
     "optimizer",
     "rl_agent",
     "news_collector",
+    "season_forecaster",
+    "season_planner",
+    "chip_planner",
+    "updater",
 ]

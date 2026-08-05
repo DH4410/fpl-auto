@@ -88,3 +88,65 @@ def entry_info(session: requests.Session, token: str, entry_id: int) -> dict:
     r = session.get(f"{_BASE}/entry/{entry_id}/", headers=_headers(token))
     r.raise_for_status()
     return r.json()
+
+
+# ---------------------------------------------------------------------------
+# Public read endpoints (no auth required)
+# ---------------------------------------------------------------------------
+
+def fixtures(session: requests.Session, event: int = None) -> list:
+    """All 380 fixtures, or only those in a specific gameweek."""
+    url = f"{_BASE}/fixtures/"
+    params = {"event": event} if event is not None else {}
+    r = session.get(url, params=params)
+    r.raise_for_status()
+    return r.json()
+
+
+def elements(session: requests.Session) -> list:
+    """All player records (same as bootstrap['elements'], lighter refresh)."""
+    r = session.get(f"{_BASE}/elements/")
+    r.raise_for_status()
+    return r.json()
+
+
+def events(session: requests.Session) -> list:
+    """All 38 gameweek metadata records."""
+    r = session.get(f"{_BASE}/events/")
+    r.raise_for_status()
+    return r.json()
+
+
+def player_summary(session: requests.Session, player_id: int) -> dict:
+    """Upcoming fixtures, current-season history, and past-season totals for one player."""
+    r = session.get(f"{_BASE}/element-summary/{player_id}/")
+    r.raise_for_status()
+    return r.json()
+
+
+def event_live(session: requests.Session, event: int) -> dict:
+    """Live player stats/points for a gameweek. Empty list before kickoff."""
+    r = session.get(f"{_BASE}/event/{event}/live/")
+    r.raise_for_status()
+    return r.json()
+
+
+def entry_history(session: requests.Session, entry_id: int) -> dict:
+    """Public transfer history for a manager entry."""
+    r = session.get(f"{_BASE}/entry/{entry_id}/history/")
+    r.raise_for_status()
+    return r.json()
+
+
+def entry_transfers(session: requests.Session, entry_id: int) -> list:
+    """All transfers made by a manager entry (public)."""
+    r = session.get(f"{_BASE}/entry/{entry_id}/transfers/")
+    r.raise_for_status()
+    return r.json()
+
+
+def set_piece_notes(session: requests.Session) -> dict:
+    """Penalty, corner, and free-kick taker notes per team."""
+    r = session.get(f"{_BASE}/team/set-piece-notes/")
+    r.raise_for_status()
+    return r.json()
