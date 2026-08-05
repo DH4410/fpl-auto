@@ -1,0 +1,22 @@
+{
+  "generated_date": "2026-08-05",
+  "seasons": ["2020-21", "2021-22", "2022-23", "2023-24", "2024-25", "2025-26"],
+  "total_rows": 163404,
+  "feature_cols": [
+    "was_home", "ewma_minutes", "ewma_goals_scored", "ewma_assists",
+    "ewma_bonus", "ewma_bps", "ewma_clean_sheets",
+    "ewma_expected_goals", "ewma_expected_assists", "ewma_expected_goal_involvements",
+    "ewma_expected_goals_conceded", "ewma_saves", "ewma_goals_conceded",
+    "ewma_total_points", "ewma_influence", "ewma_creativity", "ewma_threat",
+    "ewma_ict_index", "ewma_clearances_blocks_interceptions", "ewma_recoveries",
+    "ewma_tackles", "ewma_defensive_contribution",
+    "ewma_p60_rate", "ewma_played_any", "ewma_start_rate", "games_played"
+  ],
+  "n_features": 26,
+  "attack_training_rows": 38333,
+  "bonus_training_rows": 163404,
+  "inference_players": 527,
+  "players_with_history_past": 464,
+  "players_promoted_prior": 89,
+  "notes": "DC columns (clearances_blocks_interceptions, recoveries, tackles, defensive_contribution) present only in 2025-26. Attack model trained on rows with minutes>=20. Inference uses 40% model + 60% ep_next blend for GW1."
+}
