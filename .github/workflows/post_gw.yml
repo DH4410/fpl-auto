@@ -60,6 +60,7 @@ jobs:
           sleep $DELAY
 
       - name: Submit recommended transfer
+        id: transfer_step
         env:
           FPL_REFRESH_TOKEN: ${{ secrets.FPL_REFRESH_TOKEN }}
           FPL_EMAIL:         ${{ secrets.FPL_EMAIL }}
@@ -76,6 +77,15 @@ jobs:
           fi
 
           python scripts/post_gw.py $GW_ARG --auto $DRY_ARG || echo "Transfer step failed — check logs. Auth may need browser login."
+
+      - name: Rotate refresh token in GitHub Secrets
+        if: steps.transfer_step.outputs.new_refresh_token != ''
+        env:
+          GH_TOKEN: ${{ secrets.GH_SECRETS_PAT }}
+        run: |
+          echo "${{ steps.transfer_step.outputs.new_refresh_token }}" | \
+            gh secret set FPL_REFRESH_TOKEN --repo ${{ github.repository }}
+          echo "Refresh token rotated successfully."
 
       - name: Commit updated reports
         run: |

@@ -35,6 +35,7 @@ jobs:
           sleep $DELAY
 
       - name: Apply initial GW1 squad
+        id: apply_step
         env:
           FPL_REFRESH_TOKEN: ${{ secrets.FPL_REFRESH_TOKEN }}
           FPL_EMAIL:         ${{ secrets.FPL_EMAIL }}
@@ -45,3 +46,12 @@ jobs:
             DRY_ARG="--auto"
           fi
           python scripts/apply_team.py $DRY_ARG
+
+      - name: Rotate refresh token in GitHub Secrets
+        if: steps.apply_step.outputs.new_refresh_token != ''
+        env:
+          GH_TOKEN: ${{ secrets.GH_SECRETS_PAT }}
+        run: |
+          echo "${{ steps.apply_step.outputs.new_refresh_token }}" | \
+            gh secret set FPL_REFRESH_TOKEN --repo ${{ github.repository }}
+          echo "Refresh token rotated successfully."

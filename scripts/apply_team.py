@@ -30,6 +30,17 @@ load_dotenv()
 import fpl_auth
 import fpl_api
 
+
+def _emit_new_refresh_token() -> None:
+    """Write the rotated refresh token to GITHUB_OUTPUT so the workflow can
+    update the FPL_REFRESH_TOKEN secret automatically (prevents single-use expiry)."""
+    new_rt = fpl_auth._last_refresh_token.get("value", "")
+    github_output = os.environ.get("GITHUB_OUTPUT", "")
+    if new_rt and github_output:
+        with open(github_output, "a") as f:
+            f.write(f"new_refresh_token={new_rt}\n")
+        print(f"  [new refresh token written to GITHUB_OUTPUT for secret rotation]")
+
 SQUAD_FILE = Path(__file__).resolve().parents[1] / "research" / "gw1_squad_2026.json"
 DEFAULT_EMAIL = "dimahuang10@gmail.com"
 
@@ -72,6 +83,10 @@ def apply_squad(squad: dict, dry_run: bool) -> None:
         print(f"Logging in as {email}...")
         token, session = fpl_auth.login(email, password)
         print("Login OK.")
+
+    # Write the new (rotated) refresh token to GitHub Actions output so the
+    # workflow can update the FPL_REFRESH_TOKEN secret automatically.
+    _emit_new_refresh_token()
 
     # Human-like pause after login
     t = random.uniform(4, 9)

@@ -49,6 +49,17 @@ def _pause(lo: float, hi: float) -> None:
     time.sleep(t)
 
 
+def _emit_new_refresh_token() -> None:
+    """Write the rotated refresh token to GITHUB_OUTPUT so the workflow can
+    update the FPL_REFRESH_TOKEN secret automatically (prevents single-use expiry)."""
+    new_rt = fpl_auth._last_refresh_token.get("value", "")
+    github_output = os.environ.get("GITHUB_OUTPUT", "")
+    if new_rt and github_output:
+        with open(github_output, "a") as f:
+            f.write(f"new_refresh_token={new_rt}\n")
+        print(f"  [new refresh token written to GITHUB_OUTPUT for secret rotation]")
+
+
 def _detect_next_gw(session) -> int:
     """Find the next GW to plan for (last finished + 1) from bootstrap."""
     bs = fpl_api.bootstrap(session)
@@ -85,6 +96,7 @@ def main() -> None:
         token, session = fpl_auth.login(email, password)
         print("Login OK.")
 
+    _emit_new_refresh_token()
     _pause(4, 9)  # human pause after login
 
     # --- Resolve GW ---
