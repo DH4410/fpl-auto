@@ -392,6 +392,130 @@ def get_entry():
         return jsonify({"error": str(e)}), 500
 
 
+@app.route("/api/predict")
+def get_predict():
+    squad_file = os.path.join(os.path.dirname(__file__), "research", "gw1_squad_2026.json")
+    if not os.path.exists(squad_file):
+        return jsonify({"error": "No prediction data available yet"}), 404
+    with open(squad_file, encoding="utf-8") as f:
+        squad = json.load(f)
+    return jsonify({
+        "gw": squad.get("gameweek"),
+        "season": squad.get("season"),
+        "captain": squad.get("captain_name"),
+        "vice_captain": squad.get("vice_captain_name"),
+        "squad_cost": squad.get("squad_cost_gpm"),
+        "expected_xi_pts": squad.get("expected_xi_pts"),
+        "squad": squad.get("squad_detail", []),
+    })
+
+
+@app.route("/api/analysis")
+def get_analysis():
+    base = os.path.dirname(__file__)
+    docs = []
+    candidates = [
+        ("Season Plan (Latest)", os.path.join(base, "reports", "season_plan_latest.md")),
+        ("GW Reflection (Latest)", os.path.join(base, "reports", "reflect_latest.md")),
+        ("GW1 2026/27 Research Report", os.path.join(base, "research", "gw1_final_2026.md")),
+    ]
+    for title, path in candidates:
+        if os.path.exists(path):
+            with open(path, encoding="utf-8") as f:
+                docs.append({"title": title, "content": f.read()})
+    return jsonify(docs)
+
+
+@app.route("/api/reflect")
+def get_reflect():
+    import requests as req
+
+    entry_id = _state.get("entry_id")
+    if not entry_id:
+        return jsonify({"error": "Not logged in"}), 401
+
+    gw = request.args.get("gw", type=int)
+    if not gw:
+        bs = _state.get("bootstrap")
+        if not bs:
+            session = _state.get("session")
+            if not session:
+                session = req.Session()
+            try:
+                bs = fpl_api.bootstrap(session)
+            except Exception:
+                bs = {}
+        finished = [e for e in bs.get("events", []) if e.get("finished")]
+        if not finished:
+            return jsonify({"error": "No gameweeks have finished yet"}), 404
+        gw = finished[-1]["id"]
+
+    try:
+        live_r = req.get(
+            f"https://fantasy.premierleague.com/api/event/{gw}/live/",
+            timeout=15, headers={"User-Agent": "fpl-auto"},
+        )
+        live_r.raise_for_status()
+        picks_r = req.get(
+            f"https://fantasy.premierleague.com/api/entry/{entry_id}/event/{gw}/picks/",
+            timeout=15, headers={"User-Agent": "fpl-auto"},
+        )
+        picks_r.raise_for_status()
+    except Exception as e:
+        return jsonify({"error": f"FPL API error: {e}"}), 502
+
+    live_data = live_r.json()
+    picks_data = picks_r.json()
+
+    bs = _state.get("bootstrap") or {}
+    players_by_id = {p["id"]: p for p in bs.get("elements", [])}
+    live_by_id = {e["id"]: e.get("stats", {}) for e in live_data.get("elements", [])}
+
+    predicted_by_element = {}
+    squad_file = os.path.join(os.path.dirname(__file__), "research", "gw1_squad_2026.json")
+    if os.path.exists(squad_file):
+        with open(squad_file, encoding="utf-8") as f:
+            sq = json.load(f)
+        for p in sq.get("squad_detail", []):
+            predicted_by_element[p["element"]] = p.get("blended_xpts")
+
+    results = []
+    for pick in picks_data.get("picks", []):
+        el_id = pick["element"]
+        p_data = players_by_id.get(el_id, {})
+        stats = live_by_id.get(el_id, {})
+        actual_pts = stats.get("total_points", 0)
+        mult = pick.get("multiplier", 1)
+        predicted = predicted_by_element.get(el_id)
+        results.append({
+            "element": el_id,
+            "name": p_data.get("web_name", str(el_id)),
+            "position": pick.get("position", 0),
+            "is_captain": pick.get("is_captain", False),
+            "is_vice_captain": pick.get("is_vice_captain", False),
+            "multiplier": mult,
+            "actual_pts": actual_pts,
+            "total_pts": actual_pts * mult,
+            "predicted_xpts": round(predicted, 2) if predicted is not None else None,
+            "diff": round(actual_pts - predicted, 2) if predicted is not None else None,
+            "minutes": stats.get("minutes", 0),
+            "goals": stats.get("goals_scored", 0),
+            "assists": stats.get("assists", 0),
+            "clean_sheet": bool(stats.get("clean_sheets", 0)),
+            "bonus": stats.get("bonus", 0),
+        })
+
+    entry_history = picks_data.get("entry_history", {})
+    xi_results = [r for r in results if r["position"] <= 11]
+    return jsonify({
+        "gw": gw,
+        "total_actual": entry_history.get("points", 0),
+        "total_predicted": round(sum(r["predicted_xpts"] or 0 for r in xi_results), 1),
+        "active_chip": picks_data.get("active_chip"),
+        "players": results,
+    })
+
+
 if __name__ == "__main__":
     _load_session()
     print("FPL Auto running at http://localhost:5000")

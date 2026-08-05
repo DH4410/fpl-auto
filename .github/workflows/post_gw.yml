@@ -1,0 +1,50 @@
+name: Post-GW Analysis
+
+on:
+  schedule:
+    # Monday 09:00 UTC — covers Sunday/Monday fixtures
+    - cron: '0 9 * * 1'
+    # Wednesday 09:00 UTC — covers Tuesday/Wednesday midweek fixtures
+    - cron: '0 9 * * 3'
+    # Thursday 09:00 UTC — covers Wednesday double-headers
+    - cron: '0 9 * * 4'
+  workflow_dispatch:
+    inputs:
+      gw:
+        description: 'Gameweek number to analyze (leave blank for last finished)'
+        required: false
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests pandas numpy
+
+      - name: Run post-GW public analysis
+        env:
+          FPL_ENTRY_ID: ${{ secrets.FPL_ENTRY_ID }}
+        run: |
+          GW_ARG=""
+          if [ -n "${{ github.event.inputs.gw }}" ]; then
+            GW_ARG="--gw ${{ github.event.inputs.gw }}"
+          fi
+          python scripts/analyze_gw_public.py $GW_ARG
+
+      - name: Commit updated reports
+        run: |
+          git config user.name  "FPL Auto Bot"
+          git config user.email "bot@fplauto.local"
+          git add reports/
+          git diff --cached --quiet && echo "No changes to commit" || \
+            git commit -m "auto: post-GW reflection update [skip ci]"
+          git push

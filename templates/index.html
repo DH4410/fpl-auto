@@ -621,6 +621,64 @@
     .chip-card .ch-name  { font-size: .82rem; font-weight: 700; color: var(--text); }
     .chip-card .ch-status{ font-size: .72rem; color: var(--muted); margin-top: .15rem; }
     .chip-card.available .ch-status { color: var(--primary-d); }
+
+    /* ── AI tabs ───────────────────────────────────────────────── */
+    .section-card {
+      background: var(--card);
+      border: 1.5px solid var(--border);
+      border-radius: var(--r);
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+    .section-card h2 { font-size: 1rem; font-weight: 700; margin-bottom: .75rem; }
+    .predict-meta { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: .85rem; }
+
+    .ai-table { width: 100%; border-collapse: collapse; font-size: .83rem; }
+    .ai-table th {
+      text-align: left; padding: .4rem .6rem;
+      font-size: .72rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .06em; color: var(--muted); border-bottom: 2px solid var(--border);
+    }
+    .ai-table td { padding: .4rem .6rem; border-bottom: 1px solid var(--border); }
+    .ai-table tr:last-child td { border-bottom: none; }
+    .ai-table tr.bench td { opacity: .6; }
+    .pts-pos { color: var(--primary-d); font-weight: 700; }
+    .pts-neg { color: var(--danger); font-weight: 700; }
+    .cap-badge {
+      background: var(--warn); color: #fff; border-radius: 3px;
+      font-size: .65rem; padding: 1px 4px; font-weight: 700;
+    }
+
+    /* Markdown rendered */
+    .md-wrap { font-size: .87rem; line-height: 1.65; color: var(--text); overflow-x: auto; }
+    .md-wrap h1 { font-size: 1.25rem; font-weight: 800; margin: 1.2rem 0 .6rem; color: var(--primary-d); }
+    .md-wrap h2 { font-size: 1rem; font-weight: 700; margin: 1rem 0 .45rem; border-bottom: 1px solid var(--border); padding-bottom: .2rem; }
+    .md-wrap h3 { font-size: .92rem; font-weight: 700; margin: .8rem 0 .35rem; }
+    .md-wrap p { margin-bottom: .6rem; }
+    .md-wrap code { background: #f0fdf4; border: 1px solid var(--border); border-radius: 4px; padding: .1em .35em; font-family: monospace; font-size: .82em; }
+    .md-wrap pre { background: #f0fdf4; border: 1px solid var(--border); border-radius: 7px; padding: .75rem 1rem; overflow-x: auto; margin-bottom: .75rem; }
+    .md-wrap pre code { background: none; border: none; padding: 0; font-size: .85em; }
+    .md-wrap table { border-collapse: collapse; margin-bottom: .75rem; font-size: .82rem; }
+    .md-wrap table th, .md-wrap table td { padding: .3rem .55rem; border: 1px solid var(--border); }
+    .md-wrap table th { background: var(--bg); font-weight: 700; }
+    .md-wrap hr { border: none; border-top: 1.5px solid var(--border); margin: 1rem 0; }
+    .md-wrap ul, .md-wrap ol { margin: 0 0 .6rem 1.5rem; }
+    .md-wrap li { margin-bottom: .2rem; }
+
+    .doc-card { background: var(--card); border: 1.5px solid var(--border); border-radius: var(--r); margin-bottom: 1rem; overflow: hidden; }
+    .doc-card-header {
+      padding: .75rem 1rem; background: var(--bg); border-bottom: 1px solid var(--border);
+      font-weight: 700; cursor: pointer;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .doc-card-body { padding: 1rem; display: none; }
+    .doc-card-body.open { display: block; }
+
+    .reflect-summary {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: .6rem; margin-bottom: 1rem;
+    }
   </style>
 </head>
 <body>
@@ -665,6 +723,9 @@
   <div class="tab-nav">
     <button class="tab-btn active" onclick="switchTab('team')">My Team</button>
     <button class="tab-btn" onclick="switchTab('setup')">Season Info</button>
+    <button class="tab-btn" onclick="switchTab('predict')">Predictions</button>
+    <button class="tab-btn" onclick="switchTab('analysis')">Analysis</button>
+    <button class="tab-btn" onclick="switchTab('postgw')">Post-GW</button>
   </div>
 
   <main>
@@ -683,6 +744,29 @@
     <!-- Season Info -->
     <div id="tab-setup" style="display:none">
       <div id="season-content"><div class="empty">Loading season info…</div></div>
+    </div>
+
+    <!-- Predictions -->
+    <div id="tab-predict" style="display:none">
+      <div id="predict-content"><div class="empty">Loading predictions…</div></div>
+    </div>
+
+    <!-- Analysis -->
+    <div id="tab-analysis" style="display:none">
+      <div id="analysis-content"><div class="empty">Loading analysis…</div></div>
+    </div>
+
+    <!-- Post-GW Reflection -->
+    <div id="tab-postgw" style="display:none">
+      <div style="display:flex;gap:.5rem;align-items:center;margin-bottom:.85rem;flex-wrap:wrap;">
+        <input type="number" id="reflect-gw" placeholder="GW number (blank = last finished)"
+               min="1" max="38"
+               style="flex:1;min-width:180px;max-width:280px;padding:.55rem .75rem;border:1.5px solid var(--border);border-radius:8px;font-size:.9rem;background:#f9fefb;outline:none;" />
+        <button class="btn btn-green btn-sm" onclick="loadPostGW(true)">↻ Analyze</button>
+      </div>
+      <div id="postgw-content">
+        <div class="empty">Click Analyze to load the last finished GW, or enter a GW number first.</div>
+      </div>
     </div>
   </main>
 </div>
@@ -1149,11 +1233,217 @@ async function confirmTransfer() {
 }
 
 // ── Tab switch ─────────────────────────────────────────────────
+const TAB_NAMES = ['team', 'setup', 'predict', 'analysis', 'postgw'];
 function switchTab(name) {
   document.querySelectorAll('.tab-btn').forEach((b, i) =>
-    b.classList.toggle('active', ['team', 'setup'][i] === name));
-  document.getElementById('tab-team').style.display  = name === 'team'  ? '' : 'none';
-  document.getElementById('tab-setup').style.display = name === 'setup' ? '' : 'none';
+    b.classList.toggle('active', TAB_NAMES[i] === name));
+  TAB_NAMES.forEach(t =>
+    document.getElementById('tab-' + t).style.display = t === name ? '' : 'none');
+  if (name === 'predict'  && !_predictLoaded)  loadPredict();
+  if (name === 'analysis' && !_analysisLoaded) loadAnalysis();
+}
+
+// ── Predictions tab ────────────────────────────────────────────
+let _predictLoaded = false;
+
+async function loadPredict() {
+  _predictLoaded = true;
+  const el = document.getElementById('predict-content');
+  el.innerHTML = '<div class="empty">Loading…</div>';
+  try {
+    const d = await api('/api/predict');
+    const posColor = { GKP: 'var(--gkp)', DEF: 'var(--def)', MID: 'var(--mid)', FWD: 'var(--fwd)' };
+    const rowHTML = p => {
+      const isCap   = p.role && p.role.includes('Captain');
+      const isVC    = p.role && p.role.includes('Vice');
+      const isBench = p.role && !p.role.includes('XI');
+      const badge   = isCap ? '<span class="cap-badge">C</span> '
+                    : isVC  ? '<span class="cap-badge" style="background:#a78bfa">V</span> ' : '';
+      const dot = `<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${posColor[p.pos]||'#ccc'};margin-right:5px;vertical-align:middle"></span>`;
+      const model = p.model_xpts != null ? p.model_xpts.toFixed(2) : '—';
+      const ep    = p.ep_next    != null ? p.ep_next.toFixed(2)    : '—';
+      return `<tr class="${isBench ? 'bench' : ''}">
+        <td>${dot}${p.pos}</td>
+        <td>${badge}${p.name}</td>
+        <td>${p.team}</td>
+        <td>£${(p.price||0).toFixed(1)}m</td>
+        <td><strong>${(p.blended_xpts||0).toFixed(2)}</strong></td>
+        <td style="color:var(--muted)">${model}</td>
+        <td style="color:var(--muted)">${ep}</td>
+      </tr>`;
+    };
+    el.innerHTML = `
+      <div class="section-card">
+        <h2>GW${d.gw} ${d.season} — Predicted Points</h2>
+        <div class="predict-meta">
+          <div class="info-chip"><span class="label">Captain </span><strong>${d.captain}</strong></div>
+          <div class="info-chip"><span class="label">Vice </span><strong>${d.vice_captain}</strong></div>
+          <div class="info-chip"><span class="label">Squad Cost </span>£${(d.squad_cost||0).toFixed(1)}m</div>
+          <div class="info-chip"><span class="label">Expected XI pts </span><strong>${(d.expected_xi_pts||0).toFixed(1)}</strong></div>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="ai-table">
+            <thead><tr><th>Pos</th><th>Player</th><th>Team</th><th>Price</th><th>xPts (blend)</th><th>Model</th><th>FPL ep</th></tr></thead>
+            <tbody>${d.squad.map(rowHTML).join('')}</tbody>
+          </table>
+        </div>
+        <p style="font-size:.74rem;color:var(--muted);margin-top:.5rem">
+          Blend = 40% ML model + 60% FPL ep_next. Bench rows are dimmed.
+          Model trained on 163k rows (6 seasons), α=0.25 EWMA features.
+        </p>
+      </div>`;
+  } catch (e) {
+    el.innerHTML = `<div class="empty">${e.message}</div>`;
+    _predictLoaded = false;
+  }
+}
+
+// ── Analysis tab ───────────────────────────────────────────────
+let _analysisLoaded = false;
+
+function renderMarkdown(raw) {
+  // escape HTML first, then apply markdown rules
+  let s = raw.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  // fenced code blocks
+  s = s.replace(/```[^\n]*\n([\s\S]*?)```/g, (_,c) => `<pre><code>${c.trimEnd()}</code></pre>`);
+  // headings
+  s = s.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+  s = s.replace(/^## (.+)$/gm,  '<h2>$1</h2>');
+  s = s.replace(/^# (.+)$/gm,   '<h1>$1</h1>');
+  // hr
+  s = s.replace(/^---$/gm, '<hr>');
+  // bold, italic, inline code
+  s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  s = s.replace(/\*([^*\n]+)\*/g, '<em>$1</em>');
+  s = s.replace(/`([^`]+)`/g, '<code>$1</code>');
+  // tables — match header | sep | rows block
+  s = s.replace(/^(\|.+\|)\n\|[-| :]+\|\n((?:\|.+\|\n?)+)/gm, (_, hdr, body) => {
+    const th = hdr.split('|').slice(1,-1).map(c => `<th>${c.trim()}</th>`).join('');
+    const rows = body.trim().split('\n').map(l => {
+      const tds = l.split('|').slice(1,-1).map(c => `<td>${c.trim()}</td>`).join('');
+      return `<tr>${tds}</tr>`;
+    }).join('');
+    return `<table><thead><tr>${th}</tr></thead><tbody>${rows}</tbody></table>`;
+  });
+  // lists
+  s = s.replace(/^- (.+)$/gm, '<li>$1</li>');
+  s = s.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
+  // paragraphs
+  s = s.split(/\n{2,}/).map(block => {
+    block = block.trim();
+    if (!block) return '';
+    if (/^<(h[1-6]|ul|ol|li|table|pre|hr)/.test(block)) return block;
+    return `<p>${block.replace(/\n/g,' ')}</p>`;
+  }).join('\n');
+  return s;
+}
+
+async function loadAnalysis() {
+  _analysisLoaded = true;
+  const el = document.getElementById('analysis-content');
+  el.innerHTML = '<div class="empty">Loading…</div>';
+  try {
+    const docs = await api('/api/analysis');
+    if (!docs.length) {
+      el.innerHTML = '<div class="empty">No analysis reports available yet. Run the season planner to generate one.</div>';
+      return;
+    }
+    el.innerHTML = docs.map((doc, i) => `
+      <div class="doc-card">
+        <div class="doc-card-header" onclick="toggleDoc(${i})">
+          <span>${doc.title}</span>
+          <span id="doc-tog-${i}">${i === 0 ? '▲' : '▼'}</span>
+        </div>
+        <div class="doc-card-body ${i === 0 ? 'open' : ''}" id="doc-body-${i}">
+          <div class="md-wrap">${renderMarkdown(doc.content)}</div>
+        </div>
+      </div>`).join('');
+  } catch (e) {
+    el.innerHTML = `<div class="empty">${e.message}</div>`;
+    _analysisLoaded = false;
+  }
+}
+
+function toggleDoc(i) {
+  const body = document.getElementById('doc-body-' + i);
+  const tog  = document.getElementById('doc-tog-' + i);
+  const open = body.classList.toggle('open');
+  tog.textContent = open ? '▲' : '▼';
+}
+
+// ── Post-GW tab ────────────────────────────────────────────────
+let _postgwLoaded = false;
+
+async function loadPostGW(force) {
+  if (_postgwLoaded && !force) return;
+  _postgwLoaded = true;
+  const el = document.getElementById('postgw-content');
+  el.innerHTML = '<div class="empty">Loading…</div>';
+  const gwVal = (document.getElementById('reflect-gw').value || '').trim();
+  const url = '/api/reflect' + (gwVal ? `?gw=${gwVal}` : '');
+  try {
+    const d = await api(url);
+    const diff = d.total_actual - d.total_predicted;
+    const diffFmt = (diff >= 0 ? '+' : '') + diff.toFixed(1);
+    const diffCls = diff >= 0 ? 'pts-pos' : 'pts-neg';
+
+    const starters = d.players.filter(p => p.position <= 11).sort((a,b) => a.position - b.position);
+    const bench    = d.players.filter(p => p.position > 11 ).sort((a,b) => a.position - b.position);
+
+    const playerRow = p => {
+      const dc = p.diff === null ? '' : p.diff >= 0 ? 'pts-pos' : 'pts-neg';
+      const dt = p.diff === null ? '—' : (p.diff >= 0 ? '+' : '') + p.diff.toFixed(1);
+      const pred = p.predicted_xpts !== null ? p.predicted_xpts : '—';
+      const cap  = p.is_captain     ? '<span class="cap-badge">C</span> ' : '';
+      const vc   = p.is_vice_captain && !p.is_captain ? '<span class="cap-badge" style="background:#a78bfa">V</span> ' : '';
+      const mult = p.multiplier > 1 ? ` ×${p.multiplier}` : '';
+      const stats = [
+        p.minutes + 'm',
+        p.goals   ? '⚽' + p.goals   : '',
+        p.assists ? '🅰' + p.assists : '',
+        p.clean_sheet ? '🔒' : '',
+        p.bonus   ? '+' + p.bonus + 'b' : '',
+      ].filter(Boolean).join(' ');
+      return `<tr class="${p.position > 11 ? 'bench' : ''}">
+        <td>${cap}${vc}${p.name}${mult}</td>
+        <td><strong>${p.total_pts}</strong></td>
+        <td>${pred}</td>
+        <td class="${dc}">${dt}</td>
+        <td style="color:var(--muted);font-size:.78rem">${stats}</td>
+      </tr>`;
+    };
+
+    const chipNote = d.active_chip
+      ? `<div class="info-chip"><span class="label">Chip </span>${d.active_chip}</div>` : '';
+
+    el.innerHTML = `
+      <div class="section-card">
+        <h2>GW${d.gw} Reflection</h2>
+        <div class="reflect-summary">
+          <div class="season-card"><div class="s-label">Actual Points</div><div class="s-val">${d.total_actual}</div></div>
+          <div class="season-card"><div class="s-label">Predicted</div><div class="s-val">${d.total_predicted}</div></div>
+          <div class="season-card"><div class="s-label">Difference</div><div class="s-val ${diffCls}">${diffFmt}</div></div>
+          ${d.active_chip ? `<div class="season-card"><div class="s-label">Chip</div><div class="s-val" style="font-size:.9rem">${d.active_chip}</div></div>` : ''}
+        </div>
+        <div style="overflow-x:auto">
+          <table class="ai-table">
+            <thead><tr><th>Player</th><th>Pts</th><th>xPts</th><th>Diff</th><th>Stats</th></tr></thead>
+            <tbody>
+              ${starters.map(playerRow).join('')}
+              <tr><td colspan="5" style="font-size:.72rem;color:var(--muted);padding:.3rem .6rem;background:var(--bg)">— Bench —</td></tr>
+              ${bench.map(playerRow).join('')}
+            </tbody>
+          </table>
+        </div>
+        <p style="font-size:.74rem;color:var(--muted);margin-top:.5rem">
+          Predicted = pre-GW blended xPts (available for GW1 squad only).
+          Bench players don't count toward predicted total.
+        </p>
+      </div>`;
+  } catch (e) {
+    el.innerHTML = `<div class="empty">${e.message}</div>`;
+    _postgwLoaded = false;
+  }
 }
 
 // ── Auto-restore session ───────────────────────────────────────
