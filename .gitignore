@@ -10,3 +10,10 @@ venv/
 dist/
 .DS_Store
 bot/cache/
+
+# Local data warehouse (too large for git — 38MB DuckDB file)
+data/warehouse.duckdb
+data/parquet/raw/
+data/staging/
+# Keep gitkeep and metadata
+!data/.gitkeep

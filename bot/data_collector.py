@@ -1238,3 +1238,81 @@ def match_api_football_players(injuries_df: pd.DataFrame,
     out = injuries_df.copy()
     out["fpl_element"] = matched
     return out
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Section 8 — Local DuckDB warehouse (optional, 38 MB, not in git)
+# ─────────────────────────────────────────────────────────────────────────────
+
+_WAREHOUSE_PATH = Path(__file__).resolve().parent.parent / "data" / "warehouse.duckdb"
+
+
+def warehouse_available() -> bool:
+    """Return True if the local DuckDB warehouse file exists."""
+    return _WAREHOUSE_PATH.exists()
+
+
+def load_warehouse_snapshots() -> "pd.DataFrame":
+    """Load current-season player snapshots from the local DuckDB warehouse.
+
+    Returns a DataFrame with one row per player, columns matching the FPL
+    bootstrap-static payload (web_name, position, cost_tenths, ownership_percent,
+    ep_next, availability_status, chance_of_playing, plus all per-90 stats).
+
+    Falls back gracefully: returns an empty DataFrame if the warehouse file
+    does not exist, so callers can treat this as an optional enrichment.
+
+    The warehouse is NOT in git (38 MB). To create it, extract the data.zip
+    from the project root into fpl-auto/data/.
+    """
+    if not warehouse_available():
+        return pd.DataFrame()
+
+    try:
+        import duckdb, json  # noqa: E401
+    except ImportError:
+        return pd.DataFrame()
+
+    con = duckdb.connect(str(_WAREHOUSE_PATH), read_only=True)
+    raw = con.execute(
+        "SELECT player_id, position, cost_tenths, ownership_percent, "
+        "availability_status, chance_of_playing, payload "
+        "FROM fpl_player_snapshots WHERE gameweek IS NULL"
+    ).df()
+    con.close()
+
+    if raw.empty:
+        return pd.DataFrame()
+
+    parsed = raw["payload"].apply(json.loads)
+    snap = pd.json_normalize(parsed.tolist())
+    snap["player_id"] = raw["player_id"].astype(int).values
+    snap["position"] = raw["position"].values
+    snap["cost_tenths"] = raw["cost_tenths"].values
+    snap["ownership_percent"] = raw["ownership_percent"].values
+    snap["availability_status"] = raw["availability_status"].values
+    snap["chance_of_playing"] = raw["chance_of_playing"].values
+    return snap
+
+
+def load_warehouse_fixtures() -> "pd.DataFrame":
+    """Load 2026/27 fixture schedule from the local DuckDB warehouse.
+
+    Returns a DataFrame with columns: fixture_id, gameweek, home_team_id,
+    away_team_id, kickoff_time, status. Empty if warehouse not available.
+    """
+    if not warehouse_available():
+        return pd.DataFrame()
+
+    try:
+        import duckdb  # noqa: F401
+    except ImportError:
+        return pd.DataFrame()
+
+    con = duckdb.connect(str(_WAREHOUSE_PATH), read_only=True)
+    df = con.execute(
+        "SELECT fixture_id, gameweek, home_team_id, away_team_id, "
+        "kickoff_time, status FROM fixtures WHERE season = '2026-27' ORDER BY gameweek, kickoff_time"
+    ).df()
+    con.close()
+    return df
