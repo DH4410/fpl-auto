@@ -257,8 +257,14 @@ def login_browser() -> tuple[str, requests.Session]:
     )
     resp.raise_for_status()
     token_data = resp.json()
-    # Store refresh token globally so callers can retrieve it
+    # Store full token response and session cookies for GitHub Actions use
     _last_refresh_token["value"] = token_data.get("refresh_token", "")
+    _last_refresh_token["all_fields"] = list(token_data.keys())
+    # Save session cookies as a fallback (works even if no refresh_token issued)
+    _last_refresh_token["cookies"] = {
+        name: morsel.value
+        for name, morsel in session.cookies.items()
+    }
     return token_data["access_token"], session
 
 

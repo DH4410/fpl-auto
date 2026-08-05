@@ -717,6 +717,8 @@
       <span class="stat-chip" id="bank-chip" style="display:none"></span>
       <span class="stat-chip" id="ft-chip" style="display:none"></span>
       <span class="stat-chip" id="user-chip"></span>
+      <button class="btn btn-white btn-sm" id="renew-btn" onclick="renewToken()"
+              title="Re-run Google login to capture a fresh automation token">🔑 Renew token</button>
     </div>
   </header>
 
@@ -909,6 +911,31 @@ function onLoggedIn(name) {
   document.getElementById('app').style.display = 'block';
   document.getElementById('user-chip').textContent = name || 'Signed in';
   init();
+}
+
+async function renewToken() {
+  setBtn('renew-btn', '<span class="spin"></span>', true);
+  toast('Opening browser — sign in with Google to capture a fresh automation token…', '');
+  try {
+    await api('/api/login/browser/renew', { method: 'POST' });
+    // Poll using the same browser-login poll endpoint
+    const poll = async () => {
+      const r = await api('/api/login/browser/poll');
+      if (r.status === 'done' || r.status === 'idle') {
+        toast('Token renewed! Copy it from /api/refresh-token', 'ok');
+        setBtn('renew-btn', '🔑 Renew token', false);
+      } else if (r.status === 'error') {
+        toast('Renewal failed: ' + (r.error || 'unknown'), 'err');
+        setBtn('renew-btn', '🔑 Renew token', false);
+      } else {
+        setTimeout(poll, 1000);
+      }
+    };
+    setTimeout(poll, 1000);
+  } catch (e) {
+    toast(e.message, 'err');
+    setBtn('renew-btn', '🔑 Renew token', false);
+  }
 }
 
 // ── Init ───────────────────────────────────────────────────────

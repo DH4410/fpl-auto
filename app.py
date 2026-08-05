@@ -28,17 +28,22 @@ _browser_login = {"status": "idle", "error": None}
 SESSION_FILE = os.path.join(os.path.dirname(__file__), ".session.json")
 
 
-def _save_session(refresh_token: str = None):
+def _save_session(refresh_token: str = None, cookies: dict = None):
     data = {"token": _state["token"], "entry_id": _state["entry_id"]}
-    if refresh_token:
-        data["refresh_token"] = refresh_token
-    elif os.path.exists(SESSION_FILE):
+    # Preserve existing saved fields if not overwriting
+    if os.path.exists(SESSION_FILE):
         try:
             existing = json.load(open(SESSION_FILE))
-            if existing.get("refresh_token"):
+            if existing.get("refresh_token") and not refresh_token:
                 data["refresh_token"] = existing["refresh_token"]
+            if existing.get("session_cookies") and not cookies:
+                data["session_cookies"] = existing["session_cookies"]
         except Exception:
             pass
+    if refresh_token:
+        data["refresh_token"] = refresh_token
+    if cookies:
+        data["session_cookies"] = cookies
     with open(SESSION_FILE, "w") as f:
         json.dump(data, f)
 
@@ -359,31 +364,42 @@ def do_picks():
         return jsonify({"error": str(e)}), 500
 
 
-@app.route("/api/login/browser", methods=["POST"])
-def browser_login_start():
-    """Kicks off a background thread that opens a Chromium browser for login."""
-    if _browser_login["status"] == "pending":
-        return jsonify({"status": "pending"})
-
-    def run():
-        _browser_login["status"] = "pending"
-        _browser_login["error"] = None
-        try:
-            token, session = fpl_auth.login_browser()
+def _run_browser_login(update_session: bool = True):
+    """Shared logic for browser login and token renewal."""
+    _browser_login["status"] = "pending"
+    _browser_login["error"] = None
+    try:
+        token, session = fpl_auth.login_browser()
+        if update_session:
             _state["token"] = token
             _state["session"] = session
             user = fpl_api.me(session, token)
             _state["entry_id"] = user["player"].get("entry")
             _state["bootstrap"] = fpl_api.bootstrap(session)
-            # Save refresh token so GitHub Actions can use it without a browser
-            refresh_token = fpl_auth._last_refresh_token.get("value", "")
-            _save_session(refresh_token=refresh_token)
-            _browser_login["status"] = "done"
-        except Exception as e:
-            _browser_login["status"] = "error"
-            _browser_login["error"] = str(e)
+        refresh_token = fpl_auth._last_refresh_token.get("value", "")
+        cookies = fpl_auth._last_refresh_token.get("cookies", {})
+        _save_session(refresh_token=refresh_token, cookies=cookies)
+        _browser_login["status"] = "done"
+    except Exception as e:
+        _browser_login["status"] = "error"
+        _browser_login["error"] = str(e)
 
-    threading.Thread(target=run, daemon=True).start()
+
+@app.route("/api/login/browser", methods=["POST"])
+def browser_login_start():
+    """Kicks off a background thread that opens a Chromium browser for login."""
+    if _browser_login["status"] == "pending":
+        return jsonify({"status": "pending"})
+    threading.Thread(target=_run_browser_login, kwargs={"update_session": True}, daemon=True).start()
+    return jsonify({"status": "pending"})
+
+
+@app.route("/api/login/browser/renew", methods=["POST"])
+def browser_renew_token():
+    """Re-runs browser login just to capture a fresh refresh token. Keeps current session."""
+    if _browser_login["status"] == "pending":
+        return jsonify({"status": "pending"})
+    threading.Thread(target=_run_browser_login, kwargs={"update_session": False}, daemon=True).start()
     return jsonify({"status": "pending"})
 
 
@@ -415,13 +431,39 @@ def get_entry():
 
 @app.route("/api/refresh-token")
 def get_refresh_token():
-    """Returns the saved refresh token so you can add it to GitHub Secrets."""
-    token = _get_saved_refresh_token()
-    if not token:
+    """Returns saved auth data for GitHub Actions setup."""
+    if not os.path.exists(SESSION_FILE):
+        return jsonify({"error": "Not logged in yet — use the Sign in with Google button first."}), 404
+    try:
+        data = json.load(open(SESSION_FILE))
+    except Exception:
+        return jsonify({"error": "Session file unreadable."}), 500
+
+    refresh_token = data.get("refresh_token", "")
+    cookies = data.get("session_cookies", {})
+
+    # Also check what was returned in the last in-memory browser login
+    in_memory_fields = fpl_auth._last_refresh_token.get("all_fields", [])
+    in_memory_rt = fpl_auth._last_refresh_token.get("value", "")
+    in_memory_cookies = fpl_auth._last_refresh_token.get("cookies", {})
+
+    if not refresh_token and not cookies and not in_memory_rt and not in_memory_cookies:
         return jsonify({
-            "error": "No refresh token saved yet. Log in via 'Sign in with Google / Apple' first."
+            "error": "No token captured yet. Click the 🔑 Renew token button and sign in with Google.",
+            "debug_last_login_fields": in_memory_fields,
+            "hint": "If debug_last_login_fields is empty, the browser login hasn't run in this server session yet.",
         }), 404
-    return jsonify({"refresh_token": token})
+
+    return jsonify({
+        "refresh_token": refresh_token or in_memory_rt or None,
+        "session_cookies": cookies or in_memory_cookies or {},
+        "oauth_fields_returned": in_memory_fields,
+        "instructions": (
+            "Copy 'refresh_token' to GitHub Secret FPL_REFRESH_TOKEN. "
+            "If refresh_token is null, the OAuth server didn't issue one — use session_cookies instead "
+            "(add as FPL_SESSION_COOKIES secret, update scripts to restore cookies)."
+        ),
+    })
 
 
 @app.route("/api/predict")
