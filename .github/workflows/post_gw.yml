@@ -2,12 +2,8 @@ name: Post-GW Analysis & Auto-Transfer
 
 on:
   schedule:
-    # Monday 09:00 UTC — covers Sunday fixtures
-    - cron: '0 9 * * 1'
-    # Wednesday 09:00 UTC — covers Tuesday/Wednesday midweek
-    - cron: '0 9 * * 3'
-    # Thursday 09:00 UTC — double-header cover
-    - cron: '0 9 * * 4'
+    # Run every 4 hours. The GW-check step exits early if no action is needed.
+    - cron: '0 */4 * * *'
   workflow_dispatch:
     inputs:
       gw:
@@ -35,25 +31,90 @@ jobs:
         run: |
           pip install requests pandas numpy xgboost lightgbm pulp scipy tabulate python-dotenv
 
+      # Check FPL deadlines — only proceed if a GW has finished and the next
+      # deadline is still in the future (between 2 and 48 hours away).
+      # Manual workflow_dispatch always proceeds regardless.
+      - name: Check GW deadline
+        id: gw_check
+        run: |
+          python -c "
+          import requests, os, sys
+          from datetime import datetime, timezone
+
+          # Manual dispatch always runs
+          if '${{ github.event_name }}' == 'workflow_dispatch':
+              with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+                  f.write('should_run=true\n')
+                  gw_input = '${{ github.event.inputs.gw }}'
+                  f.write(f'next_gw={gw_input}\n' if gw_input else 'next_gw=\n')
+              print('Manual dispatch — proceeding.')
+              sys.exit(0)
+
+          try:
+              events = requests.get(
+                  'https://fantasy.premierleague.com/api/bootstrap-static/',
+                  timeout=15
+              ).json()['events']
+          except Exception as e:
+              print(f'Could not fetch FPL events: {e}')
+              with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+                  f.write('should_run=false\n')
+              sys.exit(0)
+
+          now = datetime.now(timezone.utc)
+          finished = [e for e in events if e.get('finished')]
+          upcoming = [e for e in events if not e.get('finished') and e.get('deadline_time')]
+
+          if not finished:
+              print('No finished GWs yet — nothing to analyse.')
+              with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+                  f.write('should_run=false\n')
+              sys.exit(0)
+
+          if not upcoming:
+              print('No upcoming GW deadlines found.')
+              with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+                  f.write('should_run=false\n')
+              sys.exit(0)
+
+          last_gw = finished[-1]
+          nxt = upcoming[0]
+          deadline = datetime.fromisoformat(nxt['deadline_time'].replace('Z', '+00:00'))
+          hours_left = (deadline - now).total_seconds() / 3600
+
+          # Act if deadline is 2–48 hours away (enough time for review, not too early)
+          should = 2 <= hours_left <= 48
+          print(f'GW{last_gw[\"id\"]} finished. Next GW{nxt[\"id\"]} deadline in {hours_left:.1f}h → should_run={should}')
+
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+              f.write(f'should_run={str(should).lower()}\n')
+              f.write(f'next_gw={nxt[\"id\"]}\n')
+          "
+
       # Random startup delay (3–18 min) so runs don't look machine-regular
       - name: Human-like startup delay
+        if: steps.gw_check.outputs.should_run == 'true'
         run: |
           DELAY=$(python -c "import random; print(random.randint(180, 1080))")
           echo "Waiting ${DELAY}s before starting..."
           sleep $DELAY
 
       - name: Run public GW analysis (no auth required)
+        if: steps.gw_check.outputs.should_run == 'true'
         env:
           FPL_ENTRY_ID: ${{ secrets.FPL_ENTRY_ID }}
         run: |
           GW_ARG=""
           if [ -n "${{ github.event.inputs.gw }}" ]; then
             GW_ARG="--gw ${{ github.event.inputs.gw }}"
+          elif [ -n "${{ steps.gw_check.outputs.next_gw }}" ]; then
+            GW_ARG="--gw ${{ steps.gw_check.outputs.next_gw }}"
           fi
           python scripts/analyze_gw_public.py $GW_ARG || echo "Public analysis skipped (no finished GW yet)"
 
       # Another pause between analysis and transfer submission
       - name: Pause before transfer
+        if: steps.gw_check.outputs.should_run == 'true'
         run: |
           DELAY=$(python -c "import random; print(random.randint(120, 480))")
           echo "Waiting ${DELAY}s before transfer step..."
@@ -61,6 +122,7 @@ jobs:
 
       - name: Submit recommended transfer
         id: transfer_step
+        if: steps.gw_check.outputs.should_run == 'true'
         env:
           FPL_REFRESH_TOKEN: ${{ secrets.FPL_REFRESH_TOKEN }}
           FPL_EMAIL:         ${{ secrets.FPL_EMAIL }}
@@ -69,6 +131,8 @@ jobs:
           GW_ARG=""
           if [ -n "${{ github.event.inputs.gw }}" ]; then
             GW_ARG="--gw ${{ github.event.inputs.gw }}"
+          elif [ -n "${{ steps.gw_check.outputs.next_gw }}" ]; then
+            GW_ARG="--gw ${{ steps.gw_check.outputs.next_gw }}"
           fi
 
           DRY_ARG=""
@@ -88,10 +152,11 @@ jobs:
           echo "Refresh token rotated successfully."
 
       - name: Commit updated reports
+        if: steps.gw_check.outputs.should_run == 'true'
         run: |
           git config user.name  "FPL Auto Bot"
           git config user.email "bot@fplauto.local"
           git add reports/
           git diff --cached --quiet && echo "No report changes" || \
-            git commit -m "auto: GW analysis + transfer report [skip ci]"
+            git commit -m "auto: GW${{ steps.gw_check.outputs.next_gw }} analysis + transfer report [skip ci]"
           git push

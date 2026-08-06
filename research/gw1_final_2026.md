@@ -123,21 +123,43 @@ All features are EWMA-shifted by 1 GW (no leakage), α=0.25 (~7 GW effective win
 
 ---
 
-## 5. How to Apply the Squad
+## 5. How the Bot Chose This Squad
 
-```bash
-# Set your FPL password
-export FPL_PASSWORD=your_password_here
+### Process
 
-# Preview (no API calls)
-python scripts/apply_team.py --dry-run
+1. **Score every player.** The bot fetches all 527 active players from the FPL bootstrap API and runs each through the ML pipeline to get a blended `xPts` per GW (40% model output + 60% FPL's own `ep_next` for GW1, since `ep_next` carries the specific fixture-difficulty signal that the model can't learn until games are played).
 
-# Apply to your FPL account (will ask for confirmation)
-python scripts/apply_team.py
+2. **Pre-filter to 150 candidates.** The full 527-player pool would make the MILP too slow. Players are ranked by blended xPts and the top 150 are passed to the solver.
 
-# Apply without confirmation prompt
-python scripts/apply_team.py --auto
-```
+3. **Solve the MILP.** The optimizer maximises total starting-XI xPts subject to hard constraints: £100m budget, 2 GKP / 5 DEF / 5 MID / 3 FWD squad shape, ≤3 players per club, and a legal formation (≥3 DEF + ≥2 FWD + 1 GKP in the XI). Bench players are weighted at 25% to give them some value without distorting the XI selection.
+
+4. **Assign captain/vice.** Highest-xPts player in the XI becomes captain (Haaland, 5.55 → 11.1 effective), second becomes vice (B.Fernandes, 5.36).
+
+### Key Decisions
+
+| Decision | Why |
+|----------|-----|
+| **5 defenders in XI** | Gabriel, Matheus N., Senesi, Pedro Porro, and Ballard all scored in the top 15 blended xPts. The model's DC (defensive contribution) sub-model — trained on 2025-26 data when CBIT stats became available — gave all five high form scores. Running 5 DEF freed enough budget to fit Haaland without sacrificing midfield quality. |
+| **Haaland at £15.5m** | Highest absolute xPts in the pool (5.55 blended). The solver treats a captained player as worth 2× their xPts, so the MILP structurally rewards the highest-xPts player as captain — Haaland is the clear choice. |
+| **3× Man City** | Haaland, Matheus N., and Doku are the three highest-scoring City players; the ≤3/club cap is exactly met. City have the best GW1 fixture by FDR. |
+| **Ballard (Sunderland, £5.0m) over cheaper options** | Newly-promoted players get Sunderland's 2024-25 (Championship) data, but the minutes prior and DC-form signal still ranked Ballard above most £5m alternatives. The cheap price enables the premium attack (Haaland + B.Fernandes). |
+| **B.Fernandes at £12m** | The second-highest xPts in the dataset (5.36), with a Man Utd home fixture. Despite the price, the MILP found the budget works by loading up on cheap bench players (Dubravka £4m, Reed £4.5m, Hughes £4.5m). |
+| **Bench: 4 cheap enablers** | Dubravka (£4m), Reed (£4.5m), Hughes (£4.5m), Piroe (£5m). The solver deliberately takes the bench penalty on these players to maximise starting-XI quality. Their xPts are low, but legal squad shape requires bodies on the bench. |
+
+### Does the Model Predict DEFCON Points?
+
+Partially. DEFCON awards +2 pts when a player crosses a defensive-activity threshold in a match:
+- **Defenders:** 10+ combined clearances, blocks, interceptions, and tackles (CBIT)
+- **Midfielders/Forwards:** 12+ combined CBIT and ball recoveries
+- **Cap:** maximum +2 pts per match regardless
+
+The model's DC sub-model uses EWMA features for `clearances_blocks_interceptions`, `recoveries`, `tackles`, and `defensive_contribution` — so it captures *who tends to be defensively active* in a continuous sense. A defender with high EWMA CBIT will score higher on the DC head, and that lifts their `model_xpts`.
+
+However, the model does **not** explicitly calculate P(CBIT ≥ threshold) × 2. The DEFCON bonus is a discrete threshold jump, not a linear signal. What the model sees is *correlated form* — players who habitually hit 10+ CBIT do show up in EWMA as having high defensive contribution, so they rank higher, but the model can't separate "this player averages 12 CBIT so they'll get +2 pts" from "this player is generally more defensive."
+
+The 60% weight given to FPL's own `ep_next` partially compensates: FPL's model does include DEFCON in its expected-points calculation (since it's in the official scoring rules), so the blended score implicitly captures DEFCON through that channel.
+
+**Practical takeaway:** The DC-heavy defenders in this squad (Gabriel, Matheus N., Senesi) were ranked partly because their defensive activity form suggests DEFCON potential. The model doesn't guarantee they'll hit the threshold, but they're the right type of player.
 
 ---
 

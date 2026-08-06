@@ -58,7 +58,11 @@ def transfer(
             "Origin": "https://fantasy.premierleague.com",
         }),
     )
-    r.raise_for_status()
+    if not r.ok:
+        raise requests.exceptions.HTTPError(
+            f"{r.status_code} {r.reason} — {r.text[:800]}",
+            response=r,
+        )
     return r.json()
 
 

@@ -28,7 +28,7 @@ from typing import Any
 import pandas as pd
 import requests
 
-from . import data_collector
+from . import data_collector, reporter
 from .season_forecaster import SeasonForecaster
 from .season_planner import SeasonPlanner
 from .chip_planner import ChipPlanner
@@ -218,8 +218,25 @@ class SeasonUpdater:
         plan["chip_plan"] = chip_result.get("chip_plan", [])
         plan["chip_reason"] = chip_result.get("reason", "")
 
-        # 6. Write reports.
-        report_paths = self._write_reports(plan, current_gw)
+        # 6. Fetch last GW live data for the report (public endpoint, no auth needed).
+        finished_gws = [e for e in bootstrap["events"] if e.get("finished")]
+        last_gw = finished_gws[-1]["id"] if finished_gws else None
+        last_gw_data: dict = {}
+        if last_gw:
+            try:
+                live_raw = data_collector.fetch_event_live(last_gw, force=True)
+                last_gw_data = {
+                    el["id"]: el.get("stats", {})
+                    for el in live_raw.get("elements", [])
+                }
+                log.info("Fetched GW%d live data: %d players", last_gw, len(last_gw_data))
+            except Exception as exc:
+                log.warning("Could not fetch GW%d live data: %s", last_gw, exc)
+
+        # 7. Write reports.
+        report_paths = self._write_reports(
+            plan, current_gw, forecasts, bootstrap, last_gw, last_gw_data
+        )
 
         result = {**plan, "report_paths": report_paths, "run_at": _now_iso()}
         log.info("Done. Reports written to %s", REPORTS_DIR)
@@ -229,94 +246,26 @@ class SeasonUpdater:
     # Report writing
     # ------------------------------------------------------------------
 
-    def _write_reports(self, plan: dict, current_gw: int) -> dict[str, str]:
+    def _write_reports(
+        self,
+        plan: dict,
+        current_gw: int,
+        forecasts: pd.DataFrame,
+        bootstrap: dict,
+        last_gw: int | None = None,
+        last_gw_data: dict | None = None,
+    ) -> dict[str, str]:
         md_path = REPORTS_DIR / "season_plan_latest.md"
         csv_path = REPORTS_DIR / "season_plan_latest.csv"
 
-        # Markdown.
-        md = self._build_markdown(plan, current_gw)
+        md = reporter.build_report(plan, current_gw, forecasts, bootstrap, last_gw, last_gw_data)
         md_path.write_text(md, encoding="utf-8")
 
-        # CSV (report table).
         rt: pd.DataFrame = plan.get("report_table", pd.DataFrame())
         if not rt.empty:
             rt.to_csv(csv_path, index=False)
 
         return {"markdown": str(md_path), "csv": str(csv_path)}
-
-    @staticmethod
-    def _build_markdown(plan: dict, current_gw: int) -> str:
-        lines = [
-            f"# FPL Season Plan — GW{current_gw}",
-            f"*Generated {_now_iso()} — advisory only, no transfers executed*",
-            "",
-        ]
-
-        # Immediate action box.
-        lines += [
-            "## Immediate Action (GW{})".format(current_gw),
-            "",
-        ]
-        chip = plan.get("chip")
-        if chip:
-            lines.append(f"**Chip:** {chip}  ")
-        cap = plan.get("captain", {})
-        vice = plan.get("vice", {})
-        lines += [
-            f"**Captain:** {cap.get('name', '?')} ({cap.get('xpts', 0):.1f} xPts)  ",
-            f"**Vice:** {vice.get('name', '?')} ({vice.get('xpts', 0):.1f} xPts)  ",
-        ]
-        if plan.get("transfers_in"):
-            transfers = "  \n".join(
-                f"  OUT: {o['name']} (£{o['selling_price']}m) -> IN: {i['name']} (£{i['cost']}m)"
-                for i, o in zip(plan["transfers_in"], plan["transfers_out"])
-            )
-            lines.append(f"**Transfers:**  \n{transfers}")
-            if plan["hits"] > 0:
-                lines.append(f"**Hits:** {plan['hits']} (-{plan['hit_cost']} pts)")
-        else:
-            lines.append("**Transfers:** Roll (no transfer)")
-        lines += [
-            f"**Bank after:** £{plan.get('bank_after', 0)}m  ",
-            f"**FT next GW:** {plan.get('ft_banked_next', 1)}  ",
-            "",
-        ]
-
-        # Chip schedule.
-        chip_plan = plan.get("chip_plan", [])
-        if chip_plan:
-            lines += ["## Chip Schedule", ""]
-            lines.append("| GW | Chip | Est. Gain |")
-            lines.append("|---:|---|---:|")
-            for cp in chip_plan:
-                lines.append(f"| {cp['gw']} | {cp['chip_label']} | +{cp['expected_gain']:.1f} pts |")
-            lines += ["", f"*Reason: {plan.get('chip_reason', '')}*", ""]
-
-        # Summary table.
-        rt = plan.get("report_table")
-        if rt is not None and not rt.empty:
-            lines += ["## GW-by-GW Plan", ""]
-            lines.append(rt.to_markdown(index=False))
-            lines.append("")
-
-        # Starting XI for GW.
-        first_plan = plan["gw_plan"][0] if plan.get("gw_plan") else {}
-        xi = first_plan.get("starting_xi", [])
-        bench = first_plan.get("bench", [])
-        if xi:
-            lines += ["## Starting XI (GW{})".format(current_gw), ""]
-            pos_labels = {1: "GKP", 2: "DEF", 3: "MID", 4: "FWD"}
-            for pos_id in (1, 2, 3, 4):
-                players_at_pos = [p for p in xi if p["position"] == pos_id]
-                if players_at_pos:
-                    row = " | ".join(
-                        f"**{p['name']}**{'(C)' if p['element'] == cap.get('element') else ''}"
-                        for p in players_at_pos
-                    )
-                    lines.append(f"**{pos_labels[pos_id]}:** {row}  ")
-            lines += ["", f"**Bench:** {' | '.join(p['name'] for p in bench)}", ""]
-
-        return "\n".join(lines)
 
 
 def _now_iso() -> str:
