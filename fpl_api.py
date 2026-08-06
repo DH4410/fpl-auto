@@ -83,8 +83,12 @@ def update_picks(
         json={"picks": picks, "chips": chips or []},
         headers=_headers(token),
     )
-    r.raise_for_status()
-    return r.json()
+    if not r.ok:
+        raise requests.exceptions.HTTPError(
+            f"{r.status_code} {r.reason} — {r.text[:800]}",
+            response=r,
+        )
+    return r.json() if r.content else {}
 
 
 def entry_info(session: requests.Session, token: str, entry_id: int) -> dict:
