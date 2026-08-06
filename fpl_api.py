@@ -63,7 +63,7 @@ def transfer(
             f"{r.status_code} {r.reason} — {r.text[:800]}",
             response=r,
         )
-    return r.json()
+    return r.json() if r.content else {}
 
 
 def update_picks(
