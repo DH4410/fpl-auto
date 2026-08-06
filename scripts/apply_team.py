@@ -117,30 +117,47 @@ def apply_squad(squad: dict, dry_run: bool) -> None:
     else:
         selling = {p["element"]: p["selling_price"] for p in current_picks}
 
-        # Fetch live prices — player prices change daily in preseason and FPL
-        # rejects any transfer where purchase_price doesn't match the current price.
-        print("Fetching live player prices from FPL...")
+        # Fetch live prices and element types from bootstrap.
+        # Prices change daily in preseason — FPL rejects transfers with stale prices.
+        # Element types are needed to pair swaps correctly (GKP↔GKP, DEF↔DEF, etc.).
+        print("Fetching live player data from FPL...")
         import requests as _req
         _bs = _req.get("https://fantasy.premierleague.com/api/bootstrap-static/", timeout=15).json()
-        live_prices = {el["id"]: el["now_cost"] for el in _bs["elements"]}
+        live_prices   = {el["id"]: el["now_cost"]      for el in _bs["elements"]}
+        element_types = {el["id"]: el["element_type"]  for el in _bs["elements"]}
 
         if to_remove:
-            # Batch all swaps in a single API call.
-            swaps = [
-                {
-                    "element_in": a["element_in"],
-                    "element_out": r["element"],
-                    "purchase_price": live_prices.get(a["element_in"], a["purchase_price"]),
-                    "selling_price": selling[r["element"]],
-                }
-                for a, r in zip(to_add, to_remove)
-            ]
-            # Log price check so we can see if anything changed from the stored JSON.
-            for s in swaps:
-                stored = next((t["purchase_price"] for t in squad["transfers"] if t["element_in"] == s["element_in"]), None)
-                if stored and stored != s["purchase_price"]:
-                    print(f"  [price updated: element {s['element_in']} stored={stored} live={s['purchase_price']}]")
-            print(f"Swapping {len(swaps)} player(s) to match target squad...")
+            # FPL requires element_in and element_out to be the same position type
+            # (GKP↔GKP, DEF↔DEF, MID↔MID, FWD↔FWD). Group both lists by position
+            # and pair within each group.
+            from collections import defaultdict
+            remove_by_pos = defaultdict(list)
+            for p in to_remove:
+                pos = element_types.get(p["element"], 0)
+                remove_by_pos[pos].append(p)
+
+            add_by_pos = defaultdict(list)
+            for a in to_add:
+                pos = element_types.get(a["element_in"], 0)
+                add_by_pos[pos].append(a)
+
+            swaps = []
+            for pos in remove_by_pos:
+                for r, a in zip(remove_by_pos[pos], add_by_pos[pos]):
+                    live_price = live_prices.get(a["element_in"], a["purchase_price"])
+                    stored     = a["purchase_price"]
+                    if stored != live_price:
+                        print(f"  [price updated: element {a['element_in']} stored={stored} live={live_price}]")
+                    swaps.append({
+                        "element_in":     a["element_in"],
+                        "element_out":    r["element"],
+                        "purchase_price": live_price,
+                        "selling_price":  selling[r["element"]],
+                    })
+                    pos_label = {1: "GKP", 2: "DEF", 3: "MID", 4: "FWD"}.get(pos, "?")
+                    print(f"  {pos_label}: {r['element']} → {a['element_in']} (£{live_price/10:.1f}m)")
+
+            print(f"Submitting {len(swaps)} swap(s)...")
             t2 = random.uniform(6, 14)
             print(f"  [waiting {t2:.1f}s before submitting...]")
             time.sleep(t2)
@@ -155,7 +172,6 @@ def apply_squad(squad: dict, dry_run: bool) -> None:
             print(f"  [waiting {t3:.1f}s]")
             time.sleep(t3)
         else:
-            # to_add but no to_remove means we have extra players — shouldn't happen normally
             print(f"WARNING: {len(to_add)} players to add but nothing to remove. Check squad state.")
 
     print("Setting starting XI, captain, bench order...")
