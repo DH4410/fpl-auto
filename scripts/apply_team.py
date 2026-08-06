@@ -69,12 +69,17 @@ def print_squad(squad: dict) -> None:
 def apply_squad(squad: dict, dry_run: bool) -> None:
     import time, random
 
+    token, session = None, None
     refresh_token = os.environ.get("FPL_REFRESH_TOKEN", "").strip()
     if refresh_token:
-        print("Logging in via refresh token...")
-        token, session = fpl_auth.refresh_login(refresh_token)
-        print("Login OK (refresh token).")
-    else:
+        try:
+            print("Logging in via refresh token...")
+            token, session = fpl_auth.refresh_login(refresh_token)
+            print("Login OK (refresh token).")
+        except Exception as e:
+            print(f"Refresh token failed ({e}), falling back to password login...")
+
+    if token is None:
         email = os.environ.get("FPL_EMAIL", DEFAULT_EMAIL)
         password = os.environ.get("FPL_PASSWORD") or input("FPL password: ").strip()
         if not password:
@@ -82,7 +87,7 @@ def apply_squad(squad: dict, dry_run: bool) -> None:
             sys.exit(1)
         print(f"Logging in as {email}...")
         token, session = fpl_auth.login(email, password)
-        print("Login OK.")
+        print("Login OK (password).")
 
     # Write the new (rotated) refresh token to GitHub Actions output so the
     # workflow can update the FPL_REFRESH_TOKEN secret automatically.
