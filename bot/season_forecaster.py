@@ -28,6 +28,7 @@ Design notes
 from __future__ import annotations
 
 import logging
+from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -139,18 +140,25 @@ class SeasonForecaster:
                     p_start = 0.0
                     p_60 = 0.0
                 else:
+                    avg_fdr, n_fixtures = fixture_fdr
                     p_start = float(p["p_start"])
-                    fdr_mult = FDR_MULTIPLIER.get(fixture_fdr, 1.0)
+                    fdr_mult = FDR_MULTIPLIER.get(round(avg_fdr), 1.0)
 
                     # GW1 projection: use FPL's ep_next which already accounts for
-                    # the immediate fixture. Further GWs use PPG × FDR.
-                    if gw_offset == 0 and p["ep_next"] is not None and float(p["ep_next"]) > 0:
+                    # the immediate fixture (including DGW scaling). Further GWs
+                    # use PPG × FDR, explicitly multiplied by n_fixtures.
+                    using_ep_next = (
+                        gw_offset == 0
+                        and p["ep_next"] is not None
+                        and float(p["ep_next"]) > 0
+                    )
+                    if using_ep_next:
                         base = float(p["ep_next"])
+                        xpts = base * p_start * gw_decay  # ep_next is already DGW-aware
                     else:
                         ppg = max(MIN_PPG, float(p["ppg"]))
                         base = ppg * fdr_mult
-
-                    xpts = base * p_start * gw_decay
+                        xpts = base * p_start * gw_decay * n_fixtures
                     p_60 = p_start * 0.85  # approximate: most starters play 60+
 
                 uncertainty = min(0.90, UNCERTAINTY_PER_GW * (gw_offset + 1))
@@ -210,10 +218,11 @@ class SeasonForecaster:
                 fdr = fdr_map.get((int(row["team"]), gw))
                 if fdr is None:
                     continue
-                mult = FDR_MULTIPLIER.get(fdr, 1.0)
+                avg_fdr, n_fixtures = fdr
+                mult = FDR_MULTIPLIER.get(round(avg_fdr), 1.0)
                 ppg = max(MIN_PPG, float(row["ppg"]))
                 base = ppg * mult
-                total += base * float(row["p_start"]) * (self.decay ** gw_offset)
+                total += base * float(row["p_start"]) * (self.decay ** gw_offset) * n_fixtures
             return total
 
         players["horizon_xpts"] = players.apply(horizon_xpts, axis=1)
@@ -249,14 +258,14 @@ class SeasonForecaster:
     @staticmethod
     def _build_fdr_map(
         fixtures: list[dict], first_gw: int, last_gw: int
-    ) -> dict[tuple[int, int], int]:
-        """Return {(team_id, gw): fdr} for fixtures in [first_gw, last_gw].
+    ) -> dict[tuple[int, int], tuple[float, int]]:
+        """Return {(team_id, gw): (avg_fdr, n_fixtures)} for [first_gw, last_gw].
 
-        Each team appears once as home and once as away; FDR is from the
-        *difficulty* perspective of that team (difficulty of facing their
-        opponent).
+        A team normally has one fixture per gameweek, but in a double gameweek
+        it has two; both are accumulated and averaged, and ``n_fixtures`` lets
+        callers scale expected points by the number of matches played.
         """
-        fdr: dict[tuple[int, int], int] = {}
+        collected: dict[tuple[int, int], list[int]] = defaultdict(list)
         for fix in fixtures:
             gw = fix.get("event")
             if gw is None or not (first_gw <= gw <= last_gw):
@@ -266,10 +275,13 @@ class SeasonForecaster:
             home_fdr = fix.get("team_h_difficulty", 3)
             away_fdr = fix.get("team_a_difficulty", 3)
             if home_id is not None:
-                fdr[(home_id, gw)] = int(home_fdr)
+                collected[(home_id, gw)].append(int(home_fdr))
             if away_id is not None:
-                fdr[(away_id, gw)] = int(away_fdr)
-        return fdr
+                collected[(away_id, gw)].append(int(away_fdr))
+        return {
+            key: (sum(vals) / len(vals), len(vals))
+            for key, vals in collected.items()
+        }
 
 
 def _safe_float(value) -> float:

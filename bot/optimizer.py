@@ -55,6 +55,12 @@ DEFAULT_HORIZON_DISCOUNT = 0.85
 #: rotation, so they carry a small positive weight in squad selection.
 DEFAULT_BENCH_WEIGHT = 0.15
 
+#: Multiplier applied to a player's expected points when evaluating them as
+#: captain. GKP is 0 (never captain). DEF is 0.5 so a DEF needs to be
+#: predicted at 2x a MID/FWD to win the captain slot — essentially only
+#: outstanding attacking DEFs. MID/FWD are equal at 1.0.
+CAPTAIN_POSITION_WEIGHT = {GKP: 0.0, DEF: 0.5, MID: 1.0, FWD: 1.0}
+
 
 def get_solver(msg: bool = False, time_limit: int | None = 120):
     """Return the best available free MIP solver.
@@ -165,7 +171,8 @@ class SquadOptimizer:
         capt = [pulp.LpVariable(f"c_{i}", cat="Binary") for i in range(n)]
 
         # Objective: starters at full weight, bench at a fraction, plus the
-        # captain's doubled score.
+        # captain's doubled score (unweighted here — position bias only in XI
+        # optimisation, not in squad selection, to avoid perturbing composition).
         prob += (pulp.lpSum(pts[i] * start[i] for i in range(n))
                  + self.bench_weight * pulp.lpSum(
                      pts[i] * (squad[i] - start[i]) for i in range(n))
@@ -181,6 +188,8 @@ class SquadOptimizer:
         for i in range(n):
             prob += start[i] <= squad[i]      # cannot start a player you do not own
             prob += capt[i] <= start[i]       # the captain must be in the XI
+            if pos[i] == GKP:
+                prob += capt[i] == 0          # never captain a goalkeeper
         prob += pulp.lpSum(capt) == 1
 
         for et, required in SQUAD_COMPOSITION.items():
@@ -244,12 +253,15 @@ class SquadOptimizer:
         start = [pulp.LpVariable(f"x_{i}", cat="Binary") for i in range(n)]
         capt = [pulp.LpVariable(f"c_{i}", cat="Binary") for i in range(n)]
 
+        capt_w = [CAPTAIN_POSITION_WEIGHT.get(pos[i], 1.0) for i in range(n)]
         prob += (pulp.lpSum(pts[i] * start[i] for i in range(n))
-                 + pulp.lpSum(pts[i] * capt[i] for i in range(n)))
+                 + pulp.lpSum(pts[i] * capt_w[i] * capt[i] for i in range(n)))
         prob += pulp.lpSum(start) == STARTING_XI_SIZE
         prob += pulp.lpSum(capt) == 1
         for i in range(n):
             prob += capt[i] <= start[i]
+            if pos[i] == GKP:
+                prob += capt[i] == 0          # never captain a goalkeeper
 
         prob += pulp.lpSum(start[i] for i in range(n) if pos[i] == GKP) == 1
         for et, minimum in FORMATION_MINIMUMS.items():

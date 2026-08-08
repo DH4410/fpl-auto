@@ -29,7 +29,7 @@ import numpy as np
 import pandas as pd
 
 from .fpl_rules import (
-    CHIP_FREE_HIT, CHIP_WILDCARD,
+    CHIP_FREE_HIT, CHIP_WILDCARD, CHIP_TRIPLE_CAPTAIN, CHIP_BENCH_BOOST,
     GKP, DEF, MID, FWD,
     SQUAD_COMPOSITION, STARTING_XI_SIZE,
     FPLRules,
@@ -49,6 +49,7 @@ class SeasonBacktester:
         history_df: pd.DataFrame,
         test_season: str,
         budget: float = 100.0,
+        expected_points_fn=None,
     ):
         self.hist = history_df.copy()
         self.test_season = test_season
@@ -89,7 +90,7 @@ class SeasonBacktester:
         self.hist["element"] = self.hist["element"].astype(int)
 
         # ── encode team as int for the MIP club-limit constraint ──────────
-        if self.hist["team"].dtype == object:
+        if not pd.api.types.is_numeric_dtype(self.hist["team"]):
             teams = sorted(self.hist["team"].dropna().unique())
             team_map = {t: i + 1 for i, t in enumerate(teams)}
             self.hist["team_id"] = self.hist["team"].map(team_map).fillna(0).astype(int)
@@ -106,6 +107,10 @@ class SeasonBacktester:
 
         # ── value must be integer tenths (e.g. 65 = £6.5m) ──────────────
         self.hist["value"] = pd.to_numeric(self.hist["value"], errors="coerce").fillna(50).astype(int)
+
+        # Optional callable(before_gw: int) -> pd.Series indexed by element.
+        # When supplied, replaces the rolling-mean expected_points with ML predictions.
+        self.expected_points_fn = expected_points_fn
 
         print(f"[backtester] init OK — {len(self.hist):,} rows, "
               f"seasons: {sorted(self.hist['season'].unique())}")
@@ -124,7 +129,10 @@ class SeasonBacktester:
 
     def _build_pool(self, before_gw: int) -> pd.DataFrame:
         """Player pool for GW ``before_gw``, with prices and expected points."""
-        exp = self._expected_pts(before_gw)
+        if self.expected_points_fn is not None:
+            exp = self.expected_points_fn(before_gw)
+        else:
+            exp = self._expected_pts(before_gw)
 
         test = self.hist[self.hist["season"] == self.test_season].copy()
         earliest = (
@@ -138,6 +146,8 @@ class SeasonBacktester:
             prev = test[test["GW"] == before_gw - 1]
             if not prev.empty:
                 price_lu = prev.set_index("element")["value"]
+                # Drop duplicate element entries (can arise in DGW fixtures).
+                price_lu = price_lu[~price_lu.index.duplicated(keep="last")]
                 earliest["value"] = (
                     earliest["element"].map(price_lu).fillna(earliest["value"])
                 )
@@ -175,47 +185,66 @@ class SeasonBacktester:
         pool: pd.DataFrame,
         bank: float,
     ) -> tuple[pd.DataFrame, float, bool]:
-        """Sell the weakest player, buy the best affordable replacement."""
+        """Make the transfer with the highest marginal expected-points gain."""
         pool_idx = pool.set_index("element")
 
         squad = squad_df.copy()
         squad["_exp"] = squad["element"].map(
             pool_idx["expected_points"]
         ).fillna(0)
-        out_row = squad.sort_values("_exp").iloc[0]
 
-        out_sell_tenths = self.rules.calc_selling_price_tenths(
-            int(out_row.get("purchase_price", out_row["now_cost"]) or out_row["now_cost"]),
-            int(out_row["now_cost"]),
-        )
-        budget_tenths = out_sell_tenths + int(round(bank * 10))
+        best_gain = 0.0  # only transfer if gain is positive
+        best_out: pd.Series | None = None
+        best_in: pd.Series | None = None
+        best_new_bank = bank
 
-        pos = int(out_row["element_type"])
-        owned = set(squad["element"].astype(int)) - {int(out_row["element"])}
-        club_counts = (
-            squad[squad["element"] != int(out_row["element"])]["team"].value_counts()
-        )
+        for _, out_row in squad.iterrows():
+            # Use pool's current price, not the stale now_cost stored at purchase time
+            current_cost = int(
+                pool_idx["now_cost"].get(int(out_row["element"]), out_row["now_cost"])
+            )
+            purchase_price = int(
+                out_row.get("purchase_price", current_cost) or current_cost
+            )
+            out_sell_tenths = self.rules.calc_selling_price_tenths(
+                purchase_price, current_cost
+            )
+            budget_tenths = out_sell_tenths + int(round(bank * 10))
 
-        cands = pool[
-            (pool["element_type"] == pos)
-            & (~pool["element"].isin(owned))
-            & (pool["now_cost"].astype(int) <= budget_tenths)
-            & (pool["team"].map(lambda t: int(club_counts.get(t, 0)) < 3))
-        ].sort_values("expected_points", ascending=False)
+            pos = int(out_row["element_type"])
+            owned = set(squad["element"].astype(int)) - {int(out_row["element"])}
+            club_counts = (
+                squad[squad["element"] != int(out_row["element"])]["team"].value_counts()
+            )
 
-        if cands.empty:
+            cands = pool[
+                (pool["element_type"] == pos)
+                & (~pool["element"].isin(owned))
+                & (pool["now_cost"].astype(int) <= budget_tenths)
+                & (pool["team"].map(lambda t: int(club_counts.get(t, 0)) < 3))
+            ].sort_values("expected_points", ascending=False)
+
+            if cands.empty:
+                continue
+
+            in_row = cands.iloc[0]
+            gain = float(in_row["expected_points"]) - float(out_row["_exp"])
+            if gain > best_gain:
+                best_gain = gain
+                best_out = out_row
+                best_in = in_row
+                best_new_bank = (budget_tenths - int(in_row["now_cost"])) / 10.0
+
+        if best_out is None:
             return squad_df, bank, False
 
-        in_row = cands.iloc[0]
-        new_bank = (budget_tenths - int(in_row["now_cost"])) / 10.0
-
-        new_squad = squad[squad["element"] != int(out_row["element"])].copy()
-        in_dict = in_row.to_dict()
-        in_dict["purchase_price"] = int(in_row["now_cost"])
+        new_squad = squad[squad["element"] != int(best_out["element"])].copy()
+        in_dict = best_in.to_dict()
+        in_dict["purchase_price"] = int(best_in["now_cost"])
         new_squad = pd.concat(
             [new_squad, pd.DataFrame([in_dict])], ignore_index=True
         )
-        return new_squad, new_bank, True
+        return new_squad, best_new_bank, True
 
     # ------------------------------------------------------------------
     # Fallback squad (when MIP fails)
@@ -257,8 +286,15 @@ class SeasonBacktester:
     # Core simulation
     # ------------------------------------------------------------------
 
-    def run(self, strategy: str = "1ft") -> pd.DataFrame:
-        """Simulate a full season and return per-GW results."""
+    def run(self, strategy: str = "1ft",
+            chip_gws: dict | None = None) -> pd.DataFrame:
+        """Simulate a full season and return per-GW results.
+
+        chip_gws maps gameweek → chip name, e.g.
+          {26: "bboost", 33: "3xc", 34: "freehit"}
+        Chips are applied exactly once; scheduling a chip a second time is a no-op.
+        """
+        chip_gws = chip_gws or {}
         test_gws = sorted(
             self.hist.loc[self.hist["season"] == self.test_season, "GW"].unique()
         )
@@ -338,13 +374,17 @@ class SeasonBacktester:
                             print(f"[backtester] GW{gw} wildcard MIP failed ({exc}); skipping")
 
                     elif strategy != "passive":
-                        new_squad, new_bank, made = self._greedy_transfer(
-                            squad_df, pool, bank
-                        )
-                        if made:
+                        # Use all available free transfers greedily (no hits).
+                        n_transfers = 0
+                        for _ in range(free_transfers):
+                            new_squad, new_bank, made = self._greedy_transfer(
+                                squad_df, pool, bank
+                            )
+                            if not made:
+                                break
                             squad_df = new_squad
                             bank = new_bank
-                            n_transfers = 1
+                            n_transfers += 1
                         squad_ids = squad_df["element"].astype(int).tolist()
 
                     # Re-optimise XI each week
@@ -367,10 +407,64 @@ class SeasonBacktester:
                             self._best_xi_from_pool(squad_ids, pool)
                         )
 
+                # ── apply scheduled chips ────────────────────────────────
+                scheduled = chip_gws.get(gw)
+                if scheduled and scheduled not in chips_used:
+                    if scheduled == CHIP_FREE_HIT:
+                        # Build a fresh squad from players with a fixture this GW
+                        # (players who appear in the actual GW data had teams playing).
+                        gw_elements = set(
+                            self.hist.loc[
+                                (self.hist["season"] == self.test_season)
+                                & (self.hist["GW"] == gw),
+                                "element",
+                            ].astype(int)
+                        )
+                        fh_pool = pool[pool["element"].isin(gw_elements)].copy()
+                        if len(fh_pool) >= 15:
+                            pool_costs = pool.set_index("element")["now_cost"]
+                            fh_budget = (
+                                squad_df["element"].map(pool_costs)
+                                .fillna(squad_df["now_cost"])
+                                .sum() / 10.0
+                                + bank
+                            )
+                            try:
+                                res_fh = self.opt.optimize_initial_squad(
+                                    fh_pool, fh_budget, "expected_points"
+                                )
+                                fh_ids = set(p["element"] for p in res_fh["squad"])
+                                fh_squad = fh_pool[fh_pool["element"].isin(fh_ids)].copy()
+                                fh_squad["purchase_price"] = fh_squad["now_cost"].astype(int)
+                                # Score with FH squad; restore real squad after
+                                fh_xi_ids    = [p["element"] for p in res_fh["starting_xi"]]
+                                fh_bench_ids = [p["element"] for p in res_fh["bench"]]
+                                fh_capt      = res_fh["captain"]
+                                fh_vice      = res_fh["vice_captain"]
+                                # Override XI for this GW only
+                                xi_ids, bench_ids = fh_xi_ids, fh_bench_ids
+                                captain_id, vice_id = fh_capt, fh_vice
+                                squad_df_for_gw = fh_squad
+                                chip = CHIP_FREE_HIT
+                                chips_used.add(CHIP_FREE_HIT)
+                                n_transfers = 0  # no real transfers during FH
+                            except Exception as exc:
+                                print(f"[backtester] GW{gw} FH MIP failed ({exc}); no chip")
+                                squad_df_for_gw = squad_df
+                        else:
+                            squad_df_for_gw = squad_df
+                    else:
+                        # TC or BB: just tag the chip; squad/XI unchanged
+                        chip = scheduled
+                        chips_used.add(scheduled)
+                        squad_df_for_gw = squad_df
+                else:
+                    squad_df_for_gw = squad_df
+
                 # ── score actual GW ───────────────────────────────────────
                 points_by_player, played_minutes = self._gw_actuals(gw)
                 pos_map = (
-                    squad_df.set_index("element")["element_type"].astype(int).to_dict()
+                    squad_df_for_gw.set_index("element")["element_type"].astype(int).to_dict()
                 )
 
                 xi_dicts    = [{"element": e, "element_type": pos_map.get(e, MID)} for e in xi_ids]
