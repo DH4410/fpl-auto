@@ -34,7 +34,7 @@ from .fpl_rules import (
     SQUAD_COMPOSITION, STARTING_XI_SIZE,
     FPLRules,
 )
-from .optimizer import SquadOptimizer
+from .optimizer import SquadOptimizer, CAPTAIN_POSITION_WEIGHT
 
 log = logging.getLogger(__name__)
 
@@ -50,6 +50,7 @@ class SeasonBacktester:
         test_season: str,
         budget: float = 100.0,
         expected_points_fn=None,
+        captain_score_fn=None,
     ):
         self.hist = history_df.copy()
         self.test_season = test_season
@@ -112,6 +113,11 @@ class SeasonBacktester:
         # When supplied, replaces the rolling-mean expected_points with ML predictions.
         self.expected_points_fn = expected_points_fn
 
+        # Optional callable(before_gw: int) -> pd.Series indexed by element.
+        # Risk-adjusted captain scores (e.g. xPts * p60). When supplied, overrides
+        # the MIP captain selection after every XI is finalised.
+        self.captain_score_fn = captain_score_fn
+
         print(f"[backtester] init OK — {len(self.hist):,} rows, "
               f"seasons: {sorted(self.hist['season'].unique())}")
 
@@ -167,12 +173,17 @@ class SeasonBacktester:
     # ------------------------------------------------------------------
 
     def _gw_actuals(self, gw: int) -> tuple[dict, dict]:
-        """Return (points_by_element, minutes_by_element) for a GW."""
+        """Return (points_by_element, minutes_by_element) for a GW.
+
+        Uses groupby+sum so players with two fixtures in a DGW have their
+        points and minutes accumulated correctly (set_index would keep only
+        the last row for duplicate elements).
+        """
         rows = self.hist[
             (self.hist["season"] == self.test_season) & (self.hist["GW"] == gw)
         ]
-        pts  = rows.set_index("element")["total_points"].fillna(0).astype(int).to_dict()
-        mins = rows.set_index("element")["minutes"].fillna(0).astype(int).to_dict()
+        pts  = rows.groupby("element")["total_points"].sum().fillna(0).astype(int).to_dict()
+        mins = rows.groupby("element")["minutes"].sum().fillna(0).astype(int).to_dict()
         return pts, mins
 
     # ------------------------------------------------------------------
@@ -283,6 +294,41 @@ class SeasonBacktester:
         return xi, bench, capt, vice
 
     # ------------------------------------------------------------------
+    # Captain override
+    # ------------------------------------------------------------------
+
+    def _override_captain(
+        self, xi_ids: list[int], pool: pd.DataFrame, gw: int
+    ) -> tuple[int | None, int | None]:
+        """Return (captain_id, vice_id) using risk-adjusted captain scores.
+
+        Returns (None, None) when captain_score_fn is not set, letting the
+        caller keep the MIP-chosen captain unchanged.
+        """
+        if self.captain_score_fn is None:
+            return None, None
+
+        scores = self.captain_score_fn(gw)  # pd.Series indexed by element
+        pool_et = pool.set_index("element")["element_type"]
+
+        eligible = []
+        for eid in xi_ids:
+            et = pool_et.get(eid)
+            if et is None or pd.isna(et):
+                continue
+            pos_weight = CAPTAIN_POSITION_WEIGHT.get(int(et), 1.0)
+            if pos_weight == 0:
+                continue  # GKP not captainable
+            score = float(scores.get(eid, 0.0)) * pos_weight
+            eligible.append((eid, score))
+
+        if len(eligible) < 2:
+            return None, None
+
+        eligible.sort(key=lambda x: -x[1])
+        return eligible[0][0], eligible[1][0]
+
+    # ------------------------------------------------------------------
     # Core simulation
     # ------------------------------------------------------------------
 
@@ -344,13 +390,24 @@ class SeasonBacktester:
                         )
                         bank = max(0.0, self.budget - squad_df["now_cost"].sum() / 10.0)
 
+                    # Apply risk-adjusted captain override (GW1 initial squad)
+                    oc, ov = self._override_captain(xi_ids, pool, gw)
+                    if oc is not None:
+                        captain_id, vice_id = oc, ov
+
                 else:
                     squad_ids = squad_df["element"].astype(int).tolist()
 
-                    # Wildcard at GW20
+                    # Wildcard at a programmable GW: strategy name encodes the GW,
+                    # e.g. "wildcard14" triggers at GW14, "wildcard20" at GW20.
+                    _wc_gw = (
+                        int(strategy[8:])
+                        if strategy.startswith("wildcard") and strategy[8:].isdigit()
+                        else None
+                    )
                     if (
-                        strategy == "wildcard20"
-                        and gw == 20
+                        _wc_gw is not None
+                        and gw == _wc_gw
                         and CHIP_WILDCARD not in chips_used
                     ):
                         try:
@@ -407,6 +464,11 @@ class SeasonBacktester:
                             self._best_xi_from_pool(squad_ids, pool)
                         )
 
+                    # Apply risk-adjusted captain override (post-XI reopt)
+                    oc, ov = self._override_captain(xi_ids, pool, gw)
+                    if oc is not None:
+                        captain_id, vice_id = oc, ov
+
                 # ── apply scheduled chips ────────────────────────────────
                 scheduled = chip_gws.get(gw)
                 if scheduled and scheduled not in chips_used:
@@ -444,6 +506,10 @@ class SeasonBacktester:
                                 # Override XI for this GW only
                                 xi_ids, bench_ids = fh_xi_ids, fh_bench_ids
                                 captain_id, vice_id = fh_capt, fh_vice
+                                # Apply risk-adjusted captain override (FH squad)
+                                oc, ov = self._override_captain(xi_ids, pool, gw)
+                                if oc is not None:
+                                    captain_id, vice_id = oc, ov
                                 squad_df_for_gw = fh_squad
                                 chip = CHIP_FREE_HIT
                                 chips_used.add(CHIP_FREE_HIT)

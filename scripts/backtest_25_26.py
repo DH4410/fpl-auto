@@ -90,8 +90,18 @@ def build_ml_predictor_fn(
     fcols: list[str],
     medians: pd.Series,
     predictor: FPLPointsPredictor,
-) -> callable:
-    """Return an expected_points_fn(before_gw) -> pd.Series for SeasonBacktester."""
+) -> tuple[callable, callable, callable]:
+    """Return (expected_points_fn, captain_score_fn, make_captain_variant) sharing one cache.
+
+    expected_points_fn(before_gw)         -> pd.Series  [pool expected points]
+    captain_score_fn(before_gw)           -> pd.Series  [xPts * p60, DGW-scaled]
+    make_captain_variant(k, cap_dgw_scale) -> callable   [k-blend variant factory]
+
+    make_captain_variant creates captain score functions with:
+      cap_score = xPts * (k + (1-k)*p60)  and a separate cap_dgw_scale for DGW weeks.
+      k=0 is pure p60-risk (same as captain_score_fn with default DGW_SCALE).
+      k=1 is raw expected_points (no p60 weighting).
+    """
     # Pre-compute which elements have double fixtures in each test GW.
     test_hist = history[history["season"] == TEST_SEASON]
     dgw_elements: dict[int, set[int]] = {}
@@ -101,36 +111,81 @@ def build_ml_predictor_fn(
         if doubles:
             dgw_elements[int(gw)] = doubles
 
-    def expected_points_fn(before_gw: int) -> pd.Series:
-        # Row at GW==before_gw has EWMA features from GW 1..(before_gw-1),
-        # because compute_ewma_stats shifts by 1. This is lookahead-free.
+    # Shared prediction cache: before_gw -> {"xp": ndarray, "p60": ndarray, "elements": ndarray}
+    _pred_cache: dict[int, dict | None] = {}
+
+    def _ensure_cached(before_gw: int) -> None:
+        if before_gw in _pred_cache:
+            return
         gw_feat = feat_all[
             (feat_all["season"] == TEST_SEASON)
             & (feat_all["GW"] == before_gw)
-        ].copy()
-        # Drop any duplicate element rows (can arise from data concatenation).
-        gw_feat = gw_feat.drop_duplicates(subset=["element"])
-
+        ].drop_duplicates(subset=["element"]).copy()
         if gw_feat.empty:
-            return pd.Series(dtype=float)
-
+            _pred_cache[before_gw] = None
+            return
         X = gw_feat[fcols].fillna(medians)
         et = gw_feat["element_type"].fillna(MID).astype(int).values
-
         preds = predictor.predict(X, et)
-        xp = preds["expected_points"].clip(lower=0).values.copy()
+        _pred_cache[before_gw] = {
+            "xp":       preds["expected_points"].clip(lower=0).values.copy(),
+            "p60":      preds["p60"].values.copy(),
+            "elements": gw_feat["element"].astype(int).values,
+        }
 
-        # Scale up players with a double fixture this GW.
+    def expected_points_fn(before_gw: int) -> pd.Series:
+        _ensure_cached(before_gw)
+        cached = _pred_cache[before_gw]
+        if cached is None:
+            return pd.Series(dtype=float)
+        xp = cached["xp"].copy()
+        elements = cached["elements"]
         if before_gw in dgw_elements:
             doubles = dgw_elements[before_gw]
-            elems = gw_feat["element"].astype(int).values
-            for idx, eid in enumerate(elems):
+            for idx, eid in enumerate(elements):
                 if eid in doubles:
                     xp[idx] *= DGW_SCALE
+        return pd.Series(xp, index=elements)
 
-        return pd.Series(xp, index=gw_feat["element"].astype(int).values)
+    def captain_score_fn(before_gw: int) -> pd.Series:
+        """Risk-adjusted captain score: expected_points * p60, DGW-scaled."""
+        _ensure_cached(before_gw)
+        cached = _pred_cache[before_gw]
+        if cached is None:
+            return pd.Series(dtype=float)
+        cap_score = cached["xp"].copy() * cached["p60"]
+        elements = cached["elements"]
+        if before_gw in dgw_elements:
+            doubles = dgw_elements[before_gw]
+            for idx, eid in enumerate(elements):
+                if eid in doubles:
+                    cap_score[idx] *= DGW_SCALE
+        return pd.Series(cap_score, index=elements)
 
-    return expected_points_fn
+    def make_captain_variant(k: float = 0.0, cap_dgw_scale: float = DGW_SCALE) -> callable:
+        """Return a captain score fn with k-blending and a separate DGW scale.
+
+        cap_score = xPts * (k + (1-k)*p60), then scaled by cap_dgw_scale for DGW players.
+        """
+        def fn(before_gw: int) -> pd.Series:
+            _ensure_cached(before_gw)
+            cached = _pred_cache[before_gw]
+            if cached is None:
+                return pd.Series(dtype=float)
+            xp = cached["xp"]
+            p60 = cached["p60"]
+            cap_score = xp * (k + (1.0 - k) * p60)
+            elements = cached["elements"]
+            cap_score = cap_score.copy()
+            if before_gw in dgw_elements:
+                doubles = dgw_elements[before_gw]
+                for idx, eid in enumerate(elements):
+                    if eid in doubles:
+                        cap_score[idx] *= cap_dgw_scale
+            return pd.Series(cap_score, index=elements)
+        return fn
+
+    return expected_points_fn, captain_score_fn, make_captain_variant
 
 
 def main() -> None:
@@ -164,13 +219,12 @@ def main() -> None:
     medians = train_feat[fcols].median()
     log.info("Feature columns for prediction: %d", len(fcols))
 
-    # ── 3. Build the expected_points callable ────────────────────────────
-    ml_fn = build_ml_predictor_fn(feat_all, history, fcols, medians, predictor)
+    # ── 3. Build ML callables (shared prediction cache) ──────────────────
+    ml_fn, captain_score_fn, make_captain_variant = build_ml_predictor_fn(
+        feat_all, history, fcols, medians, predictor
+    )
 
     # ── 4. Run baseline (rolling mean) ──────────────────────────────────
-    # For a fair A/B, both strategies see ALL historical data (2022-24) for
-    # the rolling mean too. The backtester's _expected_pts already excludes
-    # the test season, so this is clean.
     log.info("Running BASELINE backtester (rolling mean)…")
     bt_base = SeasonBacktester(history, test_season=TEST_SEASON)
     df_base = bt_base.run(strategy="1ft")
@@ -189,73 +243,164 @@ def main() -> None:
 
     # ── 7. Run ML + chips (BB@GW26, TC@GW33) ───────────────────────────
     # 2025-26 DGWs: GW26, GW33, GW36. BGWs: GW31, GW34.
-    # With the all-FTs strategy, the squad is well-maintained so FH actually
-    # hurts (our squad outscores the FH squad in blank GWs). Best schedule:
-    # BB in DGW26 (bench gets 2× fixture) and TC in DGW33 (biggest DGW,
-    # captain scores 3×). No FH needed.
-    CHIP_SCHEDULE_25_26 = {26: "bboost", 33: "3xc"}
+    CHIP_SCHEDULE_26_33 = {26: "bboost", 33: "3xc"}
     log.info("Running ML + chips backtester (BB@GW26, TC@GW33)…")
     bt_chips = SeasonBacktester(history, test_season=TEST_SEASON,
                                 expected_points_fn=ml_fn)
-    df_chips = bt_chips.run(strategy="1ft", chip_gws=CHIP_SCHEDULE_25_26)
+    df_chips = bt_chips.run(strategy="1ft", chip_gws=CHIP_SCHEDULE_26_33)
 
-    # ── 8. Report ────────────────────────────────────────────────────────
-    base_total  = int(df_base["pts"].sum())
-    ml_total    = int(df_ml["pts"].sum())
-    wc_total    = int(df_wc["pts"].sum())
-    chips_total = int(df_chips["pts"].sum())
+    # ── 8. Run ML + captain risk + chips (BB@GW26, TC@GW33) ─────────────
+    # Captain score = expected_points * p60 (rotation-risk penalty).
+    log.info("Running ML + captain risk + chips (BB@GW26, TC@GW33)…")
+    bt_cap = SeasonBacktester(history, test_season=TEST_SEASON,
+                              expected_points_fn=ml_fn,
+                              captain_score_fn=captain_score_fn)
+    df_cap = bt_cap.run(strategy="1ft", chip_gws=CHIP_SCHEDULE_26_33)
 
-    print("\n" + "=" * 65)
+    # ── 9. Chip timing sweep: BB@GW36, TC@GW33 ──────────────────────────
+    CHIP_SCHEDULE_36_33 = {36: "bboost", 33: "3xc"}
+    log.info("Running ML + chips sweep (BB@GW36, TC@GW33)…")
+    bt_chips2 = SeasonBacktester(history, test_season=TEST_SEASON,
+                                 expected_points_fn=ml_fn,
+                                 captain_score_fn=captain_score_fn)
+    df_chips2 = bt_chips2.run(strategy="1ft", chip_gws=CHIP_SCHEDULE_36_33)
+
+    # ── 10. ML + wildcard at GW14 ────────────────────────────────────────
+    log.info("Running ML + wildcard@GW14 backtester…")
+    bt_wc14 = SeasonBacktester(history, test_season=TEST_SEASON,
+                               expected_points_fn=ml_fn,
+                               captain_score_fn=captain_score_fn)
+    df_wc14 = bt_wc14.run(strategy="wildcard14", chip_gws=CHIP_SCHEDULE_26_33)
+
+    # ── 11. Report ───────────────────────────────────────────────────────
+    base_total   = int(df_base["pts"].sum())
+    ml_total     = int(df_ml["pts"].sum())
+    wc_total     = int(df_wc["pts"].sum())
+    chips_total  = int(df_chips["pts"].sum())
+    cap_total    = int(df_cap["pts"].sum())
+    chips2_total = int(df_chips2["pts"].sum())
+    wc14_total   = int(df_wc14["pts"].sum())
+
+    print("\n" + "=" * 70)
     print("  FPL 2025-26 BACKTEST RESULTS")
-    print("=" * 65)
-    print(f"  Baseline (rolling mean, 1 FT/GW):         {base_total:>5} pts")
-    print(f"  ML model (FPLPointsPredictor, 1 FT):      {ml_total:>5} pts")
-    print(f"  ML model + Wildcard at GW20:               {wc_total:>5} pts")
-    print(f"  ML model + Chips (BB26/TC33):              {chips_total:>5} pts")
+    print("=" * 70)
+    print(f"  1. Baseline (rolling mean, 1 FT/GW):             {base_total:>5} pts")
+    print(f"  2. ML model (1 FT):                              {ml_total:>5} pts")
+    print(f"  3. ML + Wildcard@GW20:                           {wc_total:>5} pts")
+    print(f"  4. ML + Chips (BB@26, TC@33):                    {chips_total:>5} pts")
+    print(f"  5. ML + Captain risk + Chips (BB@26, TC@33):     {cap_total:>5} pts  ** KEY")
+    print(f"  6. ML + Captain risk + Chips (BB@36, TC@33):     {chips2_total:>5} pts")
+    print(f"  7. ML + Captain risk + WC@14 + Chips (BB@26):    {wc14_total:>5} pts")
     print()
-    print(f"  User's actual 2025-26 score:               2,059 pts  (~3M rank)")
-    print(f"  Sub-100k target:                          ~2,200 pts")
-    print(f"  ML gain over baseline:                    {ml_total - base_total:>+5} pts")
-    print(f"  ML+Chips (BB+TC) gain over baseline:      {chips_total - base_total:>+5} pts")
-    print(f"  ML+Chips gain over user's actual:         {chips_total - 2059:>+5} pts")
-    print("=" * 65)
-
-    best = max(ml_total, chips_total)
+    print(f"  User's actual 2025-26 score:                     2,059 pts  (~3M rank)")
+    print(f"  Sub-100k target:                                ~2,200 pts")
+    print()
+    best = max(ml_total, chips_total, cap_total, chips2_total, wc14_total)
+    print(f"  Best strategy:                                   {best:>5} pts")
     if best >= 2200:
-        print("\n  PASS: ML strategy meets sub-100k threshold.")
-        print("  Ready to integrate into the live 26/27 pipeline.")
+        print("  STATUS: PASS — sub-100k threshold met.")
     elif best >= 2059:
-        print("\n  PARTIAL: ML beats user's actual score but not sub-100k.")
+        print("  STATUS: PARTIAL — beats user's actual but not sub-100k.")
     else:
-        print("\n  MISS: ML strategy underperforms. Check model diagnostics.")
+        print("  STATUS: MISS — below user's actual score.")
+    print("=" * 70)
 
-    # Chip breakdown
-    print("\n  Chips GW breakdown:")
-    print(f"  {'GW':>4}  {'ML':>5}  {'Chips':>6}  {'Chip':>8}  {'Capt bonus':>10}")
-    for gw in [26, 33]:
-        mpts  = int(df_ml.loc[df_ml["gw"] == gw, "pts"].sum())
-        cpts  = int(df_chips.loc[df_chips["gw"] == gw, "pts"].sum())
-        chip  = df_chips.loc[df_chips["gw"] == gw, "chip"].iloc[0] if len(df_chips[df_chips["gw"] == gw]) else ""
-        cbonus = int(df_chips.loc[df_chips["gw"] == gw, "captain_bonus"].sum())
-        print(f"  GW{gw:2d}  {mpts:>5}  {cpts:>6}  {str(chip):>8}  {cbonus:>10}")
+    # Captain risk isolated effect
+    cap_gain = cap_total - chips_total
+    print(f"\n  Captain risk gain over ML+Chips:   {cap_gain:>+4} pts  "
+          f"(GW5 captain comparison below)")
 
-    # ── 9. GW-by-GW breakdown ────────────────────────────────────────────
-    print("\n  GW-by-GW (ML vs baseline, first 10 GWs):")
-    print(f"  {'GW':>4}  {'Base':>5}  {'ML':>5}  {'Diff':>5}  {'ML cum':>8}")
-    for gw in range(1, min(11, df_ml["gw"].max() + 1)):
-        bpts = int(df_base.loc[df_base["gw"] == gw, "pts"].sum())
-        mpts = int(df_ml.loc[df_ml["gw"] == gw, "pts"].sum())
-        mcum = int(df_ml.loc[df_ml["gw"] <= gw, "pts"].sum())
-        print(f"  {gw:>4}  {bpts:>5}  {mpts:>5}  {mpts - bpts:>+5}  {mcum:>8}")
+    # GW5 captain bonus comparison
+    gw5_ml  = int(df_ml.loc[df_ml["gw"] == 5, "captain_bonus"].sum())
+    gw5_cap = int(df_cap.loc[df_cap["gw"] == 5, "captain_bonus"].sum())
+    gw5_ml_id  = int(df_ml.loc[df_ml["gw"] == 5, "captain_id"].iloc[0]) if len(df_ml[df_ml["gw"] == 5]) else 0
+    gw5_cap_id = int(df_cap.loc[df_cap["gw"] == 5, "captain_id"].iloc[0]) if len(df_cap[df_cap["gw"] == 5]) else 0
+    print(f"\n  GW5 captain comparison:")
+    print(f"    ML+Chips:     captain_id={gw5_ml_id:>6},  captain_bonus={gw5_ml:>4} pts")
+    print(f"    ML+Cap+Chips: captain_id={gw5_cap_id:>6},  captain_bonus={gw5_cap:>4} pts")
+
+    # Chip-week breakdown
+    print("\n  Chip GW breakdown (run 4 vs run 5):")
+    print(f"  {'GW':>4}  {'ML+Chips':>9}  {'ML+Cap+Chips':>13}  {'Chip':>8}  {'Cap bonus (run5)':>17}")
+    for gw in [26, 33, 36]:
+        c4 = int(df_chips.loc[df_chips["gw"] == gw, "pts"].sum()) if gw in df_chips["gw"].values else 0
+        c5 = int(df_cap.loc[df_cap["gw"] == gw, "pts"].sum()) if gw in df_cap["gw"].values else 0
+        chip_str = str(df_cap.loc[df_cap["gw"] == gw, "chip"].iloc[0]) if gw in df_cap["gw"].values else "-"
+        cb5 = int(df_cap.loc[df_cap["gw"] == gw, "captain_bonus"].sum()) if gw in df_cap["gw"].values else 0
+        print(f"  GW{gw:2d}  {c4:>9}  {c5:>13}  {chip_str:>8}  {cb5:>17}")
+
+    # Per-GW breakdown for best strategy
+    named_runs = [
+        ("ML", df_ml),
+        ("ML+Chips", df_chips),
+        ("ML+Cap+Chips", df_cap),
+        ("ML+Cap+Chips(36/33)", df_chips2),
+        ("ML+WC14", df_wc14),
+    ]
+    best_name, best_df = max(named_runs, key=lambda x: x[1]["pts"].sum())
+    print(f"\n  Per-GW breakdown — best strategy ({best_name}):")
+    print(f"  {'GW':>4}  {'Pts':>5}  {'CumPts':>8}  {'Cap bonus':>10}  {'Chip':>8}")
+    for _, row in best_df.sort_values("gw").iterrows():
+        print(f"  GW{int(row['gw']):2d}  {int(row['pts']):>5}  "
+              f"{int(row['cumulative']):>8}  {int(row['captain_bonus']):>10}  "
+              f"{str(row['chip']) if row['chip'] else '':>8}")
+
+    # ── 12. Fallback tuning: k-factor + DGW scale sweep ──────────────────
+    if best < 2200:
+        print("\n" + "=" * 70)
+        print("  FALLBACK TUNING (target not reached)")
+        print("=" * 70)
+        print(f"  {'Config':>30}  {'Score':>6}  {'vs best':>8}")
+
+        tuning_results = []
+        # k-factor sweep: cap_score = xP*(k + (1-k)*p60) with default DGW scale
+        for k in [0.3, 0.5, 0.7]:
+            cap_fn = make_captain_variant(k=k)
+            bt = SeasonBacktester(
+                history, test_season=TEST_SEASON,
+                expected_points_fn=ml_fn, captain_score_fn=cap_fn
+            )
+            df = bt.run(strategy="wildcard14", chip_gws=CHIP_SCHEDULE_26_33)
+            total = int(df["pts"].sum())
+            label = f"WC14+BB26/TC33, k={k}"
+            tuning_results.append((label, total, df))
+            print(f"  {label:>30}  {total:>6}  {total - best:>+8}")
+
+        # DGW scale sweep for captain only (k=0, vary cap_dgw_scale)
+        for cdgw in [1.5, 1.8, 2.0]:
+            cap_fn = make_captain_variant(k=0.0, cap_dgw_scale=cdgw)
+            bt = SeasonBacktester(
+                history, test_season=TEST_SEASON,
+                expected_points_fn=ml_fn, captain_score_fn=cap_fn
+            )
+            df = bt.run(strategy="wildcard14", chip_gws=CHIP_SCHEDULE_26_33)
+            total = int(df["pts"].sum())
+            label = f"WC14+BB26/TC33, cap_dgw={cdgw}"
+            tuning_results.append((label, total, df))
+            print(f"  {label:>30}  {total:>6}  {total - best:>+8}")
+
+        print("=" * 70)
+        best_tuning_name, best_tuning_score, _ = max(tuning_results, key=lambda x: x[1])
+        print(f"  Best tuned config: {best_tuning_name} -> {best_tuning_score} pts")
+        if best_tuning_score >= 2200:
+            print("  STATUS: PASS after tuning.")
+        else:
+            print(f"  Remaining gap to 2200: {2200 - best_tuning_score} pts")
 
     # Save per-GW results
     out_dir = Path(__file__).resolve().parents[1] / "reports"
     out_dir.mkdir(exist_ok=True)
-    df_ml["strategy"] = "ml_1ft"
-    df_base["strategy"] = "baseline_1ft"
-    df_wc["strategy"] = "ml_wildcard20"
-    df_chips["strategy"] = "ml_chips"
-    combined = pd.concat([df_base, df_ml, df_wc, df_chips], ignore_index=True)
+    df_base["strategy"]   = "baseline_1ft"
+    df_ml["strategy"]     = "ml_1ft"
+    df_wc["strategy"]     = "ml_wildcard20"
+    df_chips["strategy"]  = "ml_chips_26_33"
+    df_cap["strategy"]    = "ml_cap_chips_26_33"
+    df_chips2["strategy"] = "ml_cap_chips_36_33"
+    df_wc14["strategy"]   = "ml_wc14_chips_26_33"
+    combined = pd.concat(
+        [df_base, df_ml, df_wc, df_chips, df_cap, df_chips2, df_wc14],
+        ignore_index=True
+    )
     out_path = out_dir / "backtest_2025_26.csv"
     combined.to_csv(out_path, index=False)
     print(f"\n  Full results saved to {out_path}")

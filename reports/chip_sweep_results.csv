@@ -1,0 +1,15 @@
+label,score,dgw_scale,chips_ok
+FH@31+BB@33+TC@36 [dgw_scale=1.5],2148,1.5,ok
+FH@31+BB@33+TC@36,2148,1.7,ok
+TC@26+BB@33,2142,1.7,ok
+TC@26+BB@36,2141,1.7,ok
+BB@36+TC@33,2140,1.7,ok
+FH@34+BB@33+TC@36,2140,1.7,ok
+FH@31+BB@26+TC@33,2140,1.7,ok
+BB@33+TC@36,2139,1.7,ok
+FH@34+BB@26+TC@33,2138,1.7,ok
+FH@31+BB@26+TC@36,2138,1.7,ok
+BB@26+TC@33,2137,1.7,ok
+BB@26+TC@36,2135,1.7,ok
+FH@31+BB@33+TC@36 [dgw_scale=2.5],2084,2.5,ok
+FH@31+BB@33+TC@36 [dgw_scale=2.0],2052,2.0,ok
