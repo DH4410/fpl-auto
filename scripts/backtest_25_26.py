@@ -27,6 +27,7 @@ import numpy as np
 import pandas as pd
 
 from bot.backtester import SeasonBacktester, compare_strategies
+from bot.chip_planner import ChipPlanner
 from bot.data_collector import load_multi_season_history
 from bot.feature_engineering import (
     compute_ewma_stats,
@@ -272,7 +273,27 @@ def main() -> None:
                                captain_score_fn=captain_score_fn)
     df_wc14 = bt_wc14.run(strategy="wildcard14", chip_gws=CHIP_SCHEDULE_26_33)
 
-    # ── 11. Report ───────────────────────────────────────────────────────
+    # ── 11. 5-chip: WC@14 + H2 WC@25 + best H2 chips ────────────────────
+    # Adds a 2nd wildcard (H2 WC@25) plus the best known H2 chip timing.
+    CHIP_5 = {25: "wildcard", 31: "freehit", 33: "bboost", 36: "3xc"}
+    log.info("Running 5-chip: WC@14 + H2 WC@25 + FH@31 + BB@33 + TC@36…")
+    bt_5chip = SeasonBacktester(history, test_season=TEST_SEASON,
+                                expected_points_fn=ml_fn,
+                                captain_score_fn=captain_score_fn)
+    df_5chip = bt_5chip.run(strategy="wildcard14", chip_gws=CHIP_5)
+
+    # ── 12. 8-chip dynamic planner ────────────────────────────────────────
+    log.info("Running chip planner for 2025-26…")
+    planner = ChipPlanner()
+    chip_plan_8 = planner.plan(ml_fn, history, TEST_SEASON)
+    log.info("Chip planner schedule: %s", chip_plan_8)
+    log.info("Running 8-chip planner backtest…")
+    bt_8chip = SeasonBacktester(history, test_season=TEST_SEASON,
+                                expected_points_fn=ml_fn,
+                                captain_score_fn=captain_score_fn)
+    df_8chip = bt_8chip.run(strategy="1ft", chip_gws=chip_plan_8)
+
+    # ── 13. Report ───────────────────────────────────────────────────────
     base_total   = int(df_base["pts"].sum())
     ml_total     = int(df_ml["pts"].sum())
     wc_total     = int(df_wc["pts"].sum())
@@ -280,6 +301,8 @@ def main() -> None:
     cap_total    = int(df_cap["pts"].sum())
     chips2_total = int(df_chips2["pts"].sum())
     wc14_total   = int(df_wc14["pts"].sum())
+    chip5_total  = int(df_5chip["pts"].sum())
+    chip8_total  = int(df_8chip["pts"].sum())
 
     print("\n" + "=" * 70)
     print("  FPL 2025-26 BACKTEST RESULTS")
@@ -288,14 +311,17 @@ def main() -> None:
     print(f"  2. ML model (1 FT):                              {ml_total:>5} pts")
     print(f"  3. ML + Wildcard@GW20:                           {wc_total:>5} pts")
     print(f"  4. ML + Chips (BB@26, TC@33):                    {chips_total:>5} pts")
-    print(f"  5. ML + Captain risk + Chips (BB@26, TC@33):     {cap_total:>5} pts  ** KEY")
+    print(f"  5. ML + Captain risk + Chips (BB@26, TC@33):     {cap_total:>5} pts")
     print(f"  6. ML + Captain risk + Chips (BB@36, TC@33):     {chips2_total:>5} pts")
     print(f"  7. ML + Captain risk + WC@14 + Chips (BB@26):    {wc14_total:>5} pts")
+    print(f"  8. ML + Captain risk + 5 chips (best tuned):     {chip5_total:>5} pts  ** KEY")
+    print(f"  9. ML + Captain risk + 8 chips (planner):        {chip8_total:>5} pts  ** KEY")
+    print(f"     Planner schedule: {chip_plan_8}")
     print()
     print(f"  User's actual 2025-26 score:                     2,059 pts  (~3M rank)")
     print(f"  Sub-100k target:                                ~2,200 pts")
     print()
-    best = max(ml_total, chips_total, cap_total, chips2_total, wc14_total)
+    best = max(ml_total, chips_total, cap_total, chips2_total, wc14_total, chip5_total, chip8_total)
     print(f"  Best strategy:                                   {best:>5} pts")
     if best >= 2200:
         print("  STATUS: PASS — sub-100k threshold met.")
@@ -336,6 +362,8 @@ def main() -> None:
         ("ML+Cap+Chips", df_cap),
         ("ML+Cap+Chips(36/33)", df_chips2),
         ("ML+WC14", df_wc14),
+        ("ML+5chip", df_5chip),
+        ("ML+8chip-planner", df_8chip),
     ]
     best_name, best_df = max(named_runs, key=lambda x: x[1]["pts"].sum())
     print(f"\n  Per-GW breakdown — best strategy ({best_name}):")

@@ -33,6 +33,8 @@ import numpy as np
 import pandas as pd
 import pulp
 
+import numpy as np
+
 from .fpl_rules import (
     CHIP_BENCH_BOOST, CHIP_FREE_HIT, CHIP_TRIPLE_CAPTAIN, CHIP_WILDCARD,
     CHIP_LABELS, chip_half, FIRST_HALF_GWS, SECOND_HALF_GWS,
@@ -242,3 +244,141 @@ class ChipPlanner:
         # Wildcard value ≈ hit savings + a small structural premium.
         hit_saving = hits * HIT_COST
         return (hit_saving + xi_xpts * 0.05) * self.wildcard_gain_premium
+
+    # ------------------------------------------------------------------
+    # Backtester chip scheduling
+    # ------------------------------------------------------------------
+
+    def plan(
+        self,
+        expected_points_fn,
+        history_df: pd.DataFrame,
+        test_season: str,
+        wildcard_h1_gw: int | None = None,
+        wildcard_h2_gw: int | None = None,
+    ) -> dict[int, str]:
+        """Return chip schedule {gw: chip_name} for the full season.
+
+        Assigns up to 8 chips (H1 + H2 sets). FH is only assigned if a BGW
+        exists in that half. WC timing defaults to 35% through H1 and 25%
+        through H2 if not supplied explicitly.
+        """
+        test_hist = history_df[history_df["season"] == test_season]
+        all_gws = sorted(test_hist["GW"].unique().astype(int))
+        if not all_gws:
+            return {}
+
+        h1_gws = [g for g in all_gws if g < 20]
+        h2_gws = [g for g in all_gws if g >= 20]
+
+        dgw_set, bgw_set, gw_n_unique = self._detect_gw_types(test_hist)
+        median_n = float(np.median(list(gw_n_unique.values()))) if gw_n_unique else 800.0
+
+        if wildcard_h1_gw is None:
+            wildcard_h1_gw = h1_gws[int(0.35 * len(h1_gws))] if h1_gws else 7
+        if wildcard_h2_gw is None:
+            wildcard_h2_gw = h2_gws[int(0.25 * len(h2_gws))] if h2_gws else 25
+
+        schedule: dict[int, str] = {}
+        for gws, wc_gw in [(h1_gws, wildcard_h1_gw), (h2_gws, wildcard_h2_gw)]:
+            half_bgws = {g for g in bgw_set if g in set(gws)}
+            schedule.update(
+                self._plan_half(gws, wc_gw, half_bgws, expected_points_fn,
+                                test_hist, gw_n_unique, median_n)
+            )
+        return schedule
+
+    def _detect_gw_types(
+        self, test_hist: pd.DataFrame
+    ) -> tuple[set[int], set[int], dict[int, int]]:
+        """Return (dgw_gws, bgw_gws, gw_n_unique) detected from player counts."""
+        gw_stats: dict[int, dict] = {}
+        for gw, grp in test_hist.groupby("GW"):
+            counts = grp.groupby("element").size()
+            gw_stats[int(gw)] = {
+                "n_unique": int(grp["element"].nunique()),
+                "n_doubles": int((counts > 1).sum()),
+            }
+        dgw_set = {g for g, s in gw_stats.items() if s["n_doubles"] > 0}
+        median_n = float(np.median([s["n_unique"] for s in gw_stats.values()]))
+        bgw_set = {g for g, s in gw_stats.items() if s["n_unique"] < 0.85 * median_n}
+        gw_n_unique = {g: s["n_unique"] for g, s in gw_stats.items()}
+        return dgw_set, bgw_set, gw_n_unique
+
+    def _plan_half(
+        self,
+        gws: list[int],
+        wc_gw: int,
+        bgw_set: set[int],
+        expected_points_fn,
+        test_hist: pd.DataFrame,
+        gw_n_unique: dict[int, int],
+        median_n: float,
+    ) -> dict[int, str]:
+        """Assign at most 4 chips (WC, FH, TC, BB) to GWs in one half.
+
+        Assignment order: WC (fixed) → FH (best BGW) → BB (best top-15 sum,
+        prefers DGWs) → TC (best max player). BB is assigned before TC because
+        Bench Boost extracts more total value from double gameweeks than Triple
+        Captain does.
+        """
+        gw_set = set(gws)
+        assigned: dict[int, str] = {}
+        taken: set[int] = set()
+
+        # 1. Wildcard — fixed GW
+        if wc_gw in gw_set:
+            assigned[wc_gw] = CHIP_WILDCARD
+            taken.add(wc_gw)
+
+        # 2. Free Hit — best BGW only (skip if none).
+        # FH score = predicted top-15 xPts among active players, weighted by
+        # sqrt(n_unique / median_n) so BGWs with more fixtures rank higher when
+        # ML predictions are similar.
+        def _fh_score(g: int) -> float:
+            n = gw_n_unique.get(g, median_n)
+            return self._fh_value(g, expected_points_fn, test_hist) * (n / median_n) ** 0.5
+
+        bgw_candidates = sorted(
+            [g for g in bgw_set if g in gw_set and g not in taken],
+            key=lambda g: -_fh_score(g),
+        )
+        if bgw_candidates:
+            fh_gw = bgw_candidates[0]
+            assigned[fh_gw] = CHIP_FREE_HIT
+            taken.add(fh_gw)
+
+        # 3. Bench Boost — GW with highest top-15 sum (assigned before TC because
+        # BB gains more total value in DGWs — all 15 players benefit from doubles).
+        bb_candidates = [g for g in gws if g not in taken]
+        if bb_candidates:
+            bb_gw = max(bb_candidates,
+                        key=lambda g: self._bb_value(g, expected_points_fn))
+            assigned[bb_gw] = CHIP_BENCH_BOOST
+            taken.add(bb_gw)
+
+        # 4. Triple Captain — GW with highest single-player prediction.
+        tc_candidates = [g for g in gws if g not in taken]
+        if tc_candidates:
+            tc_gw = max(tc_candidates,
+                        key=lambda g: self._tc_value(g, expected_points_fn))
+            assigned[tc_gw] = CHIP_TRIPLE_CAPTAIN
+
+        return assigned
+
+    def _tc_value(self, gw: int, expected_points_fn) -> float:
+        s = expected_points_fn(gw)
+        return float(s.max()) if not s.empty else 0.0
+
+    def _bb_value(self, gw: int, expected_points_fn) -> float:
+        s = expected_points_fn(gw)
+        return float(s.nlargest(15).sum()) if not s.empty else 0.0
+
+    def _fh_value(
+        self, gw: int, expected_points_fn, test_hist: pd.DataFrame
+    ) -> float:
+        """Top-15 xPts among players with an actual fixture this GW."""
+        gw_elements = set(test_hist[test_hist["GW"] == gw]["element"].astype(int))
+        s = expected_points_fn(gw)
+        s = s[s.index.isin(gw_elements)]
+        return float(s.nlargest(15).sum()) if not s.empty else 0.0

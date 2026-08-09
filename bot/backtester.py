@@ -353,7 +353,10 @@ class SeasonBacktester:
         squad_df: pd.DataFrame | None = None
         bank = 0.0
         free_transfers = 1
-        chips_used: set[str] = set()
+        chips_used_h1: set[str] = set()   # GW1-19
+        chips_used_h2: set[str] = set()   # GW20+
+        def _cu(g: int) -> set[str]:
+            return chips_used_h1 if g < 20 else chips_used_h2
         cumulative = 0
         xi_ids: list[int] = []
         bench_ids: list[int] = []
@@ -405,11 +408,15 @@ class SeasonBacktester:
                         if strategy.startswith("wildcard") and strategy[8:].isdigit()
                         else None
                     )
-                    if (
-                        _wc_gw is not None
-                        and gw == _wc_gw
-                        and CHIP_WILDCARD not in chips_used
-                    ):
+                    _do_wc = (
+                        (
+                            (_wc_gw is not None and gw == _wc_gw)
+                            or (chip_gws.get(gw) == CHIP_WILDCARD)
+                        )
+                        and CHIP_WILDCARD not in _cu(gw)
+                    )
+                    if _do_wc:
+                        _cu(gw).add(CHIP_WILDCARD)  # consume chip; prevent H-half retry
                         try:
                             pre_wc_ids = set(squad_ids)
                             res = self.opt.optimize_initial_squad(
@@ -424,7 +431,6 @@ class SeasonBacktester:
                             captain_id = res["captain"]
                             vice_id    = res["vice_captain"]
                             chip = CHIP_WILDCARD
-                            chips_used.add(CHIP_WILDCARD)
                             free_transfers = 1
                             n_transfers = sum(1 for e in squad_ids if e not in pre_wc_ids)
                         except Exception as exc:
@@ -471,7 +477,7 @@ class SeasonBacktester:
 
                 # ── apply scheduled chips ────────────────────────────────
                 scheduled = chip_gws.get(gw)
-                if scheduled and scheduled not in chips_used:
+                if scheduled and scheduled not in _cu(gw):
                     if scheduled == CHIP_FREE_HIT:
                         # Build a fresh squad from players with a fixture this GW
                         # (players who appear in the actual GW data had teams playing).
@@ -512,7 +518,7 @@ class SeasonBacktester:
                                     captain_id, vice_id = oc, ov
                                 squad_df_for_gw = fh_squad
                                 chip = CHIP_FREE_HIT
-                                chips_used.add(CHIP_FREE_HIT)
+                                _cu(gw).add(CHIP_FREE_HIT)
                                 n_transfers = 0  # no real transfers during FH
                             except Exception as exc:
                                 print(f"[backtester] GW{gw} FH MIP failed ({exc}); no chip")
@@ -522,7 +528,7 @@ class SeasonBacktester:
                     else:
                         # TC or BB: just tag the chip; squad/XI unchanged
                         chip = scheduled
-                        chips_used.add(scheduled)
+                        _cu(gw).add(scheduled)
                         squad_df_for_gw = squad_df
                 else:
                     squad_df_for_gw = squad_df
