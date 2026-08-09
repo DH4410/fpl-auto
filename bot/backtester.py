@@ -51,6 +51,8 @@ class SeasonBacktester:
         budget: float = 100.0,
         expected_points_fn=None,
         captain_score_fn=None,
+        max_hits: int = 0,
+        hit_threshold: float = 0.0,
     ):
         self.hist = history_df.copy()
         self.test_season = test_season
@@ -117,6 +119,12 @@ class SeasonBacktester:
         # Risk-adjusted captain scores (e.g. xPts * p60). When supplied, overrides
         # the MIP captain selection after every XI is finalised.
         self.captain_score_fn = captain_score_fn
+
+        # max_hits: paid hits allowed per GW (0 = never take a hit).
+        # hit_threshold: extra buffer above the 4-pt hit cost required to trigger;
+        #   e.g. hit_threshold=2 means only hit when net gain > 6 pts.
+        self.max_hits = max_hits
+        self.hit_threshold = hit_threshold
 
         print(f"[backtester] init OK — {len(self.hist):,} rows, "
               f"seasons: {sorted(self.hist['season'].unique())}")
@@ -195,8 +203,13 @@ class SeasonBacktester:
         squad_df: pd.DataFrame,
         pool: pd.DataFrame,
         bank: float,
+        min_gain: float = 0.0,
     ) -> tuple[pd.DataFrame, float, bool]:
-        """Make the transfer with the highest marginal expected-points gain."""
+        """Make the transfer with the highest marginal expected-points gain.
+
+        min_gain: minimum gain required to make the transfer (0 for free
+        transfers; set to HIT_COST + threshold for paid hits).
+        """
         pool_idx = pool.set_index("element")
 
         squad = squad_df.copy()
@@ -204,7 +217,7 @@ class SeasonBacktester:
             pool_idx["expected_points"]
         ).fillna(0)
 
-        best_gain = 0.0  # only transfer if gain is positive
+        best_gain = min_gain  # only transfer if gain exceeds threshold
         best_out: pd.Series | None = None
         best_in: pd.Series | None = None
         best_new_bank = bank
@@ -448,6 +461,22 @@ class SeasonBacktester:
                             squad_df = new_squad
                             bank = new_bank
                             n_transfers += 1
+
+                        # Paid hits: take up to max_hits if net gain exceeds
+                        # HIT_COST + hit_threshold (e.g., threshold=0 means
+                        # take a hit whenever projected gain > 4 pts).
+                        from .fpl_rules import HIT_COST as _HIT_COST
+                        for _ in range(self.max_hits):
+                            new_squad, new_bank, made = self._greedy_transfer(
+                                squad_df, pool, bank,
+                                min_gain=_HIT_COST + self.hit_threshold,
+                            )
+                            if not made:
+                                break
+                            squad_df = new_squad
+                            bank = new_bank
+                            n_transfers += 1
+
                         squad_ids = squad_df["element"].astype(int).tolist()
 
                     # Re-optimise XI each week
