@@ -421,3 +421,62 @@ def _safe_float(value) -> float:
         return float(value) if value is not None else 0.0
     except (TypeError, ValueError):
         return 0.0
+
+
+# ---------------------------------------------------------------------------
+# Captain safety filter
+# ---------------------------------------------------------------------------
+
+#: Players below this start probability are excluded from captaincy to avoid
+#: the "0-minute captain kill" scenario. 0.70 means the player must be at
+#: worst a 70% starter (status='a' or chance_of_playing=75+).
+CAPTAIN_MIN_P_START: float = 0.70
+
+
+def apply_captain_safety_filter(
+    captain_scores: "pd.Series",
+    forecasts_df: "pd.DataFrame",
+    current_gw: int,
+    min_p_start: float = CAPTAIN_MIN_P_START,
+) -> "pd.Series":
+    """Zero out captain scores for players whose start probability is too low.
+
+    The single most costly mistake in FPL is captaining a player who does not
+    start. ``p_start`` from the forecaster already incorporates injury status
+    and ``chance_of_playing``; this filter enforces a hard floor so the
+    optimizer cannot pick a doubtful player as captain even when their raw
+    expected points are very high.
+
+    Parameters
+    ----------
+    captain_scores:
+        Series indexed by element IDs containing the pre-filter captain scores.
+    forecasts_df:
+        The forecaster output; must contain ``element``, ``gw``, ``p_start``.
+    current_gw:
+        The gameweek being planned.
+    min_p_start:
+        Players below this start-probability are zeroed out.
+
+    Returns
+    -------
+    pd.Series
+        Captain scores with unsafe picks set to 0.0.
+    """
+    import pandas as _pd
+    out = captain_scores.copy()
+    gw_rows = forecasts_df[forecasts_df["gw"] == current_gw]
+    if "p_start" not in gw_rows.columns:
+        return out
+    p_start_map = gw_rows.set_index("element")["p_start"].to_dict()
+    for element, score in out.items():
+        p = p_start_map.get(int(element), 1.0)
+        if float(p) < min_p_start:
+            out[element] = 0.0
+    log.info(
+        "apply_captain_safety_filter: zeroed %d of %d candidates (p_start < %.2f)",
+        int((captain_scores > 0).sum() - (out > 0).sum()),
+        len(out),
+        min_p_start,
+    )
+    return out

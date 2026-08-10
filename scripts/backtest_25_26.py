@@ -32,6 +32,8 @@ from bot.data_collector import load_multi_season_history
 from bot.feature_engineering import (
     compute_ewma_stats,
     feature_columns,
+    player_vs_opponent_features,
+    resolve_opponent_team_name,
     rolling_window_stats,
 )
 from bot.fpl_rules import MID
@@ -258,6 +260,9 @@ def main() -> None:
     log.info("Computing EWMA + rolling features (once for all seasons)…")
     feat_all = compute_ewma_stats(history)
     feat_all = rolling_window_stats(feat_all)
+    log.info("Resolving opponent team names + h2h features…")
+    feat_all = resolve_opponent_team_name(feat_all)
+    feat_all = player_vs_opponent_features(feat_all)
     feat_all = _add_position_features(feat_all)
 
     # Derive feature column list from the training sub-set to avoid any

@@ -682,8 +682,15 @@ class FPLPointsPredictor:
         concede_pts = np.where(np.isin(et, [GKP, DEF]),
                                -0.5 * conceded * minutes_share, 0.0)
 
-        card_pts = -np.array([self.yellow_per90.get(int(e), 0.15) for e in et]) \
-            * minutes_share
+        # Per-player yellow card rate when available; positional average otherwise.
+        pos_yellow = np.array([self.yellow_per90.get(int(e), 0.15) for e in et])
+        if "ewma_yellow_cards" in X.columns:
+            player_rate = pd.to_numeric(X["ewma_yellow_cards"], errors="coerce").values
+            valid = np.isfinite(player_rate) & (player_rate >= 0)
+            yellow_rate = np.where(valid, player_rate, pos_yellow)
+        else:
+            yellow_rate = pos_yellow
+        card_pts = -yellow_rate * minutes_share
 
         total = (appearance + goals_pts + assist_pts + cs_pts + defcon_pts
                  + saves_pts + concede_pts + card_pts + exp_bonus)

@@ -23,6 +23,8 @@ from bot.data_collector import load_multi_season_history
 from bot.feature_engineering import (
     compute_ewma_stats,
     feature_columns,
+    player_vs_opponent_features,
+    resolve_opponent_team_name,
     rolling_window_stats,
 )
 from bot.fpl_rules import MID
@@ -69,6 +71,10 @@ def main() -> None:
     log.info("Computing EWMA + rolling features…")
     feat = compute_ewma_stats(history)
     feat = rolling_window_stats(feat)
+
+    log.info("Resolving opponent team names + h2h features…")
+    feat = resolve_opponent_team_name(feat)
+    feat = player_vs_opponent_features(feat)
 
     fcols = feature_columns(feat)
     log.info("Feature columns (%d): %s", len(fcols), fcols)

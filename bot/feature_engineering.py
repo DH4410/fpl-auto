@@ -48,6 +48,7 @@ EWMA_STATS = (
     "influence", "creativity", "threat", "ict_index",
     "clearances_blocks_interceptions", "recoveries", "tackles",
     "defensive_contribution",
+    "yellow_cards", "red_cards",
 )
 
 DEFAULT_ALPHA = 0.25
@@ -712,6 +713,149 @@ def player_form_features(bootstrap_df: pd.DataFrame,
     return hist
 
 
+# ---------------------------------------------------------------------------
+# 5. Player vs. specific opponent (head-to-head history)
+# ---------------------------------------------------------------------------
+
+def resolve_opponent_team_name(df: pd.DataFrame) -> pd.DataFrame:
+    """Add 'opponent_team_name' string column via within-fixture cross-referencing.
+
+    Vaastav's ``opponent_team`` is a per-season integer FPL team ID that resets
+    every year. Within any single fixture both teams' player-rows appear in the
+    same DataFrame: team A's players have ``opponent_team = B_int``, team B's
+    players have ``opponent_team = A_int``. Cross-referencing pairs resolves
+    ``B_int → 'B'`` and ``A_int → 'A'`` without needing an external teams CSV.
+
+    Requires ``team`` (player's own team name string), ``opponent_team`` (int),
+    and ``fixture`` (fixture ID) columns. Operates per season when ``season``
+    is present.
+    """
+    need = {"opponent_team", "team", "fixture"}
+    if not need.issubset(df.columns):
+        return df
+
+    out = df.copy()
+    season_cols = ["season"] if "season" in df.columns else []
+    join_keys = season_cols + ["fixture"]
+
+    pairs = (
+        out[join_keys + ["team", "opponent_team"]]
+        .dropna(subset=["opponent_team"])
+        .drop_duplicates(subset=join_keys + ["team"])
+        .copy()
+    )
+    pairs["opponent_team"] = pd.to_numeric(pairs["opponent_team"],
+                                           errors="coerce").astype("Int64")
+    pairs = pairs.dropna(subset=["opponent_team"])
+
+    # Self-join within fixture: left side "opp_int" = right side team name.
+    left = pairs.rename(columns={"team": "team_l", "opponent_team": "opp_int"})
+    right = pairs.rename(columns={"team": "opp_name", "opponent_team": "opp_int_r"})
+    cross = left.merge(right, on=join_keys)
+    cross = cross[cross["team_l"] != cross["opp_name"]]
+
+    lookup = (
+        cross[season_cols + ["opp_int", "opp_name"]]
+        .drop_duplicates(subset=season_cols + ["opp_int"])
+        .rename(columns={"opp_int": "_opp_int"})
+    )
+
+    out["_opp_int"] = pd.to_numeric(out["opponent_team"],
+                                    errors="coerce").astype("Int64")
+    out = out.merge(lookup, on=season_cols + ["_opp_int"], how="left")
+    out = out.rename(columns={"opp_name": "opponent_team_name"})
+    out = out.drop(columns=["_opp_int"])
+    return out
+
+
+def player_vs_opponent_features(
+    df: pd.DataFrame,
+    name_col: str = "name",
+    stats: tuple[str, ...] = ("goals_scored", "assists", "total_points"),
+    min_appearances: int = 2,
+) -> pd.DataFrame:
+    """Per-player rolling head-to-head stats vs each specific opponent team.
+
+    For each row ``(player P, opponent O)``, computes P's expanding mean of
+    ``goals_scored`` / ``assists`` / ``total_points`` in all *prior* appearances
+    vs O, shifted by one GW to prevent leakage. Players with fewer than
+    ``min_appearances`` h2h games fall back to their overall player-level
+    expanding mean for that stat.
+
+    Requires ``resolve_opponent_team_name`` to have been called first so that
+    ``opponent_team_name`` is a string column.
+
+    New columns: ``h2h_goals_scored_vs_opp``, ``h2h_assists_vs_opp``,
+    ``h2h_total_points_vs_opp``, ``h2h_appearances_vs_opp``.
+
+    Fully vectorised (no Python-level lambda per group) so scales to 200k+ rows.
+    """
+    if "opponent_team_name" not in df.columns or name_col not in df.columns:
+        return df
+
+    out = df.copy()
+    order_cols = [c for c in ("season", "round") if c in out.columns]
+    if not order_cols:
+        return out
+
+    out = out.sort_values(order_cols).reset_index(drop=True)
+    group_key = [name_col, "opponent_team_name"]
+    has_opp = out["opponent_team_name"].notna()
+
+    # Prior h2h appearance count: cumcount within each (player, opponent) group
+    # cumcount() gives 0 for the 1st row in a group, 1 for the 2nd, etc.
+    h2h_cumcnt = (
+        out.groupby(group_key, sort=False, dropna=True).cumcount()
+        .reindex(out.index)
+        .where(has_opp, 0)
+        .fillna(0)
+        .astype(float)
+    )
+    out["h2h_appearances_vs_opp"] = h2h_cumcnt
+
+    for stat in stats:
+        if stat not in out.columns:
+            continue
+        col_name = f"h2h_{stat}_vs_opp"
+        tmp = f"_h2h_{stat}"
+        out[tmp] = pd.to_numeric(out[stat], errors="coerce").fillna(0.0)
+
+        # Vectorised: cumulative sum per (player, opponent) group
+        cumsum = (
+            out.groupby(group_key, sort=False, dropna=True)[tmp]
+            .cumsum()
+            .reindex(out.index)
+            .where(has_opp, np.nan)
+        )
+        # Prior sum = cumsum_i - current_val_i = sum of all rows before row i
+        prior_sum = (cumsum - out[tmp]).where(has_opp)
+        # prior count = h2h_cumcnt (0 on first appearance)
+        prior_cnt = h2h_cumcnt.replace(0.0, np.nan)
+        out[col_name] = prior_sum / prior_cnt
+
+        out.drop(columns=[tmp], inplace=True)
+
+    # Fallback: overall player expanding mean when h2h history is thin
+    for stat in stats:
+        col_name = f"h2h_{stat}_vs_opp"
+        if col_name not in out.columns:
+            continue
+        tmp = f"_ov_{stat}"
+        out[tmp] = pd.to_numeric(out[stat], errors="coerce").fillna(0.0)
+
+        # Overall cumsum per player (all opponents combined)
+        ov_cumsum = out.groupby(name_col, sort=False)[tmp].cumsum()
+        ov_cumcnt = out.groupby(name_col, sort=False).cumcount().astype(float)
+        ov_prior_cnt = ov_cumcnt.replace(0.0, np.nan)
+        ov_mean = (ov_cumsum - out[tmp]) / ov_prior_cnt
+
+        thin = (h2h_cumcnt < min_appearances) | out[col_name].isna()
+        out[col_name] = out[col_name].where(~thin, ov_mean)
+        out.drop(columns=[tmp], inplace=True)
+
+    return out
+
+
 def feature_columns(df: pd.DataFrame, extra: Sequence[str] = ()) -> list[str]:
     """Model-safe feature columns: EWMA/rolling/position/fixture, no labels.
 
@@ -731,7 +875,7 @@ def feature_columns(df: pd.DataFrame, extra: Sequence[str] = ()) -> list[str]:
         "transfers_in", "transfers_out", "transfers_balance", "selected",
     }
     prefixes = ("ewma_", "roll3_", "roll6_", "pos_", "fdr_next",
-                "n_fixtures_next", "home_share_next")
+                "n_fixtures_next", "home_share_next", "h2h_")
     cols = [c for c in df.columns
             if (c.startswith(prefixes) or c in {
                 "games_played", "is_home", "now_cost", "selected_by_percent",
