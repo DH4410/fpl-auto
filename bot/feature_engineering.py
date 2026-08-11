@@ -130,7 +130,7 @@ def compute_ewma_stats(player_history_df: pd.DataFrame, alpha: float = DEFAULT_A
     return df
 
 
-def rolling_window_stats(player_history_df: pd.DataFrame, windows: Iterable[int] = (3, 6),
+def rolling_window_stats(player_history_df: pd.DataFrame, windows: Iterable[int] = (1, 3, 6, 10),
                          stats: Sequence[str] = ("minutes", "total_points",
                                                  "expected_goals",
                                                  "expected_assists"),
@@ -874,7 +874,7 @@ def feature_columns(df: pd.DataFrame, extra: Sequence[str] = ()) -> list[str]:
         "defensive_contribution", "team_h_score", "team_a_score",
         "transfers_in", "transfers_out", "transfers_balance", "selected",
     }
-    prefixes = ("ewma_", "roll3_", "roll6_", "pos_", "fdr_next",
+    prefixes = ("ewma_", "roll1_", "roll3_", "roll6_", "roll10_", "pos_", "fdr_next",
                 "n_fixtures_next", "home_share_next", "h2h_")
     cols = [c for c in df.columns
             if (c.startswith(prefixes) or c in {

@@ -1,0 +1,145 @@
+{
+  "fcols": [
+    "now_cost",
+    "is_home",
+    "ewma_minutes",
+    "ewma_goals_scored",
+    "ewma_assists",
+    "ewma_bonus",
+    "ewma_bps",
+    "ewma_clean_sheets",
+    "ewma_expected_goals",
+    "ewma_expected_assists",
+    "ewma_expected_goal_involvements",
+    "ewma_expected_goals_conceded",
+    "ewma_saves",
+    "ewma_goals_conceded",
+    "ewma_total_points",
+    "ewma_influence",
+    "ewma_creativity",
+    "ewma_threat",
+    "ewma_ict_index",
+    "ewma_yellow_cards",
+    "ewma_red_cards",
+    "ewma_p60_rate",
+    "ewma_played_any",
+    "ewma_start_rate",
+    "games_played",
+    "roll1_minutes",
+    "roll1_total_points",
+    "roll1_expected_goals",
+    "roll1_expected_assists",
+    "roll3_minutes",
+    "roll3_total_points",
+    "roll3_expected_goals",
+    "roll3_expected_assists",
+    "roll6_minutes",
+    "roll6_total_points",
+    "roll6_expected_goals",
+    "roll6_expected_assists",
+    "roll10_minutes",
+    "roll10_total_points",
+    "roll10_expected_goals",
+    "roll10_expected_assists",
+    "h2h_appearances_vs_opp",
+    "h2h_goals_scored_vs_opp",
+    "h2h_assists_vs_opp",
+    "h2h_total_points_vs_opp",
+    "pos_gkp",
+    "pos_def",
+    "pos_mid",
+    "pos_fwd"
+  ],
+  "shap": {
+    "available": true,
+    "n_rows": 2000,
+    "features": [
+      {
+        "feature": "roll1_minutes",
+        "importance": 10.944052696228027
+      },
+      {
+        "feature": "roll3_minutes",
+        "importance": 3.8638041019439697
+      },
+      {
+        "feature": "games_played",
+        "importance": 2.159219980239868
+      },
+      {
+        "feature": "now_cost",
+        "importance": 1.6413426399230957
+      },
+      {
+        "feature": "ewma_influence",
+        "importance": 1.556151270866394
+      },
+      {
+        "feature": "ewma_minutes",
+        "importance": 1.1829639673233032
+      },
+      {
+        "feature": "h2h_total_points_vs_opp",
+        "importance": 1.147309422492981
+      },
+      {
+        "feature": "ewma_bps",
+        "importance": 1.0836607217788696
+      },
+      {
+        "feature": "roll1_total_points",
+        "importance": 1.0207455158233643
+      },
+      {
+        "feature": "ewma_played_any",
+        "importance": 0.7489508390426636
+      },
+      {
+        "feature": "roll10_minutes",
+        "importance": 0.7074283361434937
+      },
+      {
+        "feature": "roll6_minutes",
+        "importance": 0.6795132160186768
+      },
+      {
+        "feature": "ewma_ict_index",
+        "importance": 0.5610928535461426
+      },
+      {
+        "feature": "ewma_clean_sheets",
+        "importance": 0.5436603426933289
+      },
+      {
+        "feature": "ewma_p60_rate",
+        "importance": 0.4628269076347351
+      },
+      {
+        "feature": "ewma_creativity",
+        "importance": 0.44747230410575867
+      },
+      {
+        "feature": "pos_def",
+        "importance": 0.44022300839424133
+      },
+      {
+        "feature": "ewma_goals_conceded",
+        "importance": 0.3943917453289032
+      },
+      {
+        "feature": "roll10_total_points",
+        "importance": 0.3927171230316162
+      },
+      {
+        "feature": "ewma_yellow_cards",
+        "importance": 0.3583925664424896
+      }
+    ]
+  },
+  "seed_stability": {
+    "mean_rho": 0.9901319006127108,
+    "min_rho": 0.9880879643685271,
+    "n_pairs": 10,
+    "gw": 20
+  }
+}

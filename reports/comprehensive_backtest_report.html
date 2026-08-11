@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FPL Model Comprehensive Backtest — 2024-25 Holdout</title>
+<style>
+:root { --bg:#ffffff; --fg:#1a1d21; --muted:#5b6570; --line:#e3e7eb;
+        --accent:#2f6f4f; --accent-soft:#eaf3ee; --warn:#8a5a00; }
+* { box-sizing: border-box; }
+body { margin:0; padding:0; background:var(--bg); color:var(--fg);
+       font: 15px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+.wrap { max-width: 980px; margin: 0 auto; padding: 40px 24px 80px; }
+header { border-bottom: 3px solid var(--accent); padding-bottom: 18px; margin-bottom: 8px; }
+h1 { font-size: 27px; margin: 0 0 6px; letter-spacing: -0.02em; }
+h2 { font-size: 19px; margin: 44px 0 12px; padding-top: 8px; }
+h2 .num { color: var(--accent); font-variant-numeric: tabular-nums; margin-right: 8px; }
+.sub { color: var(--muted); font-size: 14px; margin: 0; }
+p { margin: 10px 0; }
+.note { color: var(--muted); font-size: 13.5px; }
+table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: 14px; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+th { background: #f6f8f9; font-weight: 600; font-size: 13px;
+     text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+tr.best td { background: var(--accent-soft); font-weight: 600; }
+code { background:#f2f4f6; padding: 1px 5px; border-radius: 3px; font-size: 13px; }
+.ok { color: var(--accent); font-weight: 600; }
+.oracle { color: var(--warn); font-weight: 600; }
+.scroll { overflow-x: auto; }
+.bar-row { display: grid; grid-template-columns: 260px 1fr 70px;
+           gap: 10px; align-items: center; margin: 3px 0; font-size: 13px; }
+.bar-track { background: #f0f2f4; border-radius: 3px; height: 15px; }
+.bar-fill { background: var(--accent); height: 15px; border-radius: 3px; }
+.bar-val { text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
+.feat-name { font-family: ui-monospace, "Cascadia Code", Consolas, monospace; font-size: 12.5px; }
+ul { margin: 10px 0; padding-left: 22px; }
+li { margin: 6px 0; }
+footer { margin-top: 60px; padding-top: 16px; border-top: 1px solid var(--line);
+         color: var(--muted); font-size: 13px; }
+</style></head><body><div class="wrap">
+
+<header>
+  <h1>FPL Model Comprehensive Backtest — 2024-25 Holdout</h1>
+  <p class="sub">Trained on 2022-23 + 2023-24 · tested on 2024-25,
+  never seen in training · 16 runs · 5 seeds per ML family</p>
+</header>
+
+<p>Every run uses the same configuration — ML expected points, the p60 captain
+safety filter, and DGW scaling gated on realistic announcement timing — so the
+only thing varying across rows is the learner and its random seed.</p>
+<p><strong>Ensemble XGB+RF</strong> leads at 2,244.6 pts, +929.6 vs the no-ML baseline, against a seed spread of ±40.6.</p>
+
+<h2><span class="num">1</span>Anti-cheat audit</h2>
+<p>Each way this backtest could have lied to itself, and what was done about it.</p>
+<div class="scroll"><table>
+<thead><tr><th>Check</th><th>Status</th><th>Notes</th></tr></thead>
+<tbody><tr><td>Pool gating (January signings)</td><td class='ok'>FIXED</td><td class='note'><code>_build_pool</code> now intersects the pool with elements seen at GW ≤ <code>before_gw</code>. Previously every element in the season file was buyable from GW1, so a January signing could be transferred in months before he was registered. Measured from <code>_build_pool</code>: 616 buyable at GW1, 711 by GW20, 804 by GW38 (804 season total).</td></tr>
+<tr><td>EWMA features</td><td class='ok'>PASS</td><td class='note'><code>compute_ewma_stats</code> applies <code>.shift(1)</code> after the EWM, so a row never sees its own gameweek.</td></tr>
+<tr><td>Rolling windows (1/3/6/10)</td><td class='ok'>PASS</td><td class='note'><code>rolling_window_stats</code> applies <code>.shift(1)</code> to every window, including the two added here.</td></tr>
+<tr><td>H2H vs opponent</td><td class='ok'>PASS</td><td class='note'>prior_sum pattern: <code>cumsum − current_value</code>, divided by the prior appearance count. The current row is arithmetically excluded.</td></tr>
+<tr><td>Median imputation</td><td class='ok'>PASS</td><td class='note'>Medians come from <code>feat_all[season ∈ training]</code> only; the test season never contributes. No feature had an all-NaN training median.</td></tr>
+<tr><td>Target construction</td><td class='ok'>PASS</td><td class='note'><code>feature_columns</code> bans every same-gameweek outcome column (points, minutes, goals, bps, …) from the feature matrix.</td></tr>
+<tr><td>Chip schedule</td><td class='oracle'>ORACLE</td><td class='note'><code>{24: 'bboost', 33: '3xc'}</code> was chosen by inspecting 2024-25 results. This is a known upper bound, not a forecast — see caveats.</td></tr>
+<tr><td>DGW knowledge</td><td class='ok'>PASS</td><td class='note'>Doubles are scaled only from the gameweek the double would have been announced (<code>DGW_ANNOUNCEMENT</code>), not with hindsight.</td></tr>
+<tr><td>Seed variance</td><td class='ok'>CHECKED</td><td class='note'>Measured, not assumed: mean pairwise ρ = 0.990 (min 0.988, 10 pairs, GW20).</td></tr>
+</tbody></table></div>
+
+<h2><span class="num">2</span>Results by model family</h2>
+<div class="scroll"><table>
+<thead><tr><th>Model family</th><th class="num">Runs</th><th class="num">Mean pts</th>
+<th class="num">Std</th><th class="num">Best</th><th class="num">Worst</th>
+<th class="num">vs baseline</th></tr></thead>
+<tbody><tr class="best"><td>Ensemble XGB+RF</td><td class='num'>5</td><td class='num'>2,244.6</td><td class='num'>± 40.6</td><td class='num'>2270 (seed 2)</td><td class='num'>2174 (seed 42)</td><td class='num'>+929.6</td></tr>
+<tr><td>RandomForest</td><td class='num'>5</td><td class='num'>2,202.0</td><td class='num'>± 72.5</td><td class='num'>2269 (seed 42)</td><td class='num'>2115 (seed 3)</td><td class='num'>+887.0</td></tr>
+<tr><td>XGB/LGB</td><td class='num'>5</td><td class='num'>2,147.2</td><td class='num'>± 121.4</td><td class='num'>2331 (seed 2)</td><td class='num'>1999 (seed 42)</td><td class='num'>+832.2</td></tr>
+<tr><td>Baseline</td><td class='num'>1</td><td class='num'>1,315.0</td><td class='num'>± 0.0</td><td class='num'>1315 (seed -1)</td><td class='num'>1315 (seed -1)</td><td class='num'>+0.0</td></tr>
+</tbody></table></div>
+<p class="note">Baseline is a single deterministic run — rolling-mean expected
+points, no ML — so it has no seed spread.</p>
+
+<h2><span class="num">3</span>Per-seed detail</h2>
+<div class="scroll"><table>
+<thead><tr><th>Season</th><th>Model</th><th class="num">Seed</th>
+<th class="num">Total pts</th><th class="num">Captain bonus</th>
+<th class="num">GWs</th></tr></thead>
+<tbody><tr><td>2024-25</td><td>Baseline</td><td class='num'>-1</td><td class='num'>1,315</td><td class='num'>120</td><td class='num'>38</td></tr>
+<tr><td>2024-25</td><td>Ensemble XGB+RF</td><td class='num'>0</td><td class='num'>2,262</td><td class='num'>344</td><td class='num'>38</td></tr>
+<tr><td>2024-25</td><td>Ensemble XGB+RF</td><td class='num'>1</td><td class='num'>2,247</td><td class='num'>347</td><td class='num'>38</td></tr>
+<tr><td>2024-25</td><td>Ensemble XGB+RF</td><td class='num'>2</td><td class='num'>2,270</td><td class='num'>360</td><td class='num'>38</td></tr>
+<tr><td>2024-25</td><td>Ensemble XGB+RF</td><td class='num'>3</td><td class='num'>2,270</td><td class='num'>345</td><td class='num'>38</td></tr>
+<tr><td>2024-25</td><td>Ensemble XGB+RF</td><td class='num'>42</td><td class='num'>2,174</td><td class='num'>312</td><td class='num'>38</td></tr>
+<tr><td>2024-25</td><td>RandomForest</td><td class='num'>0</td><td class='num'>2,248</td><td class='num'>344</td><td class='num'>38</td></tr>
+<tr><td>2024-25</td><td>RandomForest</td><td class='num'>1</td><td class='num'>2,132</td><td class='num'>326</td><td class='num'>38</td></tr>
+<tr><td>2024-25</td><td>RandomForest</td><td class='num'>2</td><td class='num'>2,246</td><td class='num'>343</td><td class='num'>38</td></tr>
+<tr><td>2024-25</td><td>RandomForest</td><td class='num'>3</td><td class='num'>2,115</td><td class='num'>349</td><td class='num'>38</td></tr>
+<tr><td>2024-25</td><td>RandomForest</td><td class='num'>42</td><td class='num'>2,269</td><td class='num'>331</td><td class='num'>38</td></tr>
+<tr><td>2024-25</td><td>XGB/LGB</td><td class='num'>0</td><td class='num'>2,101</td><td class='num'>312</td><td class='num'>38</td></tr>
+<tr><td>2024-25</td><td>XGB/LGB</td><td class='num'>1</td><td class='num'>2,130</td><td class='num'>286</td><td class='num'>38</td></tr>
+<tr><td>2024-25</td><td>XGB/LGB</td><td class='num'>2</td><td class='num'>2,331</td><td class='num'>309</td><td class='num'>38</td></tr>
+<tr><td>2024-25</td><td>XGB/LGB</td><td class='num'>3</td><td class='num'>2,175</td><td class='num'>271</td><td class='num'>38</td></tr>
+<tr><td>2024-25</td><td>XGB/LGB</td><td class='num'>42</td><td class='num'>1,999</td><td class='num'>245</td><td class='num'>38</td></tr>
+</tbody></table></div>
+
+<h2><span class="num">4</span>Feature set (49 columns)</h2>
+<p>Every column handed to the models, grouped by what it measures. All
+time-series features carry a one-gameweek lag.</p>
+<div class="scroll"><table>
+<thead><tr><th>Description</th><th class="num">Count</th><th>Columns</th></tr></thead>
+<tbody><tr><td>EWMA form (α=0.25, 1-GW lag)</td><td class='num'>22</td><td><span class='feat-name'>ewma_assists</span>, <span class='feat-name'>ewma_bonus</span>, <span class='feat-name'>ewma_bps</span>, <span class='feat-name'>ewma_clean_sheets</span>, <span class='feat-name'>ewma_creativity</span>, <span class='feat-name'>ewma_expected_assists</span>, <span class='feat-name'>ewma_expected_goal_involvements</span>, <span class='feat-name'>ewma_expected_goals</span>, <span class='feat-name'>ewma_expected_goals_conceded</span>, <span class='feat-name'>ewma_goals_conceded</span>, <span class='feat-name'>ewma_goals_scored</span>, <span class='feat-name'>ewma_ict_index</span>, <span class='feat-name'>ewma_influence</span>, <span class='feat-name'>ewma_minutes</span>, <span class='feat-name'>ewma_p60_rate</span>, <span class='feat-name'>ewma_played_any</span>, <span class='feat-name'>ewma_red_cards</span>, <span class='feat-name'>ewma_saves</span>, <span class='feat-name'>ewma_start_rate</span>, <span class='feat-name'>ewma_threat</span>, <span class='feat-name'>ewma_total_points</span>, <span class='feat-name'>ewma_yellow_cards</span></td></tr>
+<tr><td>1-game rolling mean (1-GW lag)</td><td class='num'>4</td><td><span class='feat-name'>roll1_expected_assists</span>, <span class='feat-name'>roll1_expected_goals</span>, <span class='feat-name'>roll1_minutes</span>, <span class='feat-name'>roll1_total_points</span></td></tr>
+<tr><td>3-game rolling mean (1-GW lag)</td><td class='num'>4</td><td><span class='feat-name'>roll3_expected_assists</span>, <span class='feat-name'>roll3_expected_goals</span>, <span class='feat-name'>roll3_minutes</span>, <span class='feat-name'>roll3_total_points</span></td></tr>
+<tr><td>6-game rolling mean (1-GW lag)</td><td class='num'>4</td><td><span class='feat-name'>roll6_expected_assists</span>, <span class='feat-name'>roll6_expected_goals</span>, <span class='feat-name'>roll6_minutes</span>, <span class='feat-name'>roll6_total_points</span></td></tr>
+<tr><td>10-game rolling mean (1-GW lag)</td><td class='num'>4</td><td><span class='feat-name'>roll10_expected_assists</span>, <span class='feat-name'>roll10_expected_goals</span>, <span class='feat-name'>roll10_minutes</span>, <span class='feat-name'>roll10_total_points</span></td></tr>
+<tr><td>H2H vs opponent (cumulative, lagged)</td><td class='num'>4</td><td><span class='feat-name'>h2h_appearances_vs_opp</span>, <span class='feat-name'>h2h_assists_vs_opp</span>, <span class='feat-name'>h2h_goals_scored_vs_opp</span>, <span class='feat-name'>h2h_total_points_vs_opp</span></td></tr>
+<tr><td>Position one-hot</td><td class='num'>4</td><td><span class='feat-name'>pos_def</span>, <span class='feat-name'>pos_fwd</span>, <span class='feat-name'>pos_gkp</span>, <span class='feat-name'>pos_mid</span></td></tr>
+<tr><td>Raw / contextual feature</td><td class='num'>3</td><td><span class='feat-name'>games_played</span>, <span class='feat-name'>is_home</span>, <span class='feat-name'>now_cost</span></td></tr>
+</tbody></table></div>
+
+<h2><span class="num">5</span>SHAP feature importance — minutes model</h2>
+<p class='note'>Mean |SHAP| over 2,000 training rows, minutes model (XGBoost regressor, seed 0). Bars are scaled to the largest value; units are minutes.</p><div class='bar-row'><div class='feat-name'>roll1_minutes</div><div class='bar-track'><div class='bar-fill' style='width:100.0%'></div></div><div class='bar-val'>10.94</div></div><div class='bar-row'><div class='feat-name'>roll3_minutes</div><div class='bar-track'><div class='bar-fill' style='width:35.3%'></div></div><div class='bar-val'>3.86</div></div><div class='bar-row'><div class='feat-name'>games_played</div><div class='bar-track'><div class='bar-fill' style='width:19.7%'></div></div><div class='bar-val'>2.16</div></div><div class='bar-row'><div class='feat-name'>now_cost</div><div class='bar-track'><div class='bar-fill' style='width:15.0%'></div></div><div class='bar-val'>1.64</div></div><div class='bar-row'><div class='feat-name'>ewma_influence</div><div class='bar-track'><div class='bar-fill' style='width:14.2%'></div></div><div class='bar-val'>1.56</div></div><div class='bar-row'><div class='feat-name'>ewma_minutes</div><div class='bar-track'><div class='bar-fill' style='width:10.8%'></div></div><div class='bar-val'>1.18</div></div><div class='bar-row'><div class='feat-name'>h2h_total_points_vs_opp</div><div class='bar-track'><div class='bar-fill' style='width:10.5%'></div></div><div class='bar-val'>1.15</div></div><div class='bar-row'><div class='feat-name'>ewma_bps</div><div class='bar-track'><div class='bar-fill' style='width:9.9%'></div></div><div class='bar-val'>1.08</div></div><div class='bar-row'><div class='feat-name'>roll1_total_points</div><div class='bar-track'><div class='bar-fill' style='width:9.3%'></div></div><div class='bar-val'>1.02</div></div><div class='bar-row'><div class='feat-name'>ewma_played_any</div><div class='bar-track'><div class='bar-fill' style='width:6.8%'></div></div><div class='bar-val'>0.75</div></div><div class='bar-row'><div class='feat-name'>roll10_minutes</div><div class='bar-track'><div class='bar-fill' style='width:6.5%'></div></div><div class='bar-val'>0.71</div></div><div class='bar-row'><div class='feat-name'>roll6_minutes</div><div class='bar-track'><div class='bar-fill' style='width:6.2%'></div></div><div class='bar-val'>0.68</div></div><div class='bar-row'><div class='feat-name'>ewma_ict_index</div><div class='bar-track'><div class='bar-fill' style='width:5.1%'></div></div><div class='bar-val'>0.56</div></div><div class='bar-row'><div class='feat-name'>ewma_clean_sheets</div><div class='bar-track'><div class='bar-fill' style='width:5.0%'></div></div><div class='bar-val'>0.54</div></div><div class='bar-row'><div class='feat-name'>ewma_p60_rate</div><div class='bar-track'><div class='bar-fill' style='width:4.2%'></div></div><div class='bar-val'>0.46</div></div><div class='bar-row'><div class='feat-name'>ewma_creativity</div><div class='bar-track'><div class='bar-fill' style='width:4.1%'></div></div><div class='bar-val'>0.45</div></div><div class='bar-row'><div class='feat-name'>pos_def</div><div class='bar-track'><div class='bar-fill' style='width:4.0%'></div></div><div class='bar-val'>0.44</div></div><div class='bar-row'><div class='feat-name'>ewma_goals_conceded</div><div class='bar-track'><div class='bar-fill' style='width:3.6%'></div></div><div class='bar-val'>0.39</div></div><div class='bar-row'><div class='feat-name'>roll10_total_points</div><div class='bar-track'><div class='bar-fill' style='width:3.6%'></div></div><div class='bar-val'>0.39</div></div><div class='bar-row'><div class='feat-name'>ewma_yellow_cards</div><div class='bar-track'><div class='bar-fill' style='width:3.3%'></div></div><div class='bar-val'>0.36</div></div>
+
+<h2><span class="num">6</span>Notes &amp; caveats</h2>
+<ul>
+<li><strong>The chip schedule is an oracle.</strong>
+<code>{24: 'bboost', 33: '3xc'}</code> was picked by looking at how 2024-25 actually
+played out. Every family gets the same advantage, so the comparison between them
+is fair, but the absolute totals are an upper bound no live manager could hit.</li>
+<li><strong>DGW_SCALE = 1.7</strong> is a flat multiplier on a doubling
+player's expected points. It is a crude stand-in for actually projecting two
+fixtures, and it over-rewards players whose second fixture is hard.</li>
+<li><strong>January signings are now excluded until registered.</strong> This fix
+lowers scores relative to earlier backtests — the old pool let the optimiser buy
+players who had not yet joined the league.</li>
+<li><strong>The RF family has no p60 classifier.</strong> Its p60 is a monotone
+proxy, <code>(minutes / 90) · 0.9</code>, which sits systematically below the
+XGBoost classifier's estimate. Since the captain safety filter zeroes anyone
+under p60 = 0.70, RF captains from a smaller pool. That is a real property of
+the family, but it confounds "RF is a worse learner" with "RF has a worse
+p60 head".</li>
+<li><strong>Seed variance is path-dependent.</strong> Two seeds that rank players
+near-identically can still diverge by hundreds of points: one early transfer
+differs, the squads drift apart, and the paths never reconverge. Read the seed
+spread, not any single run.</li>
+<li><strong>One season, one holdout.</strong> 2024-25 is 38 gameweeks of a
+single league season. Differences inside the seed spread should not be treated
+as real.</li>
+</ul>
+
+<footer>Generated by <code>scripts/backtest_comprehensive.py</code> ·
+data 2022-23 + 2023-24 + 2024-25 · results in <code>reports/comprehensive_results.csv</code></footer>
+</div></body></html>

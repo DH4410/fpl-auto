@@ -155,6 +155,11 @@ class SeasonBacktester:
             .first()
         )
 
+        # Only players already registered by this GW are buyable — otherwise a
+        # January signing who debuts in GW20 could be bought in GW3.
+        available_ids = set(test[test["GW"] <= before_gw]["element"].astype(int))
+        earliest = earliest[earliest["element"].isin(available_ids)]
+
         # Use price from the previous GW if available
         if before_gw > 1:
             prev = test[test["GW"] == before_gw - 1]
