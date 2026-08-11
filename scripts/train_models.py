@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """
-Train FPLPointsPredictor on 2022-23 to 2024-25 Vaastav data.
+Train FPLPointsPredictor on all available Vaastav seasons.
 
 Saves four sub-model pickles to bot/models/:
     minutes.pkl  attack.pkl  defense.pkl  bonus.pkl
 
-2020-21 and 2021-22 are excluded because Vaastav didn't record xG/xA
-data for those seasons -- the AttackModel would have no valid targets.
-2022-23 is the first season with xG/xA in the Vaastav CSV.
+All six seasons are loaded; the xg_mask in build_training_targets handles
+2020-21/2021-22 automatically (those rows have NaN xg_per90/xa_per90 and are
+excluded from AttackModel only). MinutesModel, DefenseModel and BonusModel
+benefit from the full dataset.
 """
 
 import logging
@@ -36,7 +37,7 @@ logging.basicConfig(
 )
 log = logging.getLogger(__name__)
 
-TRAINING_SEASONS = ("2022-23", "2023-24", "2024-25")
+TRAINING_SEASONS = ("2020-21", "2021-22", "2022-23", "2023-24", "2024-25", "2025-26")
 MODELS_DIR = Path(__file__).resolve().parents[1] / "bot" / "models"
 
 POSITION_MAP = {"GK": 1, "GKP": 1, "DEF": 2, "MID": 3, "FWD": 4}
@@ -144,8 +145,9 @@ def main() -> None:
     print(f"Features: {len(fcols)}")
     print(f"In-sample Spearman (xPts vs actual):  {rho:+.3f}")
     print()
-    print("NOTE: DC head falls back to positional priors (2024-25 has no DC data).")
+    print("NOTE: DC head falls back to positional priors for seasons without DC data.")
     print("This is expected and documented in models.py.")
+    print("NOTE: xG/xA attack targets only cover 2022-23+ rows (earlier seasons have NaN).")
     print("=" * 60)
 
 

@@ -267,6 +267,8 @@ class EnsembleFPLPredictor:
         out = frames[0].copy()
         out["expected_points"] = np.mean(
             [f["expected_points"].to_numpy(dtype=float) for f in frames], axis=0)
-        out["p60"] = np.mean(
-            [f["p60"].to_numpy(dtype=float) for f in frames], axis=0)
+        # p60 comes from the first predictor only — it should be the calibrated
+        # XGBoost classifier. Averaging with the RF's monotone proxy would pull
+        # the probability down and shrink the captain-eligible pool.
+        out["p60"] = frames[0]["p60"].to_numpy(dtype=float)
         return out
