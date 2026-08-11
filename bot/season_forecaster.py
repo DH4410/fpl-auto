@@ -95,6 +95,7 @@ class SeasonForecaster:
         fixtures: list[dict],
         current_gw: int,
         owned_ids: list[int] | None = None,
+        ml_xpts: dict[int, float] | None = None,
     ) -> pd.DataFrame:
         """Compute xPts for every player over the next ``horizon`` gameweeks.
 
@@ -109,6 +110,11 @@ class SeasonForecaster:
         owned_ids:
             Element IDs already in the manager's squad. These are always
             included in the candidate pool regardless of projected points.
+        ml_xpts:
+            Optional mapping of ``element_id → predicted xPts for GW1``.
+            When provided, the ML value replaces the rule-based base for the
+            immediate GW; for subsequent GWs it is scaled by the FDR/PPG
+            branch multipliers (treating it as a per-game base rate).
 
         Returns
         -------
@@ -144,21 +150,31 @@ class SeasonForecaster:
                     p_start = float(p["p_start"])
                     fdr_mult = FDR_MULTIPLIER.get(round(avg_fdr), 1.0)
 
-                    # GW1 projection: use FPL's ep_next which already accounts for
-                    # the immediate fixture (including DGW scaling). Further GWs
-                    # use PPG × FDR, explicitly multiplied by n_fixtures.
-                    using_ep_next = (
-                        gw_offset == 0
-                        and p["ep_next"] is not None
-                        and float(p["ep_next"]) > 0
-                    )
-                    if using_ep_next:
-                        base = float(p["ep_next"])
-                        xpts = base * p_start * gw_decay  # ep_next is already DGW-aware
+                    el_id = int(p["id"])
+                    ml_val = (ml_xpts or {}).get(el_id)
+
+                    if ml_val is not None and gw_offset == 0:
+                        # ML prediction is a single-GW value, already fixture-aware.
+                        xpts = ml_val * p_start * gw_decay
+                    elif ml_val is not None:
+                        # Scale ML value as a per-game base rate for future GWs.
+                        xpts = ml_val * fdr_mult * p_start * gw_decay * n_fixtures
                     else:
-                        ppg = max(MIN_PPG, float(p["ppg"]))
-                        base = ppg * fdr_mult
-                        xpts = base * p_start * gw_decay * n_fixtures
+                        # GW1 projection: use FPL's ep_next which already accounts for
+                        # the immediate fixture (including DGW scaling). Further GWs
+                        # use PPG × FDR, explicitly multiplied by n_fixtures.
+                        using_ep_next = (
+                            gw_offset == 0
+                            and p["ep_next"] is not None
+                            and float(p["ep_next"]) > 0
+                        )
+                        if using_ep_next:
+                            base = float(p["ep_next"])
+                            xpts = base * p_start * gw_decay  # ep_next is already DGW-aware
+                        else:
+                            ppg = max(MIN_PPG, float(p["ppg"]))
+                            base = ppg * fdr_mult
+                            xpts = base * p_start * gw_decay * n_fixtures
                     p_60 = p_start * 0.85  # approximate: most starters play 60+
 
                 uncertainty = min(0.90, UNCERTAINTY_PER_GW * (gw_offset + 1))

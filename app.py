@@ -590,6 +590,50 @@ def get_reflect():
     })
 
 
+@app.route("/api/plan")
+def get_plan():
+    if not _state["token"]:
+        return jsonify({"error": "Not logged in"}), 401
+
+    bs = _state["bootstrap"] or {}
+    events = bs.get("events", [])
+    next_gw = next((e["id"] for e in events if e.get("is_next")), None)
+    current_gw_event = next((e["id"] for e in events if e.get("is_current")), None)
+    current_gw = next_gw or current_gw_event or 1
+
+    my_team = None
+    entry_info = None
+    if _state["entry_id"]:
+        try:
+            my_team = fpl_api.my_team(_state["session"], _state["token"], _state["entry_id"])
+        except Exception:
+            pass
+        try:
+            entry_info = fpl_api.entry_info(_state["session"], _state["token"], _state["entry_id"])
+        except Exception:
+            pass
+
+    try:
+        from bot.updater import SeasonUpdater
+        result = SeasonUpdater(horizon=6, max_candidates=150).run(
+            current_gw, my_team=my_team, entry_info=entry_info
+        )
+        return jsonify({
+            "gw": current_gw,
+            "captain": result.get("captain"),
+            "transfers_in": result.get("transfers_in"),
+            "transfers_out": result.get("transfers_out"),
+            "hits": result.get("hits"),
+            "chip": result.get("chip"),
+            "chip_reason": result.get("chip_reason"),
+            "chip_plan": result.get("chip_plan"),
+            "gw_plan": result.get("gw_plan"),
+            "run_at": result.get("run_at"),
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 if __name__ == "__main__":
     _load_session()
     print("FPL Auto running at http://localhost:5000")
