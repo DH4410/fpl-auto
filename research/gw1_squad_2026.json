@@ -190,5 +190,159 @@
       "is_captain": false,
       "is_vice_captain": false
     }
+  ],
+  "picks": [
+    {
+      "element": 1,
+      "position": 1,
+      "is_captain": false,
+      "is_vice_captain": false
+    },
+    {
+      "element": 4,
+      "position": 2,
+      "is_captain": true,
+      "is_vice_captain": false
+    },
+    {
+      "element": 229,
+      "position": 3,
+      "is_captain": false,
+      "is_vice_captain": false
+    },
+    {
+      "element": 230,
+      "position": 4,
+      "is_captain": false,
+      "is_vice_captain": false
+    },
+    {
+      "element": 387,
+      "position": 5,
+      "is_captain": false,
+      "is_vice_captain": true
+    },
+    {
+      "element": 392,
+      "position": 6,
+      "is_captain": false,
+      "is_vice_captain": false
+    },
+    {
+      "element": 41,
+      "position": 7,
+      "is_captain": false,
+      "is_vice_captain": false
+    },
+    {
+      "element": 67,
+      "position": 8,
+      "is_captain": false,
+      "is_vice_captain": false
+    },
+    {
+      "element": 236,
+      "position": 9,
+      "is_captain": false,
+      "is_vice_captain": false
+    },
+    {
+      "element": 415,
+      "position": 10,
+      "is_captain": false,
+      "is_vice_captain": false
+    },
+    {
+      "element": 411,
+      "position": 11,
+      "is_captain": false,
+      "is_vice_captain": false
+    },
+    {
+      "element": 350,
+      "position": 12,
+      "is_captain": false,
+      "is_vice_captain": false
+    },
+    {
+      "element": 262,
+      "position": 13,
+      "is_captain": false,
+      "is_vice_captain": false
+    },
+    {
+      "element": 492,
+      "position": 14,
+      "is_captain": false,
+      "is_vice_captain": false
+    },
+    {
+      "element": 553,
+      "position": 15,
+      "is_captain": false,
+      "is_vice_captain": false
+    }
+  ],
+  "transfers": [
+    {
+      "element_in": 1,
+      "purchase_price": 60
+    },
+    {
+      "element_in": 4,
+      "purchase_price": 80
+    },
+    {
+      "element_in": 41,
+      "purchase_price": 60
+    },
+    {
+      "element_in": 67,
+      "purchase_price": 65
+    },
+    {
+      "element_in": 229,
+      "purchase_price": 60
+    },
+    {
+      "element_in": 230,
+      "purchase_price": 55
+    },
+    {
+      "element_in": 236,
+      "purchase_price": 65
+    },
+    {
+      "element_in": 262,
+      "purchase_price": 55
+    },
+    {
+      "element_in": 350,
+      "purchase_price": 55
+    },
+    {
+      "element_in": 387,
+      "purchase_price": 65
+    },
+    {
+      "element_in": 392,
+      "purchase_price": 55
+    },
+    {
+      "element_in": 411,
+      "purchase_price": 155
+    },
+    {
+      "element_in": 415,
+      "purchase_price": 60
+    },
+    {
+      "element_in": 492,
+      "purchase_price": 55
+    },
+    {
+      "element_in": 553,
+      "purchase_price": 55
+    }
   ]
 }

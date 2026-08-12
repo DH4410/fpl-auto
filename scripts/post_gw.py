@@ -29,7 +29,7 @@ import sys
 import time
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -39,7 +39,7 @@ import fpl_api
 from bot.updater import SeasonUpdater
 
 DEFAULT_EMAIL = "Dimahuang8@gmail.com"
-REPORTS_DIR = Path(__file__).resolve().parents[1] / "reports"
+REPORTS_DIR = Path(__file__).parent.parent / "reports"
 
 
 def _pause(lo: float, hi: float) -> None:
@@ -200,6 +200,42 @@ def main() -> None:
 
     if chip:
         print(f"Chip activated: {chip}")
+
+    # After transfer: update picks (captain, XI order, bench order)
+    gw_plan = plan.get("gw_plan", [])
+    if gw_plan:
+        first = gw_plan[0]
+        starting_xi = first.get("starting_xi", [])
+        bench = first.get("bench", [])
+        cap_el = plan.get("captain", {}).get("element")
+        vc_el = None
+        # Vice is the highest-xPts non-captain outfield starter
+        outfield = [p for p in starting_xi if p["position"] != 1 and p["element"] != cap_el]
+        if outfield:
+            forecasts_gw = plan.get("gw_plan", [{}])[0]
+            vc_el = first.get("vice", {}).get("element")
+
+        xi_sorted = sorted(starting_xi, key=lambda p: p["position"])
+        bench_gkp = [p for p in bench if p["position"] == 1]
+        bench_out = sorted([p for p in bench if p["position"] != 1],
+                           key=lambda p: p.get("cost", 0), reverse=True)
+        bench_ordered = bench_gkp + bench_out
+
+        picks_payload = []
+        for i, p in enumerate(xi_sorted + bench_ordered):
+            picks_payload.append({
+                "element": p["element"],
+                "position": i + 1,
+                "is_captain": p["element"] == cap_el,
+                "is_vice_captain": p["element"] == vc_el,
+            })
+
+        if picks_payload:
+            _pause(3, 7)
+            cap_name = plan.get("captain", {}).get("name", "?")
+            print(f"Setting captain to {cap_name} and updating bench order...")
+            result2 = fpl_api.update_picks(session, token, entry_id, picks=picks_payload)
+            print(f"Picks updated: {result2}")
 
     print("\nDone. Verify at fantasy.premierleague.com/my-team")
 

@@ -191,6 +191,21 @@ class SeasonUpdater:
         log.info("Forecast table: %d rows (%d players × %d GWs)",
                  len(forecasts), forecasts["element"].nunique(), self.horizon)
 
+        # Adjust xPts downward for players flagged injured/doubtful in news
+        try:
+            from .news_collector import build_news_features
+            pool_df = data_collector.build_player_pool()
+            pool_with_news = build_news_features(pool_df, espn_enriched=True)
+            avail = {
+                int(row["id"]): float(row.get("availability_index", 1.0))
+                for _, row in pool_with_news.iterrows()
+            }
+            mask = forecasts["element"].map(avail).fillna(1.0) < 0.85
+            forecasts.loc[mask, "xpts"] *= forecasts.loc[mask, "element"].map(avail)
+            log.info("News adjustment applied to %d forecast rows", mask.sum())
+        except Exception as exc:
+            log.warning("News enrichment skipped (%s)", exc)
+
         # 4. Plan.
         log.info("Running MILP planner…")
         plan = self.planner.plan(forecasts=forecasts, current_state=state)

@@ -22,7 +22,7 @@ import os
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -41,8 +41,8 @@ def _emit_new_refresh_token() -> None:
             f.write(f"new_refresh_token={new_rt}\n")
         print(f"  [new refresh token written to GITHUB_OUTPUT for secret rotation]")
 
-SQUAD_FILE = Path(__file__).resolve().parents[1] / "research" / "gw1_squad_2026.json"
-DEFAULT_EMAIL = "dimahuang10@gmail.com"
+SQUAD_FILE = Path(__file__).parent.parent / "research" / "gw1_squad_2026.json"
+DEFAULT_EMAIL = "dimahuang8@gmail.com"
 
 
 def load_squad() -> dict:
@@ -59,10 +59,11 @@ def print_squad(squad: dict) -> None:
     print(f"Cost  : £{squad['squad_cost_gpm']:.1f}m | Expected XI pts: {squad['expected_xi_pts']:.1f}")
     print(f"Capt  : {squad['captain_name']}  |  Vice: {squad['vice_captain_name']}")
     print()
-    print(f"{'Pos':<5} {'Player':<18} {'Team':<16} {'Price':>6} {'xPts':>6}  Role")
-    print("-" * 66)
+    print(f"{'Pos':<5} {'Player':<22} {'Price':>6} {'xPts':>6}  Role")
+    print("-" * 55)
     for p in squad["squad_detail"]:
-        print(f"{p['pos']:<5} {p['name']:<18} {p['team']:<16} {p['price']:>6.1f} {p['blended_xpts']:>6.3f}  {p['role']}")
+        role = "C" if p.get("is_captain") else ("V" if p.get("is_vice_captain") else ("XI" if p.get("in_xi") else "bench"))
+        print(f"{p['position_name']:<5} {p['name']:<22} {p['cost']:>6.1f} {p['blended_xpts']:>6.3f}  {role}")
     print()
 
 

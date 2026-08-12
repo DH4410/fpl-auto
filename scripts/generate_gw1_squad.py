@@ -121,6 +121,25 @@ def main() -> None:
         ep_val = ep_by_id.get(el_id, 0.0)
         blended_xpts[el_id] = 0.4 * ml_val + 0.6 * ep_val if ep_val > 0 else ml_val
 
+    # Adjust blended_xpts downward for injured/doubtful players using ESPN news
+    try:
+        from bot.news_collector import build_news_features
+        log.info("Fetching injury/news data from ESPN + FPL...")
+        pool_with_news = build_news_features(pool, espn_enriched=True, force=args.force)
+        avail_by_id = {
+            int(row["id"]): float(row.get("availability_index", 1.0))
+            for _, row in pool_with_news.iterrows()
+        }
+        adjusted = 0
+        for el_id in list(blended_xpts.keys()):
+            avail = avail_by_id.get(el_id, 1.0)
+            if avail < 0.85:
+                blended_xpts[el_id] *= avail
+                adjusted += 1
+        log.info("News availability: adjusted xPts for %d players", adjusted)
+    except Exception as exc:
+        log.warning("News fetch failed (%s) — using FPL status only", exc)
+
     log.info("Running SeasonForecaster (horizon=1, max_candidates=300)...")
     forecaster = SeasonForecaster(horizon=1, max_candidates=300)
     forecasts = forecaster.forecast(
@@ -152,6 +171,7 @@ def main() -> None:
     first_gw = gw_plan[0]
     squad_15 = first_gw.get("squad", [])
     starting_xi = first_gw.get("starting_xi", [])
+    bench = first_gw.get("bench", [])
     xi_ids = {p["element"] for p in starting_xi}
 
     # Captain override: never pick a GKP
@@ -191,6 +211,30 @@ def main() -> None:
     cap_xpts = blended_xpts.get(captain_p["element"], 0.0)
     expected_xi_pts = round(xi_xpts + cap_xpts, 2)  # captain double-counted
 
+    # Build FPL picks payload (positions 1-11=XI, 12=bench GKP, 13-15=outfield bench)
+    xi_sorted = sorted(starting_xi, key=lambda p: p["position"])  # GKP=1, DEF=2, MID=3, FWD=4
+    bench_gkp = [p for p in bench if p["position"] == GKP_POSITION]
+    bench_out = sorted(
+        [p for p in bench if p["position"] != GKP_POSITION],
+        key=lambda p: blended_xpts.get(p["element"], 0.0),
+        reverse=True,
+    )
+    bench_ordered = bench_gkp + bench_out
+    picks = []
+    for i, p in enumerate(xi_sorted + bench_ordered):
+        picks.append({
+            "element": p["element"],
+            "position": i + 1,
+            "is_captain": p["element"] == captain_p["element"],
+            "is_vice_captain": p["element"] == vice_p["element"],
+        })
+
+    # Build transfers payload for initial squad selection (no element_out)
+    transfers = [
+        {"element_in": p["element"], "purchase_price": int(round(_safe_float(p.get("cost")) * 10))}
+        for p in squad_15
+    ]
+
     output = {
         "generated_date": datetime.now().strftime("%Y-%m-%d"),
         "season": "2026-27",
@@ -203,6 +247,8 @@ def main() -> None:
         "vice_captain_element": vice_p["element"],
         "vice_captain_name": vice_p["name"],
         "squad_detail": squad_detail,
+        "picks": picks,
+        "transfers": transfers,
     }
 
     RESEARCH_DIR.mkdir(parents=True, exist_ok=True)
