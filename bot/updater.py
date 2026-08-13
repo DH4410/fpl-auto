@@ -210,7 +210,7 @@ class SeasonUpdater:
         # 3. ML predictions — blended 40% ML + 60% ep_next per player.
         ml_xpts: dict[int, float] | None = None
         if self._predictor is not None:
-            ml_xpts = self._compute_ml_xpts(bootstrap)
+            ml_xpts = self._compute_ml_xpts(bootstrap, current_gw)
             if not ml_xpts:
                 ml_xpts = None
 
@@ -323,7 +323,112 @@ class SeasonUpdater:
     # ML inference
     # ------------------------------------------------------------------
 
-    def _compute_ml_xpts(self, bootstrap: dict) -> dict[int, float]:
+    def _compute_fixture_mkt_features(
+        self,
+        current_gw: int,
+        pool_by_id: pd.DataFrame,
+        element_ids: list[int],
+    ) -> tuple[dict[int, dict[str, float]], dict[int, float]]:
+        """Compute Dixon-Coles implied mkt_* features for the upcoming GW fixtures.
+
+        Fits DC team strength on the most recent completed season (football-data
+        cache) and converts to perspective-adjusted fixture probabilities. Much
+        more informative than uniform training medians since Arsenal-at-home and
+        Ipswich-away will get very different values.
+
+        Returns:
+            mkt_dict: element_id → {mkt_col: value}  (empty on failure)
+            is_home_dict: element_id → 0.0 or 1.0     (empty on failure)
+        """
+        try:
+            import numpy as np
+            from scipy.stats import poisson as _poisson
+            from .feature_engineering import team_strength_matrix
+            from .data_collector import (
+                fetch_football_data_odds, fetch_fixtures,
+                match_team_names, bootstrap_frames,
+            )
+
+            raw = fetch_football_data_odds(season="2025-26")
+            valid = raw.dropna(subset=["home_goals", "away_goals"]) if not raw.empty else raw
+            if len(valid) < 50:
+                return {}, {}
+
+            # team_strength_matrix expects lowercase home_team/away_team.
+            dc_input = valid.rename(columns={"HomeTeam": "home_team", "AwayTeam": "away_team"})
+            strength = team_strength_matrix(dc_input, xi=0.0018)
+            home_adv = float(strength.attrs.get("home_advantage", 0.25))
+
+            frames = bootstrap_frames()
+            teams_df = frames["teams"]
+            fd_names = list(set(valid["HomeTeam"].dropna().tolist()))
+            fd_to_fpl = match_team_names(fd_names, teams_df)
+            fpl_to_fd = {v: k for k, v in fd_to_fpl.items() if v is not None}
+
+            gw_fixtures = [fx for fx in fetch_fixtures()
+                           if fx.get("event") == current_gw]
+
+            team_mkt: dict[int, dict] = {}
+            team_is_home: dict[int, float] = {}
+            _goals = np.arange(20)
+
+            for fx in gw_fixtures:
+                h_id = fx.get("team_h")
+                a_id = fx.get("team_a")
+                h_fd = fpl_to_fd.get(h_id)
+                a_fd = fpl_to_fd.get(a_id)
+                if h_fd not in strength.index or a_fd not in strength.index:
+                    continue
+
+                lam_h = max(float(np.exp(
+                    strength.loc[h_fd, "attack"] + home_adv
+                    - strength.loc[a_fd, "defence"])), 0.1)
+                lam_a = max(float(np.exp(
+                    strength.loc[a_fd, "attack"]
+                    - strength.loc[h_fd, "defence"])), 0.1)
+
+                p_h = _poisson.pmf(_goals, lam_h)
+                p_a = _poisson.pmf(_goals, lam_a)
+                grid = np.outer(p_h, p_a)
+                p_hw = float(np.tril(grid, -1).sum())
+                p_dr = float(np.trace(grid))
+                p_aw = float(np.triu(grid, 1).sum())
+                H, A = np.meshgrid(_goals, _goals, indexing="ij")
+                p_o25 = float(grid[H + A > 2].sum())
+
+                team_mkt[h_id] = dict(
+                    mkt_p_win=p_hw, mkt_p_draw=p_dr, mkt_p_lose=p_aw,
+                    mkt_lambda_for=lam_h, mkt_lambda_against=lam_a,
+                    mkt_clean_sheet=float(p_a[0]), mkt_p_over25=p_o25,
+                )
+                team_mkt[a_id] = dict(
+                    mkt_p_win=p_aw, mkt_p_draw=p_dr, mkt_p_lose=p_hw,
+                    mkt_lambda_for=lam_a, mkt_lambda_against=lam_h,
+                    mkt_clean_sheet=float(p_h[0]), mkt_p_over25=p_o25,
+                )
+                team_is_home[h_id] = 1.0
+                team_is_home[a_id] = 0.0
+
+            mkt_out: dict[int, dict[str, float]] = {}
+            home_out: dict[int, float] = {}
+            for el_id in element_ids:
+                if el_id not in pool_by_id.index:
+                    continue
+                fpl_team = int(pool_by_id.loc[el_id, "team"])
+                if fpl_team in team_mkt:
+                    mkt_out[el_id] = team_mkt[fpl_team]
+                if fpl_team in team_is_home:
+                    home_out[el_id] = team_is_home[fpl_team]
+
+            log.info("Fixture mkt_ features: %d/%d players assigned DC-implied odds (GW%d)",
+                     len(mkt_out), len(element_ids), current_gw)
+            return mkt_out, home_out
+
+        except Exception as exc:
+            log.warning("Fixture mkt_ features failed (%s) — using training medians", exc)
+            return {}, {}
+
+    def _compute_ml_xpts(self, bootstrap: dict, current_gw: int) -> dict[int, float]:
         """Run FPLPointsPredictor on current-season element summaries.
 
         Fetches history_past for every pool player (cached after first run),
@@ -364,9 +469,16 @@ class SeasonUpdater:
             pred_df["pos_def"] = (et_series == 2).astype(float)
             pred_df["pos_mid"] = (et_series == 3).astype(float)
             pred_df["pos_fwd"] = (et_series == 4).astype(float)
-            # At GW1 there are no current-season minutes on the clock, so home/away
-            # is unknown; 0.5 is the population-neutral expectation.
+            # Compute fixture-specific DC-implied odds first (used for both
+            # mkt_* features and is_home correction below).
+            fixture_mkt, fixture_is_home = self._compute_fixture_mkt_features(
+                current_gw, pool_by_id, element_ids)
+            # is_home: 0.5 neutral if fixture data unavailable.
             pred_df["is_home"] = 0.5
+            if fixture_is_home:
+                for _el, _h in fixture_is_home.items():
+                    if _el in pred_df.index:
+                        pred_df.loc[_el, "is_home"] = _h
             # start_rate and p60_rate are available from history_past-derived
             # ewma_minutes (starters average ~80 min → start_rate ≈ 0.9).
             # Use ewma_minutes / 90 as a single proxy for both start/p60 rates.
@@ -400,16 +512,19 @@ class SeasonUpdater:
                 if h2h_col in self._model_features and h2h_col not in pred_df.columns:
                     pred_df[h2h_col] = pred_df.get(ewma_fallback, 0.0)
 
-            # Fill mkt_* columns with training medians before the general
-            # fillna. Live odds are not fetched at inference time, so all
-            # players would otherwise get NaN — which XGBoost handles via
-            # its default direction, giving every player the same value.
-            # Training medians are the population centre the model was
-            # calibrated against for rows without odds, so they are the
-            # correct neutral imputation.
+            # Fill mkt_* columns: training medians as neutral baseline, then
+            # override with fixture-specific DC-implied probabilities where
+            # available. Players whose team is not in the DC model (newly
+            # promoted, unmapped) keep the median.
             for _mkt_col, _mkt_val in self._mkt_medians.items():
                 if _mkt_col not in pred_df.columns:
                     pred_df[_mkt_col] = _mkt_val
+            if fixture_mkt:
+                for _el, _mkt_vals in fixture_mkt.items():
+                    if _el in pred_df.index:
+                        for _col, _val in _mkt_vals.items():
+                            if _col in pred_df.columns:
+                                pred_df.loc[_el, _col] = _val
 
             medians = pred_df.reindex(columns=self._model_features).median()
             X_pred = pred_df.reindex(columns=self._model_features).fillna(medians)
