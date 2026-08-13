@@ -333,17 +333,77 @@ class SeasonUpdater:
             element_types = pool_by_id.loc[common_ids, "element_type"].astype(int).tolist()
             element_ids = [int(i) for i in common_ids]
 
+            # ---------------------------------------------------------------
+            # Enrich pred_df with contextual features that
+            # element_summaries_to_features() cannot derive from history_past
+            # alone. Without these the model sees every player as a cheap,
+            # position-unknown bench player and predicts near-zero minutes.
+            # ---------------------------------------------------------------
+            et_series = pool_by_id.loc[common_ids, "element_type"].astype(int)
+            pred_df["now_cost"] = pool_by_id.loc[common_ids, "now_cost"].astype(float)
+            pred_df["pos_gkp"] = (et_series == 1).astype(float)
+            pred_df["pos_def"] = (et_series == 2).astype(float)
+            pred_df["pos_mid"] = (et_series == 3).astype(float)
+            pred_df["pos_fwd"] = (et_series == 4).astype(float)
+            # At GW1 there are no current-season minutes on the clock, so home/away
+            # is unknown; 0.5 is the population-neutral expectation.
+            pred_df["is_home"] = 0.5
+            # start_rate and p60_rate are available from history_past-derived
+            # ewma_minutes (starters average ~80 min → start_rate ≈ 0.9).
+            # Use ewma_minutes / 90 as a single proxy for both start/p60 rates.
+            _min_share = (pred_df["ewma_minutes"] / 90.0).clip(0.0, 1.0)
+            pred_df["ewma_start_rate"] = _min_share
+            pred_df["ewma_p60_rate"] = _min_share
+            pred_df["ewma_played_any"] = _min_share
+            pred_df["games_played"] = (pred_df["ewma_minutes"] / 90.0 * 38).clip(0, 38)
+            # Rolling windows are empty at GW1.  Fill with EWMA values rather
+            # than population medians — this keeps the model in the "active
+            # regular starter" regime that matches the player's history rather
+            # than the "missing/injured" regime that median-filling would imply.
+            for prefix in ("roll1", "roll3", "roll6", "roll10"):
+                for stat, ewma_col in (
+                    ("minutes", "ewma_minutes"),
+                    ("total_points", "ewma_total_points"),
+                    ("expected_goals", "ewma_expected_goals"),
+                    ("expected_assists", "ewma_expected_assists"),
+                ):
+                    col = f"{prefix}_{stat}"
+                    if col in self._model_features and col not in pred_df.columns:
+                        pred_df[col] = pred_df.get(ewma_col, 0.0)
+            # h2h features: no head-to-head history yet at GW1; use the
+            # player's own career averages from the EWMA frame as a prior.
+            for h2h_col, ewma_fallback in (
+                ("h2h_appearances_vs_opp", "games_played"),
+                ("h2h_goals_scored_vs_opp", "ewma_goals_scored"),
+                ("h2h_assists_vs_opp", "ewma_assists"),
+                ("h2h_total_points_vs_opp", "ewma_total_points"),
+            ):
+                if h2h_col in self._model_features and h2h_col not in pred_df.columns:
+                    pred_df[h2h_col] = pred_df.get(ewma_fallback, 0.0)
+
             medians = pred_df.reindex(columns=self._model_features).median()
             X_pred = pred_df.reindex(columns=self._model_features).fillna(medians)
 
             preds = self._predictor.predict(X_pred, element_types)
 
+            # Conservative position-level priors used when FPL hasn't set
+            # ep_next (new season, new signings, injury unknowns).  Without an
+            # anchor the blended value would be 100% ML, which over-rates fringe
+            # players whose per-90 history is limited. The prior is set below the
+            # average starter so genuinely good players still rank above it via the
+            # ML channel, while unknowns don't crowd out ep_next players.
+            _EP_ZERO_PRIOR: dict[int, float] = {1: 2.5, 2: 2.0, 3: 2.0, 4: 2.0}
+
+            et_map: dict[int, int] = dict(zip(element_ids, element_types))
             ml_xpts: dict[int, float] = {}
             for el_id, xpts_val in zip(element_ids, preds["expected_points"]):
                 if pd.notna(xpts_val) and xpts_val > 0:
                     ep_val = ep_by_id.get(el_id, 0.0)
-                    blended = (ML_BLEND * float(xpts_val) + (1 - ML_BLEND) * ep_val
-                               if ep_val > 0 else float(xpts_val))
+                    if ep_val > 0:
+                        blended = ML_BLEND * float(xpts_val) + (1 - ML_BLEND) * ep_val
+                    else:
+                        prior = _EP_ZERO_PRIOR.get(et_map.get(el_id, 3), 2.0)
+                        blended = ML_BLEND * float(xpts_val) + (1 - ML_BLEND) * prior
                     ml_xpts[el_id] = blended
 
             log.info("ML inference: %d/%d players predicted (%.0f%% ML + %.0f%% ep_next)",
