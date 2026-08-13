@@ -150,6 +150,7 @@ class SeasonUpdater:
         # Try to load ML predictor (fails gracefully if models not yet trained).
         self._predictor = None
         self._model_features: list[str] = []
+        self._mkt_medians: dict[str, float] = {}
         try:
             from .models import FPLPointsPredictor
             sidecar = MODELS_DIR / "minutes.pkl.json"
@@ -158,6 +159,14 @@ class SeasonUpdater:
             log.info("ML predictor loaded from %s (%d features)", MODELS_DIR, len(self._model_features))
         except Exception as exc:
             log.warning("ML predictor unavailable (%s) — forecaster will use ep_next + PPG only", exc)
+        try:
+            mkt_path = MODELS_DIR / "mkt_medians.json"
+            if mkt_path.exists():
+                self._mkt_medians = json.loads(mkt_path.read_text())
+                log.info("Loaded training medians for %d mkt_ odds features",
+                         len(self._mkt_medians))
+        except Exception as exc:
+            log.warning("Could not load mkt_medians.json: %s", exc)
 
     def run(
         self,
@@ -390,6 +399,17 @@ class SeasonUpdater:
             ):
                 if h2h_col in self._model_features and h2h_col not in pred_df.columns:
                     pred_df[h2h_col] = pred_df.get(ewma_fallback, 0.0)
+
+            # Fill mkt_* columns with training medians before the general
+            # fillna. Live odds are not fetched at inference time, so all
+            # players would otherwise get NaN — which XGBoost handles via
+            # its default direction, giving every player the same value.
+            # Training medians are the population centre the model was
+            # calibrated against for rows without odds, so they are the
+            # correct neutral imputation.
+            for _mkt_col, _mkt_val in self._mkt_medians.items():
+                if _mkt_col not in pred_df.columns:
+                    pred_df[_mkt_col] = _mkt_val
 
             medians = pred_df.reindex(columns=self._model_features).median()
             X_pred = pred_df.reindex(columns=self._model_features).fillna(medians)

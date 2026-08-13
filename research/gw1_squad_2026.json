@@ -1,14 +1,14 @@
 {
-  "generated_date": "2026-08-12",
+  "generated_date": "2026-08-13",
   "season": "2026-27",
   "gameweek": 1,
   "model": "FPLPointsPredictor (element-summary API, 40% ML + 60% ep_next)",
   "squad_cost_gpm": 100.0,
-  "expected_xi_pts": 36.35,
-  "captain_element": 4,
-  "captain_name": "Gabriel",
-  "vice_captain_element": 387,
-  "vice_captain_name": "O'Reilly",
+  "expected_xi_pts": 40.14,
+  "captain_element": 426,
+  "captain_name": "B.Fernandes",
+  "vice_captain_element": 428,
+  "vice_captain_name": "Cunha",
   "squad_detail": [
     {
       "element": 1,
@@ -16,7 +16,7 @@
       "position": "1",
       "position_name": "GKP",
       "cost": 6.0,
-      "blended_xpts": 3.361,
+      "blended_xpts": 3.308,
       "ep_next": 4.0,
       "in_xi": true,
       "is_captain": false,
@@ -28,10 +28,22 @@
       "position": "2",
       "position_name": "DEF",
       "cost": 8.0,
-      "blended_xpts": 3.473,
+      "blended_xpts": 3.186,
       "ep_next": 4.0,
       "in_xi": true,
-      "is_captain": true,
+      "is_captain": false,
+      "is_vice_captain": false
+    },
+    {
+      "element": 356,
+      "name": "Virgil",
+      "position": "2",
+      "position_name": "DEF",
+      "cost": 6.5,
+      "blended_xpts": 2.749,
+      "ep_next": 3.1,
+      "in_xi": true,
+      "is_captain": false,
       "is_vice_captain": false
     },
     {
@@ -40,151 +52,139 @@
       "position": "2",
       "position_name": "DEF",
       "cost": 6.5,
-      "blended_xpts": 3.256,
+      "blended_xpts": 2.734,
       "ep_next": 3.1,
-      "in_xi": true,
-      "is_captain": false,
-      "is_vice_captain": true
-    },
-    {
-      "element": 392,
-      "name": "A\u00eft-Nouri",
-      "position": "2",
-      "position_name": "DEF",
-      "cost": 5.5,
-      "blended_xpts": 2.87,
-      "ep_next": 2.5,
       "in_xi": true,
       "is_captain": false,
       "is_vice_captain": false
     },
     {
-      "element": 229,
-      "name": "Tarkowski",
-      "position": "2",
-      "position_name": "DEF",
-      "cost": 6.0,
-      "blended_xpts": 2.82,
+      "element": 426,
+      "name": "B.Fernandes",
+      "position": "3",
+      "position_name": "MID",
+      "cost": 12.0,
+      "blended_xpts": 4.231,
+      "ep_next": 4.0,
+      "in_xi": true,
+      "is_captain": true,
+      "is_vice_captain": false
+    },
+    {
+      "element": 428,
+      "name": "Cunha",
+      "position": "3",
+      "position_name": "MID",
+      "cost": 8.0,
+      "blended_xpts": 3.471,
+      "ep_next": 2.8,
+      "in_xi": true,
+      "is_captain": false,
+      "is_vice_captain": true
+    },
+    {
+      "element": 427,
+      "name": "Mbeumo",
+      "position": "3",
+      "position_name": "MID",
+      "cost": 8.0,
+      "blended_xpts": 3.435,
       "ep_next": 2.8,
       "in_xi": true,
       "is_captain": false,
       "is_vice_captain": false
     },
     {
-      "element": 230,
-      "name": "Branthwaite",
-      "position": "2",
-      "position_name": "DEF",
-      "cost": 5.5,
-      "blended_xpts": 2.81,
+      "element": 95,
+      "name": "O.Dango",
+      "position": "3",
+      "position_name": "MID",
+      "cost": 6.5,
+      "blended_xpts": 3.275,
+      "ep_next": 2.3,
+      "in_xi": true,
+      "is_captain": false,
+      "is_vice_captain": false
+    },
+    {
+      "element": 155,
+      "name": "Enzo",
+      "position": "3",
+      "position_name": "MID",
+      "cost": 7.0,
+      "blended_xpts": 3.255,
       "ep_next": 2.5,
       "in_xi": true,
       "is_captain": false,
       "is_vice_captain": false
     },
     {
-      "element": 67,
-      "name": "Rayan",
-      "position": "3",
-      "position_name": "MID",
-      "cost": 6.5,
-      "blended_xpts": 2.992,
-      "ep_next": 2.3,
-      "in_xi": true,
-      "is_captain": false,
-      "is_vice_captain": false
-    },
-    {
-      "element": 415,
-      "name": "Dorgu",
-      "position": "3",
-      "position_name": "MID",
-      "cost": 6.0,
-      "blended_xpts": 2.845,
-      "ep_next": 2.1,
-      "in_xi": true,
-      "is_captain": false,
-      "is_vice_captain": false
-    },
-    {
-      "element": 236,
-      "name": "Dewsbury-Hall",
-      "position": "3",
-      "position_name": "MID",
-      "cost": 6.5,
-      "blended_xpts": 2.844,
-      "ep_next": 2.3,
-      "in_xi": true,
-      "is_captain": false,
-      "is_vice_captain": false
-    },
-    {
-      "element": 41,
-      "name": "Buend\u00eda",
-      "position": "3",
-      "position_name": "MID",
-      "cost": 6.0,
-      "blended_xpts": 2.809,
-      "ep_next": 2.1,
-      "in_xi": true,
-      "is_captain": false,
-      "is_vice_captain": false
-    },
-    {
-      "element": 411,
-      "name": "Haaland",
+      "element": 106,
+      "name": "Thiago",
       "position": "4",
       "position_name": "FWD",
-      "cost": 15.5,
-      "blended_xpts": 2.797,
-      "ep_next": 4.0,
+      "cost": 8.0,
+      "blended_xpts": 3.348,
+      "ep_next": 2.5,
       "in_xi": true,
       "is_captain": false,
       "is_vice_captain": false
     },
     {
-      "element": 350,
-      "name": "A.Becker",
+      "element": 346,
+      "name": "Calvert-Lewin",
+      "position": "4",
+      "position_name": "FWD",
+      "cost": 6.0,
+      "blended_xpts": 2.921,
+      "ep_next": 2.0,
+      "in_xi": true,
+      "is_captain": false,
+      "is_vice_captain": false
+    },
+    {
+      "element": 497,
+      "name": "Dubravka",
       "position": "1",
       "position_name": "GKP",
-      "cost": 5.5,
-      "blended_xpts": 3.055,
-      "ep_next": 3.3,
+      "cost": 4.0,
+      "blended_xpts": 1.491,
+      "ep_next": 1.0,
       "in_xi": false,
       "is_captain": false,
       "is_vice_captain": false
     },
     {
-      "element": 262,
-      "name": "Smith Rowe",
-      "position": "3",
-      "position_name": "MID",
-      "cost": 5.5,
-      "blended_xpts": 2.755,
-      "ep_next": 2.0,
+      "element": 259,
+      "name": "Diop",
+      "position": "2",
+      "position_name": "DEF",
+      "cost": 4.0,
+      "blended_xpts": 1.162,
+      "ep_next": 1.0,
       "in_xi": false,
       "is_captain": false,
       "is_vice_captain": false
     },
     {
-      "element": 492,
-      "name": "Awoniyi",
+      "element": 539,
+      "name": "O'Nien",
+      "position": "2",
+      "position_name": "DEF",
+      "cost": 4.0,
+      "blended_xpts": 1.13,
+      "ep_next": 1.0,
+      "in_xi": false,
+      "is_captain": false,
+      "is_vice_captain": false
+    },
+    {
+      "element": 248,
+      "name": "Beto",
       "position": "4",
       "position_name": "FWD",
       "cost": 5.5,
-      "blended_xpts": 2.611,
-      "ep_next": 1.8,
-      "in_xi": false,
-      "is_captain": false,
-      "is_vice_captain": false
-    },
-    {
-      "element": 553,
-      "name": "Isidor",
-      "position": "4",
-      "position_name": "FWD",
-      "cost": 5.5,
-      "blended_xpts": 2.599,
+      "blended_xpts": 2.78,
       "ep_next": 1.8,
       "in_xi": false,
       "is_captain": false,
@@ -201,83 +201,83 @@
     {
       "element": 4,
       "position": 2,
-      "is_captain": true,
+      "is_captain": false,
       "is_vice_captain": false
     },
     {
-      "element": 229,
+      "element": 356,
       "position": 3,
       "is_captain": false,
       "is_vice_captain": false
     },
     {
-      "element": 230,
+      "element": 387,
       "position": 4,
       "is_captain": false,
       "is_vice_captain": false
     },
     {
-      "element": 387,
+      "element": 95,
       "position": 5,
       "is_captain": false,
-      "is_vice_captain": true
+      "is_vice_captain": false
     },
     {
-      "element": 392,
+      "element": 155,
       "position": 6,
       "is_captain": false,
       "is_vice_captain": false
     },
     {
-      "element": 41,
+      "element": 426,
       "position": 7,
-      "is_captain": false,
+      "is_captain": true,
       "is_vice_captain": false
     },
     {
-      "element": 67,
+      "element": 427,
       "position": 8,
       "is_captain": false,
       "is_vice_captain": false
     },
     {
-      "element": 236,
+      "element": 428,
       "position": 9,
       "is_captain": false,
-      "is_vice_captain": false
+      "is_vice_captain": true
     },
     {
-      "element": 415,
+      "element": 106,
       "position": 10,
       "is_captain": false,
       "is_vice_captain": false
     },
     {
-      "element": 411,
+      "element": 346,
       "position": 11,
       "is_captain": false,
       "is_vice_captain": false
     },
     {
-      "element": 350,
+      "element": 497,
       "position": 12,
       "is_captain": false,
       "is_vice_captain": false
     },
     {
-      "element": 262,
+      "element": 248,
       "position": 13,
       "is_captain": false,
       "is_vice_captain": false
     },
     {
-      "element": 492,
+      "element": 259,
       "position": 14,
       "is_captain": false,
       "is_vice_captain": false
     },
     {
-      "element": 553,
+      "element": 539,
       "position": 15,
       "is_captain": false,
       "is_vice_captain": false
@@ -293,56 +293,56 @@
       "purchase_price": 80
     },
     {
-      "element_in": 41,
-      "purchase_price": 60
-    },
-    {
-      "element_in": 67,
+      "element_in": 95,
       "purchase_price": 65
     },
     {
-      "element_in": 229,
+      "element_in": 106,
+      "purchase_price": 80
+    },
+    {
+      "element_in": 155,
+      "purchase_price": 70
+    },
+    {
+      "element_in": 248,
+      "purchase_price": 55
+    },
+    {
+      "element_in": 259,
+      "purchase_price": 40
+    },
+    {
+      "element_in": 346,
       "purchase_price": 60
     },
     {
-      "element_in": 230,
-      "purchase_price": 55
-    },
-    {
-      "element_in": 236,
+      "element_in": 356,
       "purchase_price": 65
-    },
-    {
-      "element_in": 262,
-      "purchase_price": 55
-    },
-    {
-      "element_in": 350,
-      "purchase_price": 55
     },
     {
       "element_in": 387,
       "purchase_price": 65
     },
     {
-      "element_in": 392,
-      "purchase_price": 55
+      "element_in": 426,
+      "purchase_price": 120
     },
     {
-      "element_in": 411,
-      "purchase_price": 155
+      "element_in": 427,
+      "purchase_price": 80
     },
     {
-      "element_in": 415,
-      "purchase_price": 60
+      "element_in": 428,
+      "purchase_price": 80
     },
     {
-      "element_in": 492,
-      "purchase_price": 55
+      "element_in": 497,
+      "purchase_price": 40
     },
     {
-      "element_in": 553,
-      "purchase_price": 55
+      "element_in": 539,
+      "purchase_price": 40
     }
   ]
 }

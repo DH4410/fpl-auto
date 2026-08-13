@@ -879,7 +879,7 @@ def feature_columns(df: pd.DataFrame, extra: Sequence[str] = ()) -> list[str]:
         "transfers_in", "transfers_out", "transfers_balance", "selected",
     }
     prefixes = ("ewma_", "roll1_", "roll3_", "roll6_", "roll10_", "pos_", "fdr_next",
-                "n_fixtures_next", "home_share_next", "h2h_")
+                "n_fixtures_next", "home_share_next", "h2h_", "mkt_")
     cols = [c for c in df.columns
             if (c.startswith(prefixes) or c in {
                 "games_played", "is_home", "now_cost", "selected_by_percent",

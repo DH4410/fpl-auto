@@ -53,7 +53,14 @@
     "h2h_appearances_vs_opp",
     "h2h_goals_scored_vs_opp",
     "h2h_assists_vs_opp",
-    "h2h_total_points_vs_opp"
+    "h2h_total_points_vs_opp",
+    "mkt_p_win",
+    "mkt_p_draw",
+    "mkt_p_lose",
+    "mkt_lambda_for",
+    "mkt_lambda_against",
+    "mkt_clean_sheet",
+    "mkt_p_over25"
   ],
   "fitted": true
 }
