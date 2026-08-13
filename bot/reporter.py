@@ -11,6 +11,8 @@ from typing import Optional
 
 import pandas as pd
 
+from .fpl_rules import CHIP_LABELS
+
 log = logging.getLogger(__name__)
 
 POS = {1: "GKP", 2: "DEF", 3: "MID", 4: "FWD"}
@@ -114,7 +116,7 @@ def _immediate_action(plan: dict, current_gw: int) -> str:
 
     chip = plan.get("chip")
     if chip:
-        lines.append(f"**Chip:** {chip}  ")
+        lines.append(f"**Chip:** {CHIP_LABELS.get(chip, chip)}  ")
 
     cap = plan.get("captain", {})
     vice = plan.get("vice", {})

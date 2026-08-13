@@ -1081,11 +1081,12 @@ def element_summaries_to_features(
     recent_seasons: int = 2,
     recency_weights: tuple = (0.7, 0.3),
 ) -> "pd.DataFrame":
-    """Convert element-summary history_past into per-game inference features.
+    """Convert element-summary history_past into EWMA-named inference features.
 
     For each player, takes the most recent *recent_seasons* from history_past,
-    computes per-game averages (stat / starts.clip(1)), and blends them with
-    *recency_weights* (index 0 = most recent season).
+    divides each stat by 38 (GWs per season) to produce per-GW averages that
+    match the training EWMA convention, and blends them with *recency_weights*
+    (index 0 = most recent season).
 
     Returns a DataFrame indexed by current element ID with EWMA-named columns
     (``ewma_expected_goals``, ``ewma_minutes``, etc.) that match what the ML
@@ -1112,8 +1113,6 @@ def element_summaries_to_features(
             weighted = 0.0
             for season_row, weight in zip(recent, w):
                 raw = float(season_row.get(stat) or 0)
-                minutes_s = float(season_row.get("minutes") or 0)
-                starts_s = float(season_row.get("starts") or 0)
 
                 # Always divide by 38 (GWs per season) to produce per-GW
                 # averages that match the training EWMA convention. The training

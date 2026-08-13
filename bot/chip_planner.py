@@ -164,6 +164,9 @@ class ChipPlanner:
         if pulp.LpStatus[status] != "Optimal":
             log.warning("chip LP did not solve optimally: %s", pulp.LpStatus[status])
 
+        # Only include chip assignments whose estimated gain exceeds the hit cost
+        # (4 pts). A chip that gains less than a hit is not worth the slot —
+        # it would be better to hold it for a double/blank gameweek.
         chip_plan = sorted(
             [
                 {"chip": chip, "gw": gw,
@@ -171,6 +174,7 @@ class ChipPlanner:
                  "expected_gain": round(gains[chip].get(gw, 0.0), 2)}
                 for (chip, gw), var in play.items()
                 if (pulp.value(var) or 0.0) > 0.5
+                and gains[chip].get(gw, 0.0) >= HIT_COST
             ],
             key=lambda d: d["gw"],
         )
@@ -180,7 +184,7 @@ class ChipPlanner:
         reason = (
             f"Play {CHIP_LABELS.get(rec, rec)} this GW "
             f"(est. +{now[0]['expected_gain']:.1f} pts)." if rec
-            else "Hold all chips — a later gameweek scores higher."
+            else "Hold all chips — no chip this GW offers ≥4 pts; save for a double/blank gameweek."
         )
         return {
             "chip_plan": chip_plan,
