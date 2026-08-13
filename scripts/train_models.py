@@ -99,6 +99,8 @@ def main() -> None:
 
     predictor = FPLPointsPredictor()
 
+    sample_weight = targets.get("sample_weight")
+
     log.info("Training MinutesModel on %d rows…", len(X_full))
     predictor.minutes_model.train(X_full, targets["minutes"])
 
@@ -107,6 +109,7 @@ def main() -> None:
         X_attack,
         targets["xg_per90"][xg_mask],
         targets["xa_per90"][xg_mask],
+        sample_weight=sample_weight[xg_mask] if sample_weight is not None else None,
     )
 
     log.info("Training DefenseModel on %d rows…", len(X_full))
@@ -114,6 +117,7 @@ def main() -> None:
         X_full,
         targets["clean_sheet"],
         targets.get("defcon_per90"),
+        sample_weight=sample_weight,
     )
 
     log.info("Training BonusModel on %d rows…", len(X_full))
@@ -121,6 +125,7 @@ def main() -> None:
         X_full,
         targets["bps"],
         targets.get("bonus"),
+        sample_weight=sample_weight,
     )
 
     log.info("All sub-models trained. Saving to %s…", MODELS_DIR)

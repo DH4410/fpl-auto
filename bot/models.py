@@ -312,16 +312,22 @@ class AttackModel(BaseModel):
         return self.xg_model
 
     def train(self, X: pd.DataFrame, y_xg90: pd.Series | np.ndarray,
-              y_xa90: pd.Series | np.ndarray) -> "AttackModel":
-        """Fit the xG/90 and xA/90 heads."""
+              y_xa90: pd.Series | np.ndarray,
+              sample_weight: pd.Series | np.ndarray | None = None) -> "AttackModel":
+        """Fit the xG/90 and xA/90 heads.
+
+        ``sample_weight`` weights each row proportionally to minutes played,
+        down-weighting short cameos whose per-90 rates are statistically noisy.
+        """
         lgb = _require_lightgbm()
         Xn = self._prepare(X, fit=True)
+        sw = np.asarray(sample_weight, dtype=float) if sample_weight is not None else None
 
         self.xg_model = lgb.LGBMRegressor(**self.params)
-        self.xg_model.fit(Xn, np.asarray(y_xg90, dtype=float))
+        self.xg_model.fit(Xn, np.asarray(y_xg90, dtype=float), sample_weight=sw)
 
         self.xa_model = lgb.LGBMRegressor(**self.params)
-        self.xa_model.fit(Xn, np.asarray(y_xa90, dtype=float))
+        self.xa_model.fit(Xn, np.asarray(y_xa90, dtype=float), sample_weight=sw)
 
         self.fitted = True
         return self
@@ -377,16 +383,21 @@ class DefenseModel(BaseModel):
         return self.cs_model
 
     def train(self, X: pd.DataFrame, y_clean_sheet: pd.Series | np.ndarray,
-              y_defcon_per90: pd.Series | np.ndarray | None = None
+              y_defcon_per90: pd.Series | np.ndarray | None = None,
+              sample_weight: pd.Series | np.ndarray | None = None,
               ) -> "DefenseModel":
         """Fit the clean-sheet classifier and, where data allows, the DC head.
 
         ``y_defcon_per90`` may contain NaN for seasons without DC recording --
         those rows are dropped from the DC head rather than filled.
+
+        ``sample_weight`` is passed to the DC head regressor to down-weight
+        short cameo appearances whose per-90 rates are unreliable.
         """
         xgb = _require_xgboost()
         Xn = self._prepare(X, fit=True)
         cs = np.asarray(y_clean_sheet, dtype=int)
+        sw = np.asarray(sample_weight, dtype=float) if sample_weight is not None else None
 
         n_pos = max(1, int(cs.sum()))
         n_neg = max(1, len(cs) - n_pos)
@@ -400,7 +411,9 @@ class DefenseModel(BaseModel):
             n_usable = int(usable.sum())
             if n_usable >= 100:
                 self.defcon_model = xgb.XGBRegressor(**self.params)
-                self.defcon_model.fit(Xn[usable], dc[usable].to_numpy())
+                dc_sw = sw[usable] if sw is not None else None
+                self.defcon_model.fit(Xn[usable], dc[usable].to_numpy(),
+                                      sample_weight=dc_sw)
                 self.defcon_is_rule_based = False
                 log.info("DefenseModel: DC head trained on %d rows", n_usable)
             else:
@@ -521,12 +534,14 @@ class BonusModel(BaseModel):
         self.bonus_curve: np.ndarray | None = None
 
     def train(self, X: pd.DataFrame, y_bps: pd.Series | np.ndarray,
-              y_bonus: pd.Series | np.ndarray | None = None) -> "BonusModel":
+              y_bonus: pd.Series | np.ndarray | None = None,
+              sample_weight: pd.Series | np.ndarray | None = None) -> "BonusModel":
         """Fit the BPS regressor and, if bonus labels are given, the BPS->bonus curve."""
         xgb = _require_xgboost()
         Xn = self._prepare(X, fit=True)
+        sw = np.asarray(sample_weight, dtype=float) if sample_weight is not None else None
         self.model = xgb.XGBRegressor(**self.params)
-        self.model.fit(Xn, np.asarray(y_bps, dtype=float))
+        self.model.fit(Xn, np.asarray(y_bps, dtype=float), sample_weight=sw)
         self.fitted = True
 
         if y_bonus is not None:
@@ -612,14 +627,18 @@ class FPLPointsPredictor:
         ``targets`` supplies the label columns::
 
             minutes, xg_per90, xa_per90, clean_sheet, bps
-            defcon_per90 (optional -- NaN where a season predates the DC rule)
-            bonus        (optional -- enables the BPS->bonus curve)
+            defcon_per90    (optional -- NaN where a season predates the DC rule)
+            bonus           (optional -- enables the BPS->bonus curve)
+            sample_weight   (optional -- per-row weight; see build_training_targets)
         """
+        sw = targets.get("sample_weight")
         self.minutes_model.train(X, targets["minutes"])
-        self.attack_model.train(X, targets["xg_per90"], targets["xa_per90"])
+        self.attack_model.train(X, targets["xg_per90"], targets["xa_per90"],
+                                sample_weight=sw)
         self.defense_model.train(X, targets["clean_sheet"],
-                                 targets.get("defcon_per90"))
-        self.bonus_model.train(X, targets["bps"], targets.get("bonus"))
+                                 targets.get("defcon_per90"), sample_weight=sw)
+        self.bonus_model.train(X, targets["bps"], targets.get("bonus"),
+                               sample_weight=sw)
         return self
 
     def predict(self, X: pd.DataFrame, element_type: Sequence[int],
@@ -827,6 +846,11 @@ def build_training_targets(history_df: pd.DataFrame) -> dict:
     ``defcon_per90`` is NaN for every row of a season that predates the
     defensive-contribution statistic. That is deliberate -- see the module
     docstring.
+
+    ``sample_weight`` is proportional to minutes/90, capped at 1.0. A 20-minute
+    cameo appearance has weight 0.22 vs a full game's 1.0. This reduces the
+    influence of high per-90 rates from short cameos on the attack and defense
+    models, which is the dominant source of promoted-player and low-minute bias.
     """
     df = history_df.copy()
     minutes = pd.to_numeric(df["minutes"], errors="coerce")
@@ -846,6 +870,7 @@ def build_training_targets(history_df: pd.DataFrame) -> dict:
                                      errors="coerce").fillna(0).clip(0, 1),
         "bps": pd.to_numeric(df.get("bps", 0), errors="coerce"),
         "bonus": pd.to_numeric(df.get("bonus", 0), errors="coerce"),
+        "sample_weight": (minutes / 90.0).clip(upper=1.0).fillna(1.0).clip(lower=0.1),
     }
 
     if "defensive_contribution" in df.columns:
