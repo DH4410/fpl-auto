@@ -218,7 +218,10 @@ class SeasonUpdater:
         log.info("Forecast table: %d rows (%d players × %d GWs)",
                  len(forecasts), forecasts["element"].nunique(), self.horizon)
 
-        # Adjust xPts downward for players flagged injured/doubtful in news
+        # Adjust xPts downward for players flagged injured/doubtful in news.
+        # Only applies to the CURRENT gameweek — a doubtful player for GW1 may
+        # be fully available by GW2+, so discounting all future rows would cause
+        # the planner to incorrectly sell players who should be held.
         try:
             from .news_collector import build_news_features
             pool_df = data_collector.build_player_pool()
@@ -227,11 +230,20 @@ class SeasonUpdater:
                 int(row["id"]): float(row.get("availability_index", 1.0))
                 for _, row in pool_with_news.iterrows()
             }
-            mask = forecasts["element"].map(avail).fillna(1.0) < 0.85
-            forecasts.loc[mask, "xpts"] *= forecasts.loc[mask, "element"].map(avail)
-            log.info("News adjustment applied to %d forecast rows", mask.sum())
+            avail_col = forecasts["element"].map(avail).fillna(1.0)
+            mask = (forecasts["gw"] == current_gw) & (avail_col < 0.85)
+            forecasts.loc[mask, "xpts"] *= avail_col[mask]
+            log.info("News adjustment applied to %d current-GW forecast rows", mask.sum())
         except Exception as exc:
             log.warning("News enrichment skipped (%s)", exc)
+
+        # Apply set-piece duty bonuses (penalty takers, corner takers, FK specialists).
+        try:
+            from .prediction_adjustments import apply_setpiece_boosts
+            bootstrap_df = pd.DataFrame(bootstrap["elements"])
+            forecasts = apply_setpiece_boosts(forecasts, bootstrap_df)
+        except Exception as exc:
+            log.warning("Set-piece boost skipped (%s)", exc)
 
         # 5. Plan.
         log.info("Running MILP planner…")
