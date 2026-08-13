@@ -136,7 +136,6 @@ class SeasonForecaster:
 
         rows: list[dict] = []
         for gw_offset, gw in enumerate(range(current_gw, current_gw + self.horizon)):
-            gw_decay = self.decay ** gw_offset
             for _, p in pool.iterrows():
                 team_id = int(p["team"])
                 fixture_fdr = fdr_map.get((team_id, gw))  # None if blank
@@ -155,10 +154,10 @@ class SeasonForecaster:
 
                     if ml_val is not None and gw_offset == 0:
                         # ML prediction is a single-GW value, already fixture-aware.
-                        xpts = ml_val * p_start * gw_decay
+                        xpts = ml_val * p_start
                     elif ml_val is not None:
                         # Scale ML value as a per-game base rate for future GWs.
-                        xpts = ml_val * fdr_mult * p_start * gw_decay * n_fixtures
+                        xpts = ml_val * fdr_mult * p_start * n_fixtures
                     else:
                         # GW1 projection: use FPL's ep_next which already accounts for
                         # the immediate fixture (including DGW scaling). Further GWs
@@ -170,11 +169,11 @@ class SeasonForecaster:
                         )
                         if using_ep_next:
                             base = float(p["ep_next"])
-                            xpts = base * p_start * gw_decay  # ep_next is already DGW-aware
+                            xpts = base * p_start  # ep_next is already DGW-aware
                         else:
                             ppg = max(MIN_PPG, float(p["ppg"]))
                             base = ppg * fdr_mult
-                            xpts = base * p_start * gw_decay * n_fixtures
+                            xpts = base * p_start * n_fixtures
                     p_60 = p_start * 0.85  # approximate: most starters play 60+
 
                 uncertainty = min(0.90, UNCERTAINTY_PER_GW * (gw_offset + 1))
