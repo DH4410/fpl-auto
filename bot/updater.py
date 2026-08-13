@@ -238,10 +238,14 @@ class SeasonUpdater:
             log.warning("News enrichment skipped (%s)", exc)
 
         # Apply set-piece duty bonuses (penalty takers, corner takers, FK specialists).
+        # When ML is active, FPLPointsPredictor already trained on set-piece order features,
+        # so applying the full boost on top of 40% ML output would double-count that signal.
+        # Scale by (1 - ML_BLEND) when ML is on to credit only the ep_next portion.
         try:
             from .prediction_adjustments import apply_setpiece_boosts
             bootstrap_df = pd.DataFrame(bootstrap["elements"])
-            forecasts = apply_setpiece_boosts(forecasts, bootstrap_df)
+            sp_scale = (1.0 - ML_BLEND) if ml_xpts is not None else 1.0
+            forecasts = apply_setpiece_boosts(forecasts, bootstrap_df, scale=sp_scale)
         except Exception as exc:
             log.warning("Set-piece boost skipped (%s)", exc)
 

@@ -258,12 +258,17 @@ def apply_doubtful_discount(
 def apply_setpiece_boosts(
     forecasts_df: pd.DataFrame,
     bootstrap_df: pd.DataFrame,
+    scale: float = 1.0,
 ) -> pd.DataFrame:
     """Add expected points for penalty, corner and direct free-kick duty.
 
     Only the *primary* taker on each set-piece order (order == 1) is boosted;
     a missing, zero or secondary order contributes nothing. Boosts are scaled by
     expected minutes so a rotation risk on pens is not credited a full 90.
+
+    ``scale`` should be set to ``1 - ml_blend`` when the forecaster xpts already
+    contain a partial ML signal (FPLPointsPredictor trains on set-piece features
+    and would double-count the full boost). Set to 1.0 when xpts is ep_next only.
     """
     out = forecasts_df.copy()
     if out.empty:
@@ -272,7 +277,14 @@ def apply_setpiece_boosts(
 
     keep = ["id"] + [c for c in _SETPIECE_COLUMNS if c in bootstrap_df.columns]
     orders = bootstrap_df[keep].copy().rename(columns={"id": "element"})
+    n_before = len(out)
     out = out.merge(orders, on="element", how="left")
+    if len(out) != n_before:
+        log.warning(
+            "apply_setpiece_boosts: merge changed row count %d → %d "
+            "(bootstrap_df may have duplicate element ids)",
+            n_before, len(out),
+        )
 
     p_start = pd.to_numeric(out["p_start"], errors="coerce").fillna(0.0)
     p_60 = pd.to_numeric(out["p_60"], errors="coerce").fillna(0.0)
@@ -291,13 +303,13 @@ def apply_setpiece_boosts(
     corner_boost = _is_primary(out, "corners_and_indirect_freekicks_order") * CORNER_TAKER_XA_PER90 * minutes_share * 3
     fk_boost = _is_primary(out, "direct_freekicks_order") * DIRECT_FK_XG_PER90 * minutes_share * pts_per_goal
 
-    out["xpts_setpiece_boost"] = penalty_boost + corner_boost + fk_boost
+    out["xpts_setpiece_boost"] = (penalty_boost + corner_boost + fk_boost) * scale
     out["xpts"] = out["xpts"] + out["xpts_setpiece_boost"]
     out = out.drop(columns=[c for c in _SETPIECE_COLUMNS if c in out.columns])
 
     log.info(
-        "apply_setpiece_boosts: %d rows boosted, %.2f xPts added in total",
-        int((out["xpts_setpiece_boost"] > 0).sum()), float(out["xpts_setpiece_boost"].sum()),
+        "apply_setpiece_boosts: %d rows boosted (scale=%.2f), %.2f xPts added in total",
+        int((out["xpts_setpiece_boost"] > 0).sum()), scale, float(out["xpts_setpiece_boost"].sum()),
     )
     return out
 

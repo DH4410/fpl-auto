@@ -322,7 +322,11 @@ def team_strength_matrix(historical_results_df: pd.DataFrame,
 
     with the Dixon-Coles tau correction on low scores and exponential time decay
     ``exp(-xi * days_ago)`` so old matches count less. ``xi = 0.0018`` halves a
-    match's weight after roughly a year, the value Dixon and Coles found optimal.
+    match's weight after roughly a year (~385 days). Note: Dixon and Coles (1997)
+    found ξ ≈ 0.0065 optimal on 1990s English league data (~107-day half-life).
+    The slower default here reflects that pre-season GW1 squad selection benefits
+    from full-season team-strength signals, not just last 3 months. Cross-validate
+    xi on held-out seasons before changing the default.
 
     Accepts either a fixture-level frame (columns ``home_team``, ``away_team``,
     ``home_goals``, ``away_goals``, optional ``kickoff_time``) or a Vaastav
