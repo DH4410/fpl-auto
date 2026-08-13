@@ -43,7 +43,11 @@ REPORTS_DIR.mkdir(parents=True, exist_ok=True)
 MODELS_DIR = Path(__file__).resolve().parent / "models"
 
 #: ML blend weight (fraction from ML model; 1 - ML_BLEND from ep_next).
-ML_BLEND = 0.40
+# Holdout (2025-26, 29 757 rows): sweep over ewma_total_points anchor showed
+# optimal w_ml ≈ 0.70 (ρ=+0.7095 vs +0.7061 at 0.40). ep_next is weaker
+# than ewma (std≈0.42 vs 1.65), so true optimum is likely ≥0.70. Validated
+# by four-arm odds holdout; the +0.0034 Spearman gain exceeds the mkt_* fix.
+ML_BLEND = 0.70
 
 
 # ---------------------------------------------------------------------------
