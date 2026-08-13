@@ -33,7 +33,7 @@ from . import data_collector, reporter
 from .season_forecaster import SeasonForecaster
 from .season_planner import SeasonPlanner
 from .chip_planner import ChipPlanner
-from .fpl_rules import chip_half, CHIP_WILDCARD, CHIP_FREE_HIT, CHIP_TRIPLE_CAPTAIN, CHIP_BENCH_BOOST
+from .fpl_rules import chip_half, CHIP_WILDCARD, CHIP_FREE_HIT, CHIP_TRIPLE_CAPTAIN, CHIP_BENCH_BOOST, CHIP_LABELS
 
 log = logging.getLogger(__name__)
 
@@ -275,6 +275,16 @@ class SeasonUpdater:
         plan["chip"] = chip_result.get("recommendation")
         plan["chip_plan"] = chip_result.get("chip_plan", [])
         plan["chip_reason"] = chip_result.get("reason", "")
+        # Rebuild the Chip column in the report_table so it reflects the
+        # chip_planner output (report_table is built in season_planner.plan()
+        # before chips are merged, so it would otherwise always show "—").
+        rt = plan.get("report_table")
+        if rt is not None and not rt.empty and "GW" in rt.columns:
+            plan["report_table"] = rt.assign(
+                Chip=rt["GW"].map(
+                    lambda gw: CHIP_LABELS.get(chip_map.get(gw, ""), "") or "—"
+                )
+            )
 
         # 7. Fetch last GW live data for the report (public endpoint, no auth needed).
         finished_gws = [e for e in bootstrap["events"] if e.get("finished")]

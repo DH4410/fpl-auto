@@ -1115,18 +1115,15 @@ def element_summaries_to_features(
                 minutes_s = float(season_row.get("minutes") or 0)
                 starts_s = float(season_row.get("starts") or 0)
 
-                if stat == "minutes":
-                    # Per-GW average including non-playing weeks (38 GW season)
-                    denom = 38.0
-                elif stat == "clean_sheets":
-                    # CS is per-start; sub appearances rarely qualify
-                    denom = max(starts_s, 1.0)
-                else:
-                    # Per-90-minute rate: scales correctly for 90-min starters and
-                    # discounts fringe/bench players by their actual time on pitch.
-                    # Using starts as denominator breaks for 0-start players:
-                    # max(0,1)=1 inflates their entire season total into one game.
-                    denom = max(minutes_s / 90.0, 1.0)
+                # Always divide by 38 (GWs per season) to produce per-GW
+                # averages that match the training EWMA convention. The training
+                # EWMA is computed over individual GW rows, so non-playing GWs
+                # contribute zeros — giving ewma ≈ season_total / 38.
+                # Per-90 rates (= raw / max(minutes/90, 1)) are wrong here:
+                # they inflate fringe players with few minutes (e.g. a player
+                # with 45 min and 1 goal gets 1.0 goals/90 vs the EWMA truth
+                # of 1/38 = 0.026 goals/GW), which corrupts the ML inference.
+                denom = 38.0
 
                 weighted += weight * (raw / denom)
             row[ewma_col] = weighted

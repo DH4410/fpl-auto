@@ -265,11 +265,13 @@ class SeasonPlanner:
                     continue
                 prob += pulp.lpSum(st[i][t] for i in range(n) if pos[i] == et) >= minimum
 
-            # --- Captain: exactly 1, must start ---
+            # --- Captain: exactly 1 outfield starter (GKPs never captain) ---
             prob += pulp.lpSum(cp[i][t] for i in range(n)) == 1
             for i in range(n):
                 prob += st[i][t] <= sq[i][t]
                 prob += cp[i][t] <= st[i][t]
+                if pos[i] == GKP:
+                    prob += cp[i][t] == 0
 
             # --- Transfer continuity ---
             for i in range(n):
@@ -338,11 +340,10 @@ class SeasonPlanner:
             sell_idx = [i for i in range(n) if _val(sell[i][t]) > 0.5]
             bench_idx = [i for i in squad_idx if i not in start_idx]
 
-            vice_idx = max(
-                (i for i in start_idx if i != capt_idx),
-                key=lambda i: xpts[i, t],
-                default=capt_idx,
-            )
+            vice_candidates = [i for i in start_idx if i != capt_idx and pos[i] != GKP]
+            if not vice_candidates:
+                vice_candidates = [i for i in start_idx if i != capt_idx]
+            vice_idx = max(vice_candidates, key=lambda i: xpts[i, t], default=capt_idx)
 
             xi_xpts = sum(xpts[i, t] for i in start_idx)
             bench_xpts = sum(xpts[i, t] for i in bench_idx)
