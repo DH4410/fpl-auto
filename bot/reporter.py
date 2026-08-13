@@ -105,7 +105,7 @@ def _model_note() -> str:
         "**DEFCON:** The training data includes CBIT, recoveries, and tackles from 2025-26 "
         "onward. Players with consistently high defensive activity score higher on the DC model "
         "sub-head, so DEFCON potential is captured indirectly. FPL's own `ep_next` also "
-        "includes the DEFCON bonus in its expected-points calculation (30% weight here), "
+        "includes the DEFCON bonus in its expected-points calculation (40% weight here), "
         "so it's partially accounted for. The bot does not predict threshold-crossing "
         "probability explicitly — that would require match-level simulation."
     )
