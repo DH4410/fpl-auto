@@ -70,11 +70,11 @@ class ChipPlanner:
     time_limit: int = 30
     # Per-chip minimum expected gain before the planner recommends playing:
     # Normal-GW captain xPts ≈ 3.5-5. DGW captain ≈ 7-12. Require 6+ for TC.
-    # Normal-GW bench xPts ≈ 9-10. DGW bench ≈ 15-22. Require 13+ for BB.
-    # This prevents playing premium chips in ordinary GWs when no DGW is
-    # visible in the 6-GW planning window.
+    # Normal-GW bench xPts ≈ 9-10. Standout-fixture GW ≈ 11-12. DGW ≈ 15-22.
+    # 11.0 allows BB in genuinely great fixture weeks (not just DGWs), while
+    # blocking ordinary weeks where bench typically scores 9-10 pts.
     min_tc_gain: float = 6.0
-    min_bb_gain: float = 13.0
+    min_bb_gain: float = 11.0
 
     def evaluate(
         self,

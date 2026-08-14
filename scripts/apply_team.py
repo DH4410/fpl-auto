@@ -42,7 +42,7 @@ def _emit_new_refresh_token() -> None:
         print(f"  [new refresh token written to GITHUB_OUTPUT for secret rotation]")
 
 SQUAD_FILE = Path(__file__).parent.parent / "research" / "gw1_squad_2026.json"
-DEFAULT_EMAIL = "dimahuang8@gmail.com"
+DEFAULT_EMAIL = "dimahuang10@gmail.com"
 
 
 def load_squad() -> dict:

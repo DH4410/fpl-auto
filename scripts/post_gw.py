@@ -38,7 +38,7 @@ import fpl_auth
 import fpl_api
 from bot.updater import SeasonUpdater
 
-DEFAULT_EMAIL = "Dimahuang8@gmail.com"
+DEFAULT_EMAIL = "dimahuang10@gmail.com"
 REPORTS_DIR = Path(__file__).parent.parent / "reports"
 
 
