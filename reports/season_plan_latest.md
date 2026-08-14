@@ -1,6 +1,6 @@
 # FPL Season Plan — GW1
 
-*Generated 2026-08-14 07:44 UTC — advisory only, no transfers executed*
+*Generated 2026-08-14 09:26 UTC — advisory only, no transfers executed*
 
 ---
 

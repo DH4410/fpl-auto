@@ -1,120 +1,48 @@
 {
-  "generated_date": "2026-08-13",
+  "generated_date": "2026-08-14",
   "season": "2026-27",
   "gameweek": 1,
   "model": "FPLPointsPredictor (element-summary API, 40% ML + 60% ep_next)",
   "squad_cost_gpm": 100.0,
-  "expected_xi_pts": 40.14,
+  "expected_xi_pts": 36.33,
   "captain_element": 426,
   "captain_name": "B.Fernandes",
-  "vice_captain_element": 428,
-  "vice_captain_name": "Cunha",
+  "vice_captain_element": 4,
+  "vice_captain_name": "Gabriel",
   "squad_detail": [
-    {
-      "element": 1,
-      "name": "Raya",
-      "position": "1",
-      "position_name": "GKP",
-      "cost": 6.0,
-      "blended_xpts": 3.308,
-      "ep_next": 4.0,
-      "in_xi": true,
-      "is_captain": false,
-      "is_vice_captain": false
-    },
     {
       "element": 4,
       "name": "Gabriel",
       "position": "2",
       "position_name": "DEF",
       "cost": 8.0,
-      "blended_xpts": 3.186,
-      "ep_next": 4.0,
-      "in_xi": true,
-      "is_captain": false,
-      "is_vice_captain": false
-    },
-    {
-      "element": 356,
-      "name": "Virgil",
-      "position": "2",
-      "position_name": "DEF",
-      "cost": 6.5,
-      "blended_xpts": 2.749,
-      "ep_next": 3.1,
-      "in_xi": true,
-      "is_captain": false,
-      "is_vice_captain": false
-    },
-    {
-      "element": 387,
-      "name": "O'Reilly",
-      "position": "2",
-      "position_name": "DEF",
-      "cost": 6.5,
-      "blended_xpts": 2.734,
-      "ep_next": 3.1,
-      "in_xi": true,
-      "is_captain": false,
-      "is_vice_captain": false
-    },
-    {
-      "element": 426,
-      "name": "B.Fernandes",
-      "position": "3",
-      "position_name": "MID",
-      "cost": 12.0,
-      "blended_xpts": 4.231,
-      "ep_next": 4.0,
-      "in_xi": true,
-      "is_captain": true,
-      "is_vice_captain": false
-    },
-    {
-      "element": 428,
-      "name": "Cunha",
-      "position": "3",
-      "position_name": "MID",
-      "cost": 8.0,
-      "blended_xpts": 3.471,
-      "ep_next": 2.8,
+      "blended_xpts": 0.0,
+      "ep_next": 0.0,
       "in_xi": true,
       "is_captain": false,
       "is_vice_captain": true
     },
     {
-      "element": 427,
-      "name": "Mbeumo",
-      "position": "3",
-      "position_name": "MID",
-      "cost": 8.0,
-      "blended_xpts": 3.435,
-      "ep_next": 2.8,
-      "in_xi": true,
+      "element": 28,
+      "name": "Martinez",
+      "position": "1",
+      "position_name": "GKP",
+      "cost": 5.0,
+      "blended_xpts": 0.0,
+      "ep_next": 0.0,
+      "in_xi": false,
       "is_captain": false,
       "is_vice_captain": false
     },
     {
-      "element": 95,
-      "name": "O.Dango",
+      "element": 86,
+      "name": "Lewis-Potter",
       "position": "3",
       "position_name": "MID",
-      "cost": 6.5,
-      "blended_xpts": 3.275,
-      "ep_next": 2.3,
-      "in_xi": true,
-      "is_captain": false,
-      "is_vice_captain": false
-    },
-    {
-      "element": 155,
-      "name": "Enzo",
-      "position": "3",
-      "position_name": "MID",
-      "cost": 7.0,
-      "blended_xpts": 3.255,
-      "ep_next": 2.5,
-      "in_xi": true,
+      "cost": 5.5,
+      "blended_xpts": 0.0,
+      "ep_next": 0.0,
+      "in_xi": false,
       "is_captain": false,
       "is_vice_captain": false
     },
@@ -124,8 +52,56 @@
       "position": "4",
       "position_name": "FWD",
       "cost": 8.0,
-      "blended_xpts": 3.348,
-      "ep_next": 2.5,
+      "blended_xpts": 0.0,
+      "ep_next": 0.0,
+      "in_xi": true,
+      "is_captain": false,
+      "is_vice_captain": false
+    },
+    {
+      "element": 124,
+      "name": "Gro\u00df",
+      "position": "3",
+      "position_name": "MID",
+      "cost": 5.5,
+      "blended_xpts": 0.0,
+      "ep_next": 0.0,
+      "in_xi": true,
+      "is_captain": false,
+      "is_vice_captain": false
+    },
+    {
+      "element": 142,
+      "name": "James",
+      "position": "2",
+      "position_name": "DEF",
+      "cost": 5.5,
+      "blended_xpts": 0.0,
+      "ep_next": 0.0,
+      "in_xi": true,
+      "is_captain": false,
+      "is_vice_captain": false
+    },
+    {
+      "element": 200,
+      "name": "Lacroix",
+      "position": "2",
+      "position_name": "DEF",
+      "cost": 6.0,
+      "blended_xpts": 0.0,
+      "ep_next": 0.0,
+      "in_xi": true,
+      "is_captain": false,
+      "is_vice_captain": false
+    },
+    {
+      "element": 226,
+      "name": "Pickford",
+      "position": "1",
+      "position_name": "GKP",
+      "cost": 5.5,
+      "blended_xpts": 0.0,
+      "ep_next": 0.0,
       "in_xi": true,
       "is_captain": false,
       "is_vice_captain": false
@@ -136,56 +112,80 @@
       "position": "4",
       "position_name": "FWD",
       "cost": 6.0,
-      "blended_xpts": 2.921,
-      "ep_next": 2.0,
+      "blended_xpts": 0.0,
+      "ep_next": 0.0,
+      "in_xi": false,
+      "is_captain": false,
+      "is_vice_captain": false
+    },
+    {
+      "element": 368,
+      "name": "Szoboszlai",
+      "position": "3",
+      "position_name": "MID",
+      "cost": 7.0,
+      "blended_xpts": 0.0,
+      "ep_next": 0.0,
       "in_xi": true,
       "is_captain": false,
       "is_vice_captain": false
     },
     {
-      "element": 497,
-      "name": "Dubravka",
-      "position": "1",
-      "position_name": "GKP",
-      "cost": 4.0,
-      "blended_xpts": 1.491,
-      "ep_next": 1.0,
-      "in_xi": false,
-      "is_captain": false,
-      "is_vice_captain": false
-    },
-    {
-      "element": 259,
-      "name": "Diop",
+      "element": 387,
+      "name": "O'Reilly",
       "position": "2",
       "position_name": "DEF",
-      "cost": 4.0,
-      "blended_xpts": 1.162,
-      "ep_next": 1.0,
-      "in_xi": false,
+      "cost": 6.5,
+      "blended_xpts": 0.0,
+      "ep_next": 0.0,
+      "in_xi": true,
       "is_captain": false,
       "is_vice_captain": false
     },
     {
-      "element": 539,
-      "name": "O'Nien",
+      "element": 389,
+      "name": "Matheus N.",
       "position": "2",
       "position_name": "DEF",
-      "cost": 4.0,
-      "blended_xpts": 1.13,
-      "ep_next": 1.0,
-      "in_xi": false,
+      "cost": 6.0,
+      "blended_xpts": 0.0,
+      "ep_next": 0.0,
+      "in_xi": true,
       "is_captain": false,
       "is_vice_captain": false
     },
     {
-      "element": 248,
-      "name": "Beto",
+      "element": 399,
+      "name": "Cherki",
+      "position": "3",
+      "position_name": "MID",
+      "cost": 7.5,
+      "blended_xpts": 0.0,
+      "ep_next": 0.0,
+      "in_xi": true,
+      "is_captain": false,
+      "is_vice_captain": false
+    },
+    {
+      "element": 426,
+      "name": "B.Fernandes",
+      "position": "3",
+      "position_name": "MID",
+      "cost": 12.0,
+      "blended_xpts": 0.0,
+      "ep_next": 0.0,
+      "in_xi": true,
+      "is_captain": true,
+      "is_vice_captain": false
+    },
+    {
+      "element": 463,
+      "name": "Woltemade",
       "position": "4",
       "position_name": "FWD",
-      "cost": 5.5,
-      "blended_xpts": 2.78,
-      "ep_next": 1.8,
+      "cost": 6.0,
+      "blended_xpts": 0.0,
+      "ep_next": 0.0,
       "in_xi": false,
       "is_captain": false,
       "is_vice_captain": false
@@ -193,7 +193,7 @@
   ],
   "picks": [
     {
-      "element": 1,
+      "element": 226,
       "position": 1,
       "is_captain": false,
       "is_vice_captain": false
@@ -202,82 +202,82 @@
       "element": 4,
       "position": 2,
       "is_captain": false,
-      "is_vice_captain": false
+      "is_vice_captain": true
     },
     {
-      "element": 356,
+      "element": 142,
       "position": 3,
       "is_captain": false,
       "is_vice_captain": false
     },
     {
-      "element": 387,
+      "element": 200,
       "position": 4,
       "is_captain": false,
       "is_vice_captain": false
     },
     {
-      "element": 95,
+      "element": 387,
       "position": 5,
       "is_captain": false,
       "is_vice_captain": false
     },
     {
-      "element": 155,
+      "element": 389,
       "position": 6,
       "is_captain": false,
       "is_vice_captain": false
     },
     {
-      "element": 426,
+      "element": 124,
       "position": 7,
-      "is_captain": true,
+      "is_captain": false,
       "is_vice_captain": false
     },
     {
-      "element": 427,
+      "element": 368,
       "position": 8,
       "is_captain": false,
       "is_vice_captain": false
     },
     {
-      "element": 428,
+      "element": 399,
       "position": 9,
-      "is_captain": false,
-      "is_vice_captain": true
-    },
-    {
-      "element": 106,
-      "position": 10,
       "is_captain": false,
       "is_vice_captain": false
     },
     {
-      "element": 346,
+      "element": 426,
+      "position": 10,
+      "is_captain": true,
+      "is_vice_captain": false
+    },
+    {
+      "element": 106,
       "position": 11,
       "is_captain": false,
       "is_vice_captain": false
     },
     {
-      "element": 497,
+      "element": 28,
       "position": 12,
       "is_captain": false,
       "is_vice_captain": false
     },
     {
-      "element": 248,
+      "element": 86,
       "position": 13,
       "is_captain": false,
       "is_vice_captain": false
     },
     {
-      "element": 259,
+      "element": 346,
       "position": 14,
       "is_captain": false,
       "is_vice_captain": false
     },
     {
-      "element": 539,
+      "element": 463,
       "position": 15,
       "is_captain": false,
       "is_vice_captain": false
@@ -285,64 +285,64 @@
   ],
   "transfers": [
     {
-      "element_in": 1,
-      "purchase_price": 60
-    },
-    {
       "element_in": 4,
       "purchase_price": 80
     },
     {
-      "element_in": 95,
-      "purchase_price": 65
+      "element_in": 28,
+      "purchase_price": 50
+    },
+    {
+      "element_in": 86,
+      "purchase_price": 55
     },
     {
       "element_in": 106,
       "purchase_price": 80
     },
     {
-      "element_in": 155,
-      "purchase_price": 70
-    },
-    {
-      "element_in": 248,
+      "element_in": 124,
       "purchase_price": 55
     },
     {
-      "element_in": 259,
-      "purchase_price": 40
+      "element_in": 142,
+      "purchase_price": 55
+    },
+    {
+      "element_in": 200,
+      "purchase_price": 60
+    },
+    {
+      "element_in": 226,
+      "purchase_price": 55
     },
     {
       "element_in": 346,
       "purchase_price": 60
     },
     {
-      "element_in": 356,
-      "purchase_price": 65
+      "element_in": 368,
+      "purchase_price": 70
     },
     {
       "element_in": 387,
       "purchase_price": 65
     },
     {
+      "element_in": 389,
+      "purchase_price": 60
+    },
+    {
+      "element_in": 399,
+      "purchase_price": 75
+    },
+    {
       "element_in": 426,
       "purchase_price": 120
     },
     {
-      "element_in": 427,
-      "purchase_price": 80
-    },
-    {
-      "element_in": 428,
-      "purchase_price": 80
-    },
-    {
-      "element_in": 497,
-      "purchase_price": 40
-    },
-    {
-      "element_in": 539,
-      "purchase_price": 40
+      "element_in": 463,
+      "purchase_price": 60
     }
   ]
 }
