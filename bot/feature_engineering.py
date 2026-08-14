@@ -857,6 +857,100 @@ def player_vs_opponent_features(
         out[col_name] = out[col_name].where(~thin, ov_mean)
         out.drop(columns=[tmp], inplace=True)
 
+    out = _h2h_rate_features(out, group_key, has_opp, h2h_cumcnt)
+
+    return out
+
+
+#: Prior h2h games required before a per-90 rate is trusted. Below this the
+#: denominator is too small to separate skill from noise, so the positional
+#: average is used instead.
+MIN_H2H_RATE_GAMES = 3
+#: Prior minutes required before a per-90 rate is computed at all. Three
+#: cameo appearances totalling 20 minutes would otherwise produce a wild rate.
+MIN_H2H_RATE_MINUTES = 30.0
+
+
+def _h2h_rate_features(
+    out: pd.DataFrame,
+    group_key: list[str],
+    has_opp: pd.Series,
+    h2h_cumcnt: pd.Series,
+) -> pd.DataFrame:
+    """Per-90 head-to-head rates vs a specific opponent.
+
+    Adds, using only *prior* appearances (same shift-by-one leakage guard as
+    the counting features above):
+
+      ``h2h_goals_per90_vs_opp``   goals per 90 minutes vs this opponent
+      ``h2h_assists_per90_vs_opp`` assists per 90 vs this opponent
+      ``h2h_bps_per90_vs_opp``     BPS per 90 vs this opponent
+      ``h2h_cs_rate_vs_opp``       clean sheets per appearance vs this opponent
+
+    Sample guard: a rate is only trusted with at least ``MIN_H2H_RATE_GAMES``
+    prior meetings and ``MIN_H2H_RATE_MINUTES`` prior minutes. Untrusted cells
+    are filled with the average for that position, which keeps the column on a
+    sensible scale instead of implying a player has never scored against a side
+    they have faced twice.
+
+    The number of prior meetings is *not* added as a separate column: it is
+    already published as ``h2h_appearances_vs_opp`` by the caller, and a second
+    identically-valued column would be perfectly collinear.
+
+    Existing columns are never modified, and a rate is skipped entirely when
+    its source column is absent from the frame.
+    """
+    if "minutes" not in out.columns:
+        return out
+
+    def _prior_sum(col: str) -> pd.Series:
+        """Sum of ``col`` over all earlier rows in the (player, opponent) group."""
+        vals = pd.to_numeric(out[col], errors="coerce").fillna(0.0)
+        cumsum = (
+            vals.groupby([out[k] for k in group_key], sort=False, dropna=True)
+            .cumsum()
+            .reindex(out.index)
+        )
+        return (cumsum - vals).where(has_opp)
+
+    prior_minutes = _prior_sum("minutes")
+    # Guard the denominator: no minutes means no rate, not an infinite one.
+    safe_minutes = prior_minutes.where(prior_minutes >= MIN_H2H_RATE_MINUTES)
+    enough_games = h2h_cumcnt >= MIN_H2H_RATE_GAMES
+
+    # Position key for the fallback average. element_type is set upstream by
+    # the training pipeline; fall back to the text column, then to a single
+    # global group so the fill still works on minimal frames.
+    if "element_type" in out.columns:
+        pos_key = pd.to_numeric(out["element_type"], errors="coerce").fillna(-1)
+    elif "position" in out.columns:
+        pos_key = out["position"].map(POSITION_IDS).fillna(-1)
+    else:
+        pos_key = pd.Series(-1, index=out.index)
+
+    def _fill_positional(series: pd.Series) -> pd.Series:
+        """Fill untrusted cells with the positional average of trusted ones."""
+        pos_avg = series.groupby(pos_key).transform("mean")
+        return series.fillna(pos_avg).fillna(series.mean()).fillna(0.0)
+
+    per90_specs = (
+        ("goals_scored", "h2h_goals_per90_vs_opp"),
+        ("assists", "h2h_assists_per90_vs_opp"),
+        ("bps", "h2h_bps_per90_vs_opp"),
+    )
+    for src, col_name in per90_specs:
+        if src not in out.columns or col_name in out.columns:
+            continue
+        rate = _prior_sum(src) / safe_minutes * 90.0
+        out[col_name] = _fill_positional(rate.where(enough_games))
+
+    if "clean_sheets" in out.columns and "h2h_cs_rate_vs_opp" not in out.columns:
+        # Clean sheets are a per-match outcome, so this is a rate per
+        # appearance rather than per 90 minutes.
+        prior_games = h2h_cumcnt.where(h2h_cumcnt > 0)
+        cs_rate = _prior_sum("clean_sheets") / prior_games
+        out["h2h_cs_rate_vs_opp"] = _fill_positional(cs_rate.where(enough_games))
+
     return out
 
 
