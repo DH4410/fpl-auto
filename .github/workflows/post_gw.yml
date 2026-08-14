@@ -1,22 +1,40 @@
-name: Post-GW Analysis & Auto-Transfer
+name: Weekly Orchestrator (analysis, planning, transfers)
 
 on:
   schedule:
-    # Run every 4 hours. The GW-check step exits early if no action is needed.
-    - cron: '0 */4 * * *'
+    # Every 2 hours. The orchestrator derives its own stage from the FPL
+    # calendar and its saved state, and no-ops when there is nothing to do.
+    - cron: '0 */2 * * *'
   workflow_dispatch:
     inputs:
-      gw:
-        description: 'GW number to analyze (blank = auto-detect)'
+      force_stage:
+        description: 'Force a stage (blank = auto-detect)'
         required: false
+        type: choice
+        options:
+          - ''
+          - POST_GW_ANALYSIS
+          - MONITORING
+          - PRE_DEADLINE_PLAN
+          - EXECUTE
+          - INTERNATIONAL_BREAK
       dry_run:
-        description: 'Dry run only (no transfers submitted)?'
+        description: 'Dry run only (no writes to FPL)?'
         type: boolean
         default: false
 
+# The EXECUTE stage deliberately sleeps for up to ~3.5h before submitting.
+# Overlapping runs could submit the same transfers twice, so runs are
+# serialised and a queued run is never allowed to cancel one mid-submission.
+concurrency:
+  group: fpl-weekly-orchestrator
+  cancel-in-progress: false
+
 jobs:
-  post-gw:
+  orchestrate:
     runs-on: ubuntu-latest
+    # Covers the randomised pre-execution delay plus one-by-one transfers.
+    timeout-minutes: 350
 
     steps:
       - name: Checkout
@@ -31,132 +49,45 @@ jobs:
         run: |
           pip install requests pandas numpy xgboost lightgbm pulp scipy tabulate python-dotenv
 
-      # Check FPL deadlines — only proceed if a GW has finished and the next
-      # deadline is still in the future (between 2 and 48 hours away).
-      # Manual workflow_dispatch always proceeds regardless.
-      - name: Check GW deadline
-        id: gw_check
-        run: |
-          python -c "
-          import requests, os, sys
-          from datetime import datetime, timezone
-
-          # Manual dispatch always runs
-          if '${{ github.event_name }}' == 'workflow_dispatch':
-              with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
-                  f.write('should_run=true\n')
-                  gw_input = '${{ github.event.inputs.gw }}'
-                  f.write(f'next_gw={gw_input}\n' if gw_input else 'next_gw=\n')
-              print('Manual dispatch — proceeding.')
-              sys.exit(0)
-
-          try:
-              events = requests.get(
-                  'https://fantasy.premierleague.com/api/bootstrap-static/',
-                  timeout=15
-              ).json()['events']
-          except Exception as e:
-              print(f'Could not fetch FPL events: {e}')
-              with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
-                  f.write('should_run=false\n')
-              sys.exit(0)
-
-          now = datetime.now(timezone.utc)
-          finished = [e for e in events if e.get('finished')]
-          upcoming = [e for e in events if not e.get('finished') and e.get('deadline_time')]
-
-          if not finished:
-              print('No finished GWs yet — nothing to analyse.')
-              with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
-                  f.write('should_run=false\n')
-              sys.exit(0)
-
-          if not upcoming:
-              print('No upcoming GW deadlines found.')
-              with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
-                  f.write('should_run=false\n')
-              sys.exit(0)
-
-          last_gw = finished[-1]
-          nxt = upcoming[0]
-          deadline = datetime.fromisoformat(nxt['deadline_time'].replace('Z', '+00:00'))
-          hours_left = (deadline - now).total_seconds() / 3600
-
-          # Act if deadline is 2–48 hours away (enough time for review, not too early)
-          should = 2 <= hours_left <= 48
-          print(f'GW{last_gw[\"id\"]} finished. Next GW{nxt[\"id\"]} deadline in {hours_left:.1f}h → should_run={should}')
-
-          with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
-              f.write(f'should_run={str(should).lower()}\n')
-              f.write(f'next_gw={nxt[\"id\"]}\n')
-          "
-
-      # Random startup delay (3–18 min) so runs don't look machine-regular
-      - name: Human-like startup delay
-        if: steps.gw_check.outputs.should_run == 'true'
-        run: |
-          DELAY=$(python -c "import random; print(random.randint(180, 1080))")
-          echo "Waiting ${DELAY}s before starting..."
-          sleep $DELAY
-
-      - name: Run public GW analysis (no auth required)
-        if: steps.gw_check.outputs.should_run == 'true'
+      - name: Run weekly orchestrator
+        id: orchestrator
         env:
-          FPL_ENTRY_ID: ${{ secrets.FPL_ENTRY_ID }}
+          FPL_REFRESH_TOKEN:   ${{ secrets.FPL_REFRESH_TOKEN }}
+          FPL_EMAIL:           ${{ secrets.FPL_EMAIL }}
+          FPL_PASSWORD:        ${{ secrets.FPL_PASSWORD }}
+          FPL_ENTRY_ID:        ${{ secrets.FPL_ENTRY_ID }}
+          GMAIL_FROM:          ${{ secrets.GMAIL_FROM }}
+          GMAIL_APP_PASSWORD:  ${{ secrets.GMAIL_APP_PASSWORD }}
         run: |
-          GW_ARG=""
-          if [ -n "${{ github.event.inputs.gw }}" ]; then
-            GW_ARG="--gw ${{ github.event.inputs.gw }}"
-          elif [ -n "${{ steps.gw_check.outputs.next_gw }}" ]; then
-            GW_ARG="--gw ${{ steps.gw_check.outputs.next_gw }}"
+          ARGS="--auto"
+          if [ -n "${{ github.event.inputs.force_stage }}" ]; then
+            ARGS="$ARGS --force-stage ${{ github.event.inputs.force_stage }}"
           fi
-          python scripts/analyze_gw_public.py $GW_ARG || echo "Public analysis skipped (no finished GW yet)"
-
-      # Another pause between analysis and transfer submission
-      - name: Pause before transfer
-        if: steps.gw_check.outputs.should_run == 'true'
-        run: |
-          DELAY=$(python -c "import random; print(random.randint(120, 480))")
-          echo "Waiting ${DELAY}s before transfer step..."
-          sleep $DELAY
-
-      - name: Submit recommended transfer
-        id: transfer_step
-        if: steps.gw_check.outputs.should_run == 'true'
-        env:
-          FPL_REFRESH_TOKEN: ${{ secrets.FPL_REFRESH_TOKEN }}
-          FPL_EMAIL:         ${{ secrets.FPL_EMAIL }}
-          FPL_PASSWORD:      ${{ secrets.FPL_PASSWORD }}
-        run: |
-          GW_ARG=""
-          if [ -n "${{ github.event.inputs.gw }}" ]; then
-            GW_ARG="--gw ${{ github.event.inputs.gw }}"
-          elif [ -n "${{ steps.gw_check.outputs.next_gw }}" ]; then
-            GW_ARG="--gw ${{ steps.gw_check.outputs.next_gw }}"
-          fi
-
-          DRY_ARG=""
           if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
-            DRY_ARG="--dry-run"
+            ARGS="$ARGS --dry-run"
           fi
-
-          python scripts/post_gw.py $GW_ARG --auto $DRY_ARG || echo "Transfer step failed — check logs. Auth may need browser login."
+          python scripts/weekly_orchestrator.py $ARGS
 
       - name: Rotate refresh token in GitHub Secrets
-        if: steps.transfer_step.outputs.new_refresh_token != ''
+        if: steps.orchestrator.outputs.new_refresh_token != ''
         env:
           GH_TOKEN: ${{ secrets.GH_SECRETS_PAT }}
         run: |
-          echo "${{ steps.transfer_step.outputs.new_refresh_token }}" | \
+          echo "${{ steps.orchestrator.outputs.new_refresh_token }}" | \
             gh secret set FPL_REFRESH_TOKEN --repo ${{ github.repository }}
           echo "Refresh token rotated successfully."
 
-      - name: Commit updated reports
-        if: steps.gw_check.outputs.should_run == 'true'
+      # The orchestrator commits its own state after each stage so a crash
+      # cannot cause a repeat submission. This is the catch-all for anything
+      # still uncommitted (reports, snapshots) after a partial run.
+      - name: Commit reports and state
+        if: always()
         run: |
           git config user.name  "FPL Auto Bot"
           git config user.email "bot@fplauto.local"
-          git add reports/
-          git diff --cached --quiet && echo "No report changes" || \
-            git commit -m "auto: GW${{ steps.gw_check.outputs.next_gw }} analysis + transfer report [skip ci]"
-          git push
+          git add reports/ data/
+          git diff --cached --quiet && echo "No changes to commit" || {
+            git commit -m "auto: orchestrator run $(date -u +%Y-%m-%dT%H:%MZ) [skip ci]"
+            git pull --rebase --autostash || true
+            git push
+          }

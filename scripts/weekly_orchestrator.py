@@ -65,7 +65,6 @@ import fpl_api  # noqa: E402
 import fpl_auth  # noqa: E402
 from bot import email_alerts  # noqa: E402
 from bot.post_match_analyzer import PostMatchAnalyzer  # noqa: E402
-from bot.pre_deadline_simulator import PreDeadlineSimulator  # noqa: E402
 from bot.top100_tracker import Top100Tracker  # noqa: E402
 from bot.transfer_window_monitor import TransferWindowMonitor  # noqa: E402
 
@@ -420,6 +419,24 @@ def stage_transfer_window(bootstrap: dict, state: dict, dry_run: bool) -> list[d
     return ideas
 
 
+def stage_top100(bootstrap: dict, dry_run: bool) -> dict:
+    """Standalone top-100 snapshot for the most recently finished GW."""
+    last_gw = get_last_finished_gw(bootstrap)
+    if not last_gw:
+        log.info("No finished GW yet — nothing to snapshot.")
+        return {}
+    log.info("=== TOP100 — GW%d ===", last_gw)
+    if dry_run:
+        log.info("[DRY RUN] would snapshot the top 100 for GW%d", last_gw)
+        return {}
+    summary = Top100Tracker().fetch_and_store(last_gw, session=public_session())
+    log.info("Snapshot summary: %s", json.dumps(summary)[:400])
+    trends = Top100Tracker().analyze_trends()
+    log.info("Trends across %s GWs", trends.get("gws_analyzed"))
+    commit_state(f"auto: top-100 snapshot GW{last_gw}")
+    return summary
+
+
 def stage_post_gw_analysis(bootstrap: dict, state: dict, session: requests.Session,
                            dry_run: bool) -> dict:
     """Analyse the gameweek that just finished."""
@@ -534,6 +551,9 @@ def stage_pre_deadline_plan(bootstrap: dict, state: dict, dry_run: bool) -> dict
              entry_id, len(my_team.get("picks", [])),
              entry_info.get("last_deadline_bank", 0) / 10.0)
 
+    # Imported here rather than at module scope: the planner pulls in pulp and
+    # scipy, which the light single-stage workflows do not install.
+    from bot.pre_deadline_simulator import PreDeadlineSimulator
     from bot.updater import SeasonUpdater, build_current_state
 
     updater = SeasonUpdater(horizon=6)
@@ -769,7 +789,7 @@ def main() -> int:
                         help="Accepted for workflow compatibility (autonomous by default).")
     parser.add_argument("--force-stage", choices=STAGES,
                         help="Force a stage instead of deriving it.")
-    parser.add_argument("--stage", choices=["transfer_window"],
+    parser.add_argument("--stage", choices=["transfer_window", "top100"],
                         help="Run a single sub-task only.")
     args = parser.parse_args()
 
@@ -789,15 +809,18 @@ def main() -> int:
         email_alerts.send_alert("Orchestrator failed at startup", msg)
         return 1
 
-    # Single sub-task mode (used by transfer_window.yml).
-    if args.stage == "transfer_window":
+    # Single sub-task mode (used by transfer_window.yml and top100.yml).
+    if args.stage:
         try:
-            stage_transfer_window(bootstrap, state, args.dry_run)
+            if args.stage == "transfer_window":
+                stage_transfer_window(bootstrap, state, args.dry_run)
+            elif args.stage == "top100":
+                stage_top100(bootstrap, args.dry_run)
             return 0
         except Exception as exc:  # noqa: BLE001
-            msg = f"Transfer window monitoring failed: {exc}"
+            msg = f"Sub-task {args.stage} failed: {type(exc).__name__}: {exc}"
             log.exception(msg)
-            email_alerts.send_alert("Transfer window monitor failed", msg)
+            email_alerts.send_alert(f"{args.stage} sub-task failed", msg)
             return 1
 
     stage = args.force_stage or determine_stage(bootstrap, state)

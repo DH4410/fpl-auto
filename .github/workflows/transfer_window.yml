@@ -1,0 +1,53 @@
+name: Transfer Window Monitor
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'  # every 30 min while the window is open
+  workflow_dispatch:
+
+concurrency:
+  group: fpl-transfer-window
+  cancel-in-progress: false
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      # The summer window shuts at 2026-09-01 22:00 UTC. Without this guard the
+      # job would keep firing every 30 minutes forever, burning Actions minutes
+      # on a check that can never find anything again.
+      - name: Check transfer window is still open
+        id: window
+        run: |
+          NOW=$(date -u +%s)
+          CLOSE=$(date -u -d '2026-09-01 22:00:00' +%s)
+          if [ "$NOW" -lt "$CLOSE" ]; then
+            echo "open=true" >> "$GITHUB_OUTPUT"
+            echo "Window open — $(( (CLOSE - NOW) / 86400 )) day(s) remaining."
+          else
+            echo "open=false" >> "$GITHUB_OUTPUT"
+            echo "Transfer window closed — skipping."
+          fi
+
+      - name: Checkout
+        if: steps.window.outputs.open == 'true'
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        if: steps.window.outputs.open == 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        if: steps.window.outputs.open == 'true'
+        run: pip install requests python-dotenv pandas
+
+      - name: Check for new signings
+        if: steps.window.outputs.open == 'true'
+        env:
+          GMAIL_FROM:         ${{ secrets.GMAIL_FROM }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+        run: python scripts/weekly_orchestrator.py --stage transfer_window

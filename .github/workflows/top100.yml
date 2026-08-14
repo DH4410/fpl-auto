@@ -1,0 +1,47 @@
+name: Top 100 Tracker
+
+on:
+  schedule:
+    - cron: '0 9 * * 1'  # every Monday 09:00 UTC
+  workflow_dispatch:
+
+concurrency:
+  group: fpl-top100
+  cancel-in-progress: false
+
+jobs:
+  track:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests python-dotenv pandas
+
+      # Snapshots the most recently finished GW. Public endpoints only, so no
+      # FPL credentials are needed here.
+      - name: Snapshot top 100 managers
+        env:
+          GMAIL_FROM:         ${{ secrets.GMAIL_FROM }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+        run: python scripts/weekly_orchestrator.py --stage top100
+
+      - name: Commit snapshot
+        if: always()
+        run: |
+          git config user.name  "FPL Auto Bot"
+          git config user.email "bot@fplauto.local"
+          git add data/top100/
+          git diff --cached --quiet && echo "No snapshot changes" || {
+            git commit -m "auto: top-100 snapshot [skip ci]"
+            git pull --rebase --autostash || true
+            git push
+          }
