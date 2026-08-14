@@ -23,9 +23,10 @@ on:
         type: boolean
         default: false
 
-# The EXECUTE stage deliberately sleeps for up to ~3.5h before submitting.
-# Overlapping runs could submit the same transfers twice, so runs are
-# serialised and a queued run is never allowed to cancel one mid-submission.
+# Runs are serialised so overlapping jobs can never double-submit the same
+# transfers. The EXECUTE stage no longer sleeps in CI — it exits immediately
+# if the pre-committed target time hasn't been reached yet, and the next
+# 2h cron run picks it up. Most runs finish in < 5 min.
 concurrency:
   group: fpl-weekly-orchestrator
   cancel-in-progress: false
@@ -33,8 +34,8 @@ concurrency:
 jobs:
   orchestrate:
     runs-on: ubuntu-latest
-    # Covers the randomised pre-execution delay plus one-by-one transfers.
-    timeout-minutes: 350
+    # 30 min is enough for deep research + MILP planning + a few transfers.
+    timeout-minutes: 30
 
     steps:
       - name: Checkout

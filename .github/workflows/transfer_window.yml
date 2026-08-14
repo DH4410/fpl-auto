@@ -2,7 +2,7 @@ name: Transfer Window Monitor
 
 on:
   schedule:
-    - cron: '*/30 * * * *'  # every 30 min while the window is open
+    - cron: '0 */6 * * *'  # every 6h while the window is open (~220 min total for the summer)
   workflow_dispatch:
 
 concurrency:

@@ -48,7 +48,7 @@ import random
 import subprocess
 import sys
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -79,6 +79,8 @@ DEFAULT_STATE = {
     "last_simulated_gw": 0,
     "last_executed_gw": 0,
     "approved_plan": None,
+    "execute_target_utc": None,
+    "last_deep_research_gw": 0,
 }
 
 # Stage names
@@ -96,12 +98,8 @@ EXECUTE_WINDOW = (0.5, 18.0)
 BREAK_DAYS = 14
 
 # Execute-stage pacing
-EXECUTE_SLEEP_RANGE_MIN = (30.0, 210.0)     # minutes
 TRANSFER_GAP_RANGE_MIN = (4.0, 13.0)        # minutes between transfers
 MIN_MINUTES_BEFORE_DEADLINE = 30.0
-#: Ceiling on total in-job wall time (minutes) so the GH Actions job can't
-#: be killed mid-submission by the 6h default timeout.
-MAX_JOB_MINUTES = 300.0
 
 DEFAULT_EMAIL = "dimahuang8@gmail.com"
 
@@ -162,7 +160,10 @@ def commit_state(message: str) -> None:
         subprocess.run(["git", "push"], cwd=ROOT, check=True, capture_output=True)
         log.info("State committed and pushed: %s", message)
     except Exception as exc:  # noqa: BLE001
-        log.warning("State commit failed (%s) — state persists locally only", exc)
+        msg = (f"State commit/push failed ({type(exc).__name__}: {exc}) — "
+               f"state persists locally only; risk of re-submission on next CI run")
+        log.warning(msg)
+        email_alerts.send_alert("FPL Auto: state commit failed (re-submission risk)", msg)
 
 
 # ---------------------------------------------------------------------------
@@ -519,6 +520,25 @@ def stage_post_gw_analysis(bootstrap: dict, state: dict, session: requests.Sessi
     except Exception as exc:  # noqa: BLE001
         log.warning("Top-100 tracking failed (%s)", exc)
 
+    # Deep research every 2 GWs — wider forward view, chip/captaincy/differential insights.
+    last_deep_gw = int(state.get("last_deep_research_gw", 0))
+    if last_gw - last_deep_gw >= 2:
+        try:
+            from bot import data_collector
+            from bot.deep_researcher import DeepResearcher
+            fixtures = data_collector.fetch_fixtures()
+            dr = DeepResearcher().research(last_gw, bootstrap, fixtures, my_picks)
+            log.info("Deep research: top captain=%s, best chip window=GW%s",
+                     dr["captaincy_top3"][0]["name"] if dr["captaincy_top3"] else "?",
+                     dr["chip_windows"][0]["gw"] if dr["chip_windows"] else "?")
+            email_alerts.send_alert(
+                f"GW{last_gw} deep research complete", dr["email_body"]
+            )
+            if not dry_run:
+                state["last_deep_research_gw"] = int(last_gw)
+        except Exception as exc:  # noqa: BLE001
+            log.warning("Deep research failed (%s) — continuing without it", exc)
+
     if not dry_run:
         state["last_analyzed_gw"] = int(last_gw)
         state["idea_list"] = result["idea_list"]
@@ -625,10 +645,23 @@ def stage_pre_deadline_plan(bootstrap: dict, state: dict, dry_run: bool) -> dict
     decision["picks_payload"] = build_picks_payload(plan)
     decision["entry_id"] = entry_id
 
+    # Pre-commit a randomised execution time so EXECUTE stage never sleeps in CI.
+    # The target is drawn [0.5h, 18h] before the deadline, clamped so all
+    # per-transfer gaps plus 40 min of safety slack still clear the deadline.
+    deadline_utc = _parse_deadline(ev["deadline_time"])
+    n_xfers = len(decision.get("approved_transfers") or [])
+    exec_buffer_h = (max(0, n_xfers - 1) * TRANSFER_GAP_RANGE_MIN[1] + 40.0) / 60.0
+    hours_until = (deadline_utc - datetime.now(timezone.utc)).total_seconds() / 3600.0
+    hi_h = max(0.5, min(18.0, hours_until - exec_buffer_h))
+    target_h_before = random.uniform(0.5, hi_h)
+    decision["execute_target_utc"] = (deadline_utc - timedelta(hours=target_h_before)).isoformat()
+
     log.info("Decision: %d transfer(s), chip=%s, net %+.2f pts",
              len(decision["approved_transfers"]), decision["approved_chip"],
              decision["expected_net_gain"])
     log.info("Reasoning: %s", decision["reasoning"])
+    log.info("Execution target: %s (%.1fh before deadline)",
+             decision["execute_target_utc"], target_h_before)
 
     if not decision["approved_transfers"] and not decision["approved_chip"]:
         log.info("HOLD — no good transfer this GW; the free transfer rolls.")
@@ -690,24 +723,6 @@ def build_picks_payload(plan: dict) -> list[dict]:
     return payload
 
 
-def _execute_sleep_minutes(n_transfers: int, hours_left: float) -> float:
-    """Randomised pre-execution delay that always clears the deadline.
-
-    The delay is drawn from EXECUTE_SLEEP_RANGE_MIN, then capped so that the
-    whole submission (delay + per-transfer gaps) finishes at least
-    MIN_MINUTES_BEFORE_DEADLINE before the deadline, and inside MAX_JOB_MINUTES
-    so the CI job cannot be killed part-way through submitting.
-    """
-    minutes_left = hours_left * 60.0
-    exec_estimate = max(0, n_transfers - 1) * TRANSFER_GAP_RANGE_MIN[1] + 10.0
-    budget_deadline = minutes_left - MIN_MINUTES_BEFORE_DEADLINE - exec_estimate
-    budget_job = MAX_JOB_MINUTES - exec_estimate
-    cap = min(budget_deadline, budget_job)
-    if cap <= 0:
-        return 0.0
-    return min(random.uniform(*EXECUTE_SLEEP_RANGE_MIN), cap)
-
-
 def _transfer_gap_minutes(deadline: datetime, transfers_left: int) -> float:
     """Human-like gap before the next transfer, shrunk to fit the deadline.
 
@@ -748,11 +763,23 @@ def stage_execute(bootstrap: dict, state: dict, dry_run: bool) -> dict:
         return decision
 
     hours_left = hours_until_deadline(bootstrap) or 0.0
-    sleep_min = _execute_sleep_minutes(len(transfers), hours_left)
-    log.info("=== EXECUTE — GW%d === %d transfer(s), chip=%s, %.1fh to deadline; "
-             "waiting %.1f min", next_gw, len(transfers), chip, hours_left, sleep_min)
-    if sleep_min > 0 and not dry_run:
-        time.sleep(sleep_min * 60)
+    log.info("=== EXECUTE — GW%d === %d transfer(s), chip=%s, %.1fh to deadline",
+             next_gw, len(transfers), chip, hours_left)
+
+    # Check the pre-committed execution target (set at planning time). This lets
+    # the CI runner exit immediately rather than sleeping for up to 3.5h.
+    target_str = decision.get("execute_target_utc")
+    if target_str and not dry_run:
+        try:
+            target_dt = datetime.fromisoformat(target_str)
+            now_utc = datetime.now(timezone.utc)
+            if now_utc < target_dt:
+                log.info("Execution target not reached (target=%s, now=%s) — "
+                         "exiting; next 2h run will check.", target_dt.isoformat(),
+                         now_utc.isoformat())
+                return {}
+        except Exception as exc:  # noqa: BLE001
+            log.warning("Could not parse execute_target_utc (%s) — proceeding now.", exc)
 
     token, session = authenticate()
     me = fpl_api.me(session, token)

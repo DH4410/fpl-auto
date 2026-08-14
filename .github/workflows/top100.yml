@@ -34,14 +34,6 @@ jobs:
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
         run: python scripts/weekly_orchestrator.py --stage top100
 
-      - name: Commit snapshot
-        if: always()
-        run: |
-          git config user.name  "FPL Auto Bot"
-          git config user.email "bot@fplauto.local"
-          git add data/top100/
-          git diff --cached --quiet && echo "No snapshot changes" || {
-            git commit -m "auto: top-100 snapshot [skip ci]"
-            git pull --rebase --autostash || true
-            git push
-          }
+      # Commit is handled inside stage_top100 via commit_state(), which also
+      # does git pull --rebase before pushing to avoid conflicts with the
+      # main orchestrator workflow writing to the same branch.
