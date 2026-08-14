@@ -163,20 +163,22 @@ def apply_squad(squad: dict, dry_run: bool) -> None:
                     pos_label = {1: "GKP", 2: "DEF", 3: "MID", 4: "FWD"}.get(pos, "?")
                     print(f"  {pos_label}: {r['element']} → {a['element_in']} (£{live_price/10:.1f}m)")
 
-            print(f"Submitting {len(swaps)} swap(s)...")
-            t2 = random.uniform(6, 14)
-            print(f"  [waiting {t2:.1f}s before submitting...]")
-            time.sleep(t2)
-            result = fpl_api.transfer(
-                session, token, entry_id,
-                event=gw,
-                transfers=swaps,
-                chip=None,
-            )
-            print(f"Swaps accepted: {result}")
-            t3 = random.uniform(3, 7)
-            print(f"  [waiting {t3:.1f}s]")
-            time.sleep(t3)
+            print(f"Submitting {len(swaps)} swap(s) one by one...")
+            for idx, swap in enumerate(swaps):
+                if idx > 0:
+                    delay_mins = random.uniform(2.5, 7.0)
+                    print(f"  [waiting {delay_mins:.1f} min before swap {idx+1}/{len(swaps)}...]")
+                    time.sleep(delay_mins * 60)
+                print(f"  Swap {idx+1}/{len(swaps)}: element {swap['element_out']} → {swap['element_in']}")
+                result = fpl_api.transfer(
+                    session, token, entry_id,
+                    event=gw,
+                    transfers=[swap],
+                    chip=None,
+                )
+                print(f"  Result: {result}")
+                # Short pause after each write
+                time.sleep(random.uniform(4, 10))
         else:
             print(f"WARNING: {len(to_add)} players to add but nothing to remove. Check squad state.")
 

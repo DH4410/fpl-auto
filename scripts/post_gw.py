@@ -188,15 +188,23 @@ def main() -> None:
             }
             for t_in, t_out in zip(transfers_in, transfers_out)
         ]
-        print(f"Submitting {len(transfer_payload)} transfer(s)...")
-        result = fpl_api.transfer(
-            session, token, entry_id,
-            event=next_gw,
-            transfers=transfer_payload,
-            chip=chip,  # activates WC/FH chips; TC/BB activated at picks step
-        )
-        print(f"Transfer accepted: {result}")
-        _pause(3, 6)
+        print(f"Submitting {len(transfer_payload)} transfer(s) one by one...")
+        for idx, t in enumerate(transfer_payload):
+            if idx > 0:
+                delay_mins = random.uniform(4.0, 13.0)
+                print(f"  [waiting {delay_mins:.1f} min before transfer {idx+1}/{len(transfer_payload)}...]")
+                time.sleep(delay_mins * 60)
+            # Only activate chip on the first transfer call (WC/FH); TC/BB go via picks
+            chip_this = chip if (idx == 0 and chip in ("wildcard", "freehit")) else None
+            print(f"  Transfer {idx+1}/{len(transfer_payload)}: OUT element {t['element_out']} → IN {t['element_in']}")
+            result = fpl_api.transfer(
+                session, token, entry_id,
+                event=next_gw,
+                transfers=[t],
+                chip=chip_this,
+            )
+            print(f"  Result: {result}")
+            _pause(3, 8)
 
     # After transfer: update picks (captain, XI order, bench order)
     gw_plan = plan.get("gw_plan", [])
