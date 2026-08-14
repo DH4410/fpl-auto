@@ -8,8 +8,8 @@ Usage:
     --gw N       Gameweek to plan FOR (next GW to be played).
                  If omitted, auto-detects from bootstrap (last finished GW + 1).
     --dry-run    Fetch and plan, but do not submit any transfers.
-    --auto       Apply recommended transfer without confirmation prompt
-                 (only if 0 hits required; skips if hits needed).
+    --auto       Apply recommended transfer and chip without confirmation.
+                 Submits even if hits are required.
 
 Credentials (read from environment / .env):
     FPL_EMAIL     defaults to Dimahuang8@gmail.com
@@ -38,7 +38,7 @@ import fpl_auth
 import fpl_api
 from bot.updater import SeasonUpdater
 
-DEFAULT_EMAIL = "dimahuang10@gmail.com"
+DEFAULT_EMAIL = "dimahuang8@gmail.com"
 REPORTS_DIR = Path(__file__).parent.parent / "reports"
 
 
@@ -76,7 +76,7 @@ def main() -> None:
     parser.add_argument("--dry-run", action="store_true",
                         help="Fetch and plan, skip API writes.")
     parser.add_argument("--auto", action="store_true",
-                        help="Auto-apply recommended transfer (0-hit only).")
+                        help="Auto-apply transfer and chip without confirmation (includes hits).")
     args = parser.parse_args()
 
     # --- Authenticate ---
@@ -149,57 +149,54 @@ def main() -> None:
     chip = plan.get("chip")
 
     if chip:
-        print(f"\nCHIP RECOMMENDED: {chip}")
+        print(f"\nCHIP THIS GW: {chip}")
         print(f"Reason: {plan.get('chip_reason', '')}")
 
-    if not transfers_in:
-        print("\nNo transfer recommended — rolling free transfer.")
+    if not transfers_in and not chip:
+        print("\nNo transfer or chip this GW — rolling free transfer.")
         return
 
-    t_in  = transfers_in[0]
-    t_out = transfers_out[0]
-    print(f"\nRecommended: OUT {t_out['name']} (£{t_out.get('selling_price', '?')}m) "
-          f"→ IN {t_in['name']} (£{t_in.get('cost', '?')}m)")
-    if hits > 0:
-        print(f"WARNING: {hits} hit(s) required (-{plan.get('hit_cost', hits*4)} pts).")
+    if transfers_in:
+        print(f"\nTransfer(s): {len(transfers_in)}")
+        for t_in, t_out in zip(transfers_in, transfers_out):
+            print(f"  OUT {t_out['name']} (£{t_out.get('selling_price', '?')}m)"
+                  f" → IN {t_in['name']} (£{t_in.get('cost', '?')}m)")
+        if hits > 0:
+            print(f"WARNING: {hits} hit(s) required (-{plan.get('hit_cost', hits*4)} pts).")
+    else:
+        print(f"\nNo transfer needed — chip-only activation ({chip}).")
 
     if args.dry_run:
-        print("[DRY RUN] Skipping transfer submission.")
-        return
-
-    if hits > 0 and args.auto:
-        print("Auto mode: skipping hit transfer — review manually.")
+        print("[DRY RUN] Skipping submission.")
         return
 
     if not args.auto:
-        ans = input("Apply this transfer? [y/N]: ").strip().lower()
+        ans = input("Apply? [y/N]: ").strip().lower()
         if ans != "y":
             print("Cancelled.")
             return
 
-    _pause(6, 14)  # longer human pause before submitting
+    _pause(6, 14)  # human pause before submitting
 
-    sell_price = int(t_out.get("selling_price", 0) * 10)
-    buy_price  = int(t_in.get("cost", 0) * 10)
-
-    print("Submitting transfer...")
-    result = fpl_api.transfer(
-        session, token, entry_id,
-        event=next_gw,
-        transfers=[{
-            "element_in":     t_in["element"],
-            "element_out":    t_out["element"],
-            "purchase_price": buy_price,
-            "selling_price":  sell_price,
-        }],
-        chip=chip,
-    )
-    print(f"Transfer accepted: {result}")
-
-    _pause(3, 6)  # pause after write
-
-    if chip:
-        print(f"Chip activated: {chip}")
+    if transfers_in:
+        transfer_payload = [
+            {
+                "element_in":     t_in["element"],
+                "element_out":    t_out["element"],
+                "purchase_price": int(t_in.get("cost", 0) * 10),
+                "selling_price":  int(t_out.get("selling_price", 0) * 10),
+            }
+            for t_in, t_out in zip(transfers_in, transfers_out)
+        ]
+        print(f"Submitting {len(transfer_payload)} transfer(s)...")
+        result = fpl_api.transfer(
+            session, token, entry_id,
+            event=next_gw,
+            transfers=transfer_payload,
+            chip=chip,  # activates WC/FH chips; TC/BB activated at picks step
+        )
+        print(f"Transfer accepted: {result}")
+        _pause(3, 6)
 
     # After transfer: update picks (captain, XI order, bench order)
     gw_plan = plan.get("gw_plan", [])
@@ -233,8 +230,13 @@ def main() -> None:
         if picks_payload:
             _pause(3, 7)
             cap_name = plan.get("captain", {}).get("name", "?")
-            print(f"Setting captain to {cap_name} and updating bench order...")
-            result2 = fpl_api.update_picks(session, token, entry_id, picks=picks_payload)
+            chip_note = f" + activate {chip}" if chip else ""
+            print(f"Setting captain to {cap_name} and updating bench order{chip_note}...")
+            result2 = fpl_api.update_picks(
+                session, token, entry_id,
+                picks=picks_payload,
+                chips=[chip] if chip else [],  # activates TC/BB chips
+            )
             print(f"Picks updated: {result2}")
 
     print("\nDone. Verify at fantasy.premierleague.com/my-team")
