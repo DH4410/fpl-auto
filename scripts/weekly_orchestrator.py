@@ -357,6 +357,31 @@ def load_forecast_snapshot(gw: int) -> pd.DataFrame:
         return pd.DataFrame()
 
 
+def resolve_entry_id() -> int:
+    """My FPL entry id from the environment.
+
+    Returns 0 when unset. Callers must treat 0 as "cannot identify my squad"
+    and say so loudly: an empty squad makes the injury and suspension checks
+    silently pass, which looks identical to a clean bill of health.
+    """
+    raw = (os.environ.get("FPL_ENTRY_ID") or "").strip()
+    if not raw:
+        return 0
+    try:
+        return int(raw)
+    except ValueError:
+        log.warning("FPL_ENTRY_ID is set but is not an integer — ignoring.")
+        return 0
+
+
+def warn_no_entry_id(stage: str) -> None:
+    msg = (f"{stage}: FPL_ENTRY_ID is not set, so the squad could not be "
+           f"identified. Injury and suspension checks cannot flag your own "
+           f"players and will report nothing. Set FPL_ENTRY_ID as a repo secret.")
+    log.error(msg)
+    email_alerts.send_alert("FPL_ENTRY_ID not configured", msg)
+
+
 def fetch_public_picks(entry_id: int, gw: int, session: requests.Session) -> list[dict]:
     """My squad for a finished GW via the public picks endpoint (no auth)."""
     if not entry_id:
@@ -452,8 +477,13 @@ def stage_post_gw_analysis(bootstrap: dict, state: dict, session: requests.Sessi
 
     log.info("=== POST_GW_ANALYSIS — GW%d ===", last_gw)
     live_data = fpl_api.event_live(session, last_gw)
-    entry_id = int(os.environ.get("FPL_ENTRY_ID", "0") or 0)
+    entry_id = resolve_entry_id()
+    if not entry_id:
+        warn_no_entry_id("POST_GW_ANALYSIS")
     my_picks = fetch_public_picks(entry_id, last_gw, session)
+    if entry_id and not my_picks:
+        log.warning("Entry %s returned no picks for GW%d — squad-specific "
+                    "flags will be empty this run.", entry_id, last_gw)
     forecasts = load_forecast_snapshot(last_gw)
 
     result = PostMatchAnalyzer().analyze(
@@ -468,6 +498,19 @@ def stage_post_gw_analysis(bootstrap: dict, state: dict, session: requests.Sessi
     for idea in result["idea_list"][:10]:
         log.info("  [%.2f] %s %s — %s", idea["priority"], idea["action"],
                  idea["name"], idea["reason"])
+
+    # The human-readable reflection report (reports/reflect_gw{N}.md) used to be
+    # produced by post_gw.yml's public-analysis step. That step is gone, so it is
+    # triggered here instead — once per GW, which is its natural cadence.
+    if not dry_run:
+        try:
+            subprocess.run(
+                [sys.executable, "scripts/analyze_gw_public.py", "--gw", str(last_gw)],
+                cwd=ROOT, check=False, capture_output=True, timeout=300,
+            )
+            log.info("Public reflection report refreshed for GW%d.", last_gw)
+        except Exception as exc:  # noqa: BLE001
+            log.warning("Public reflection report failed (%s)", exc)
 
     # Top-100 snapshot is best-effort; a failure must not block the stage.
     try:
@@ -488,10 +531,15 @@ def stage_monitoring(bootstrap: dict, state: dict, session: requests.Session,
                      dry_run: bool) -> None:
     """Daily read-only check for new injuries/suspensions in my squad."""
     log.info("=== MONITORING ===")
-    entry_id = int(os.environ.get("FPL_ENTRY_ID", "0") or 0)
+    entry_id = resolve_entry_id()
+    if not entry_id:
+        warn_no_entry_id("MONITORING")
     last_gw = get_last_finished_gw(bootstrap) or 0
     my_picks = fetch_public_picks(entry_id, last_gw, session) if last_gw else []
     my_ids = {p["element"] for p in my_picks}
+    if not my_ids:
+        log.warning("Squad unknown (entry=%s, last finished GW=%s) — availability "
+                    "checks are running against an empty squad.", entry_id or "unset", last_gw)
 
     elements = {int(e["id"]): e for e in bootstrap.get("elements", [])}
     ideas = list(state.get("idea_list") or [])
