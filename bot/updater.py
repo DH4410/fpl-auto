@@ -43,12 +43,14 @@ REPORTS_DIR.mkdir(parents=True, exist_ok=True)
 MODELS_DIR = Path(__file__).resolve().parent / "models"
 
 #: ML blend weight (fraction from ML model; 1 - ML_BLEND from ep_next).
-# Holdout (2025-26, 29 757 rows): full-population sweep (σ_ML=1.705, σ_ep=1.646)
-# → pool ρ peaks at w=0.70 (+0.7095), played-row (minutes>0) sweep peaks at
-# w=0.60 (+0.3067 vs +0.3019 at 0.40). w=0.60 chosen: played-row peak avoids
-# GKP scale inflation (42% over-predicted at 0.70 vs 24% at 0.40). Validated
-# by four-arm odds holdout (DC-implied mkt_*, arm D ρ=+0.7070 = arm B).
-ML_BLEND = 0.60
+# Three-season leave-one-out CV on played rows (minutes>0):
+#   2023-24 holdout: best_w=0.40 (rho=+0.316 > +0.312 at 0.60)
+#   2024-25 holdout: best_w=0.40 (rho=+0.324 > +0.319 at 0.60)
+#   2025-26 holdout: best_w=0.60 (rho=+0.307 > +0.302 at 0.40)  ← overfit
+# Mean played rho: 0.40→0.3139, 0.60→0.3126. w=0.40 generalises better.
+# Pool ρ (all rows) consistently improves with higher w, but the 70 % of rows
+# with minutes=0 dominate pool ρ; played rows are the relevant decision set.
+ML_BLEND = 0.40
 
 
 # ---------------------------------------------------------------------------

@@ -68,6 +68,13 @@ class ChipPlanner:
     wildcard_gain_premium: float = 1.2
     solver_msg: bool = False
     time_limit: int = 30
+    # Per-chip minimum expected gain before the planner recommends playing:
+    # Normal-GW captain xPts ≈ 3.5-5. DGW captain ≈ 7-12. Require 6+ for TC.
+    # Normal-GW bench xPts ≈ 9-10. DGW bench ≈ 15-22. Require 13+ for BB.
+    # This prevents playing premium chips in ordinary GWs when no DGW is
+    # visible in the 6-GW planning window.
+    min_tc_gain: float = 6.0
+    min_bb_gain: float = 13.0
 
     def evaluate(
         self,
@@ -164,9 +171,18 @@ class ChipPlanner:
         if pulp.LpStatus[status] != "Optimal":
             log.warning("chip LP did not solve optimally: %s", pulp.LpStatus[status])
 
-        # Only include chip assignments whose estimated gain exceeds the hit cost
-        # (4 pts). A chip that gains less than a hit is not worth the slot —
-        # it would be better to hold it for a double/blank gameweek.
+        # Only include chip assignments that clear per-chip minimum thresholds.
+        # TC and BB use elevated minimums (6 / 13 pts) to prevent playing them
+        # in ordinary GWs — their value is highest in double gameweeks where
+        # the captain or bench players appear twice. HIT_COST (4 pts) is the
+        # floor for WC / FH which are less sensitive to DGW timing.
+        def _min_for(chip: str) -> float:
+            if chip == CHIP_TRIPLE_CAPTAIN:
+                return self.min_tc_gain
+            if chip == CHIP_BENCH_BOOST:
+                return self.min_bb_gain
+            return float(HIT_COST)
+
         chip_plan = sorted(
             [
                 {"chip": chip, "gw": gw,
@@ -174,7 +190,7 @@ class ChipPlanner:
                  "expected_gain": round(gains[chip].get(gw, 0.0), 2)}
                 for (chip, gw), var in play.items()
                 if (pulp.value(var) or 0.0) > 0.5
-                and gains[chip].get(gw, 0.0) >= HIT_COST
+                and gains[chip].get(gw, 0.0) >= _min_for(chip)
             ],
             key=lambda d: d["gw"],
         )
