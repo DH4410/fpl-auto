@@ -14,6 +14,9 @@ on:
 jobs:
   apply-squad:
     runs-on: ubuntu-latest
+    # Up to 13 swaps × 7 min gap = ~91 min worst case. 120 min gives headroom
+    # without letting a stuck run burn CI minutes for 6 hours (the GitHub default).
+    timeout-minutes: 120
 
     steps:
       - name: Checkout
@@ -26,13 +29,6 @@ jobs:
 
       - name: Install dependencies
         run: pip install requests python-dotenv
-
-      # Startup delay so it doesn't look instant
-      - name: Human-like startup delay
-        run: |
-          DELAY=$(python -c "import random; print(random.randint(60, 300))")
-          echo "Waiting ${DELAY}s..."
-          sleep $DELAY
 
       - name: Apply initial GW1 squad
         id: apply_step
