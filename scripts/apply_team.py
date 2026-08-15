@@ -164,21 +164,39 @@ def apply_squad(squad: dict, dry_run: bool) -> None:
                     print(f"  {pos_label}: {r['element']} → {a['element_in']} (£{live_price/10:.1f}m)")
 
             print(f"Submitting {len(swaps)} swap(s) one by one...")
+            failed_swaps = []
             for idx, swap in enumerate(swaps):
                 if idx > 0:
                     delay_mins = random.uniform(2.5, 7.0)
                     print(f"  [waiting {delay_mins:.1f} min before swap {idx+1}/{len(swaps)}...]")
                     time.sleep(delay_mins * 60)
                 print(f"  Swap {idx+1}/{len(swaps)}: element {swap['element_out']} → {swap['element_in']}")
-                result = fpl_api.transfer(
-                    session, token, entry_id,
-                    event=gw,
-                    transfers=[swap],
-                    chip=None,
-                )
-                print(f"  Result: {result}")
-                # Short pause after each write
-                time.sleep(random.uniform(4, 10))
+                swap_ok = False
+                for attempt in range(2):
+                    try:
+                        result = fpl_api.transfer(
+                            session, token, entry_id,
+                            event=gw,
+                            transfers=[swap],
+                            chip=None,
+                        )
+                        print(f"  Result: {result}")
+                        time.sleep(random.uniform(4, 10))
+                        swap_ok = True
+                        break
+                    except Exception as exc:
+                        if attempt == 0:
+                            print(f"  Swap {idx+1} failed ({exc}) — retrying in 30s...")
+                            time.sleep(30)
+                        else:
+                            print(f"  Swap {idx+1} FAILED after retry: {exc}")
+                            failed_swaps.append(swap)
+            if failed_swaps:
+                print(f"\nWARNING: {len(failed_swaps)} swap(s) failed — re-run the workflow to retry.")
+                print("Failed:")
+                for s in failed_swaps:
+                    print(f"  element {s['element_out']} → {s['element_in']}")
+                sys.exit(1)
         else:
             print(f"WARNING: {len(to_add)} players to add but nothing to remove. Check squad state.")
 

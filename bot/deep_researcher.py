@@ -163,6 +163,7 @@ def _differentials(
         info = fdr_by_team.get(tid, {"avg_fdr": 3.0, "fixtures": []})
         score = ep / max(info["avg_fdr"], 1.0)
         out.append({
+            "element": el_id,
             "name": el.get("web_name", str(el_id)),
             "pos": pos_map.get(int(el.get("element_type", 0)), "?"),
             "team": teams.get(tid, {}).get("short_name", "?"),
@@ -245,6 +246,7 @@ def _top100_insights(elements: dict, my_ids: set, gw: int) -> dict:
             continue
         el = elements[el_id]
         not_in_squad.append({
+            "element": el_id,
             "name": el.get("web_name") or str(el_id),
             "top100_count": r.get("count", 0),
             "ep_next": round(_to_float(el.get("ep_next")), 2),
@@ -257,6 +259,7 @@ def _top100_insights(elements: dict, my_ids: set, gw: int) -> dict:
             continue
         el = elements.get(el_id, {})
         unique_to_me.append({
+            "element": el_id,
             "name": el.get("web_name", str(el_id)),
             "ep_next": round(_to_float(el.get("ep_next")), 2),
             "selected_pct": round(_to_float(el.get("selected_by_percent")), 1),
@@ -282,6 +285,7 @@ def _build_report(
     differentials: list[dict],
     chip_windows: list[dict],
     top100: dict,
+    web_report: dict | None = None,
 ) -> str:
     now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     lines = [
@@ -356,7 +360,72 @@ def _build_report(
     else:
         lines.append("*No top-100 snapshot available yet.*")
 
+    lines += ["", "## Reddit Buzz (r/FantasyPremierLeague)", ""]
+    if web_report and web_report.get("available") and web_report.get("players"):
+        lines += ["| Player | Positive | Negative | Net |",
+                  "|--------|----------|----------|-----|"]
+        for r in web_report["players"][:10]:
+            sentiment = "📈" if r["net"] > 0 else ("📉" if r["net"] < 0 else "—")
+            lines.append(
+                f"| {r['name']} | {r['positive']} | {r['negative']} "
+                f"| {r['net']:+d} {sentiment} |"
+            )
+    else:
+        lines.append("*Reddit scan unavailable (likely blocked from GitHub Actions runner).*")
+
     return "\n".join(lines) + "\n"
+
+
+# ---------------------------------------------------------------------------
+# Bot idea generation
+# ---------------------------------------------------------------------------
+
+def _generate_ideas(top100: dict, differentials: list[dict]) -> list[dict]:
+    """Convert deep research findings into advisory idea_list entries.
+
+    All priorities are capped below VETO_PRIORITY (0.8) so these never hard-block
+    a transfer; they are advisory inputs to the MILP via the pre-deadline simulator.
+    """
+    ideas = []
+
+    if top100.get("available"):
+        # Smart money holds but I don't — suggest transfer_in if ≥7/10 managers hold
+        for r in top100.get("top100_not_mine") or []:
+            if r.get("top100_count", 0) >= 7 and r.get("ep_next", 0) >= 5.0:
+                ideas.append({
+                    "action": "transfer_in",
+                    "element": r["element"],
+                    "name": r["name"],
+                    "reason": (f"Top-100 smart money: {r['top100_count']}/10 managers hold, "
+                               f"ep_next {r['ep_next']}"),
+                    "priority": 0.4,
+                })
+
+        # I hold but top-100 don't and ep_next is low — mild transfer_out nudge
+        for r in top100.get("unique_to_me") or []:
+            if r.get("ep_next", 99.0) < 4.0:
+                ideas.append({
+                    "action": "transfer_out",
+                    "element": r["element"],
+                    "name": r["name"],
+                    "reason": (f"Top-100 avoid: ep_next only {r['ep_next']}, "
+                               f"{r['selected_pct']}% overall ownership — likely liability"),
+                    "priority": 0.3,
+                })
+
+    # High-value differentials with easy fixtures → speculative transfer_in
+    for d in differentials or []:
+        if d.get("ep_next", 0) >= 7.0 and d.get("avg_fdr", 5.0) <= 2.5:
+            ideas.append({
+                "action": "transfer_in",
+                "element": d["element"],
+                "name": d["name"],
+                "reason": (f"Differential: ep_next {d['ep_next']}, "
+                           f"avg FDR {d['avg_fdr']}, only {d['selected_pct']}% owned"),
+                "priority": 0.35,
+            })
+
+    return ideas
 
 
 # ---------------------------------------------------------------------------
@@ -383,10 +452,22 @@ class DeepResearcher:
         chip_windows_list = _chip_windows(fixtures, teams, elements, gw)
         top100 = _top100_insights(elements, my_ids, gw)
 
+        # Web scanner — best-effort; failure never blocks the rest.
+        try:
+            from bot.web_scanner import WebScanner
+            web_report = WebScanner().scan(list(bootstrap.get("elements", [])))
+        except Exception as exc:
+            log.warning("Web scanner failed (%s) — omitting from report.", exc)
+            web_report = {"available": False, "source": "", "players": []}
+
         REPORTS_DIR.mkdir(parents=True, exist_ok=True)
-        md = _build_report(gw, squad_fdr, captaincy, differentials, chip_windows_list, top100)
+        md = _build_report(gw, squad_fdr, captaincy, differentials, chip_windows_list, top100,
+                           web_report)
         (REPORTS_DIR / f"deep_research_gw{gw}.md").write_text(md, encoding="utf-8")
         log.info("Deep research report: reports/deep_research_gw%d.md", gw)
+
+        ideas = _generate_ideas(top100, differentials)
+        log.info("Deep research: %d advisory idea(s) generated for bot planning.", len(ideas))
 
         return {
             "gw": gw,
@@ -394,11 +475,14 @@ class DeepResearcher:
             "differentials_top5": differentials[:5],
             "chip_windows": chip_windows_list,
             "top100": top100,
-            "email_body": _email_body(gw, captaincy, differentials, chip_windows_list, top100),
+            "ideas": ideas,
+            "email_body": _email_body(gw, captaincy, differentials, chip_windows_list, top100,
+                                      web_report),
         }
 
 
-def _email_body(gw, captaincy, differentials, chip_windows, top100) -> str:
+def _email_body(gw, captaincy, differentials, chip_windows, top100,
+                web_report=None) -> str:
     lines = [f"Deep research complete after GW{gw}.\n"]
     if captaincy:
         c = captaincy[0]
@@ -424,5 +508,13 @@ def _email_body(gw, captaincy, differentials, chip_windows, top100) -> str:
             f"Top-100 hold but you don't: {r['name']} — "
             f"{r['top100_count']}/10 smart managers, ep_next {r['ep_next']}"
         )
+    if web_report and web_report.get("available") and web_report.get("players"):
+        buzzed = [r for r in web_report["players"] if abs(r["net"]) >= 2][:3]
+        if buzzed:
+            buzz_str = ", ".join(
+                f"{r['name']} ({'+' if r['net'] > 0 else ''}{r['net']})"
+                for r in buzzed
+            )
+            lines.append(f"Reddit buzz: {buzz_str}")
     lines.append(f"\nFull report: reports/deep_research_gw{gw}.md")
     return "\n".join(lines)

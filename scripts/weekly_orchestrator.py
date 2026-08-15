@@ -81,6 +81,7 @@ DEFAULT_STATE = {
     "approved_plan": None,
     "execute_target_utc": None,
     "last_deep_research_gw": 0,
+    "research_ideas": [],
 }
 
 # Stage names
@@ -212,10 +213,10 @@ def get_last_finished_gw(bootstrap: dict) -> int | None:
 def is_gw_fully_scored(gw: int, session: requests.Session) -> bool:
     """True once every fixture in ``gw`` has finished.
 
-    The fixtures endpoint is used rather than the live endpoint: live element
-    stats carry no per-match state, whereas each fixture exposes ``finished``
-    and ``finished_provisional``. A GW is only safe to analyse once no match
-    is still in play.
+    Uses kickoff_time + 3h as a proxy for match completion — simpler and more
+    reliable than polling the ``finished`` flag, which can lag behind reality.
+    Conservative: any fixture with a missing or unparseable kickoff is treated
+    as not yet complete.
     """
     try:
         fixtures = fpl_api.fixtures(session, event=gw)
@@ -224,7 +225,18 @@ def is_gw_fully_scored(gw: int, session: requests.Session) -> bool:
         return False
     if not fixtures:
         return False
-    return all(fx.get("finished") or fx.get("finished_provisional") for fx in fixtures)
+    now_utc = datetime.now(timezone.utc)
+    for fx in fixtures:
+        kt = fx.get("kickoff_time")
+        if not kt:
+            return False  # unknown kickoff → conservative
+        try:
+            ko = _parse_deadline(kt)
+            if now_utc < ko + timedelta(hours=3):
+                return False
+        except Exception:
+            return False
+    return True
 
 
 def determine_stage(bootstrap: dict, state_file: dict) -> str:
@@ -531,11 +543,11 @@ def stage_post_gw_analysis(bootstrap: dict, state: dict, session: requests.Sessi
             log.info("Deep research: top captain=%s, best chip window=GW%s",
                      dr["captaincy_top3"][0]["name"] if dr["captaincy_top3"] else "?",
                      dr["chip_windows"][0]["gw"] if dr["chip_windows"] else "?")
-            email_alerts.send_alert(
-                f"GW{last_gw} deep research complete", dr["email_body"]
-            )
+            ideas = dr.get("ideas", [])
+            log.info("Deep research generated %d advisory idea(s) for the bot.", len(ideas))
             if not dry_run:
                 state["last_deep_research_gw"] = int(last_gw)
+                state["research_ideas"] = ideas
         except Exception as exc:  # noqa: BLE001
             log.warning("Deep research failed (%s) — continuing without it", exc)
 
@@ -633,7 +645,9 @@ def stage_pre_deadline_plan(bootstrap: dict, state: dict, dry_run: bool) -> dict
     forecasts = _rebuild_forecasts(updater, bootstrap, next_gw, current_state)
     save_forecast_snapshot(forecasts, next_gw)
 
-    idea_list = list(state.get("idea_list") or []) + list(state.get("signing_ideas") or [])
+    idea_list = (list(state.get("idea_list") or [])
+                 + list(state.get("signing_ideas") or [])
+                 + list(state.get("research_ideas") or []))
     decision = PreDeadlineSimulator(horizon=6).simulate(
         idea_list=idea_list,
         forecasts=forecasts,
@@ -836,6 +850,7 @@ def stage_execute(bootstrap: dict, state: dict, dry_run: bool) -> dict:
         state["last_executed_gw"] = next_gw
         state["idea_list"] = []
         state["signing_ideas"] = []
+        state["research_ideas"] = []
         save_state(state)
         # Commit immediately: if this is lost, the next 2-hourly run would
         # resubmit the same transfers.

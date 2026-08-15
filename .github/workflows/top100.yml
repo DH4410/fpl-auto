@@ -12,6 +12,8 @@ concurrency:
 jobs:
   track:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     timeout-minutes: 20
 
     steps:

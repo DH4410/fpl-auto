@@ -34,6 +34,8 @@ concurrency:
 jobs:
   orchestrate:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     # 30 min is enough for deep research + MILP planning + a few transfers.
     timeout-minutes: 30
 
