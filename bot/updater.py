@@ -97,7 +97,7 @@ def build_current_state(
 
     # Bank from entry_info if available, else from my_team.
     if entry_info:
-        bank_tenths = int(entry_info.get("last_deadline_bank", 0))
+        bank_tenths = int(entry_info.get("last_deadline_bank") or 0)
     else:
         bank_tenths = int(my_team.get("transfers", {}).get("bank", 0))
 

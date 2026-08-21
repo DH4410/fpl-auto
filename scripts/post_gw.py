@@ -124,7 +124,7 @@ def main() -> None:
     entry_info = fpl_api.entry_info(session, token, entry_id)
 
     picks = my_team.get("picks", [])
-    bank_tenths = entry_info.get("last_deadline_bank", 0)
+    bank_tenths = entry_info.get("last_deadline_bank") or 0
     print(f"Squad: {len(picks)} players | Bank: £{bank_tenths / 10:.1f}m")
 
     _pause(3, 7)

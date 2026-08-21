@@ -629,7 +629,7 @@ def stage_pre_deadline_plan(bootstrap: dict, state: dict, dry_run: bool) -> dict
     entry_info = fpl_api.entry_info(session, token, entry_id)
     log.info("Entry %s: %d players, bank £%.1fm",
              entry_id, len(my_team.get("picks", [])),
-             entry_info.get("last_deadline_bank", 0) / 10.0)
+             (entry_info.get("last_deadline_bank") or 0) / 10.0)
 
     # Imported here rather than at module scope: the planner pulls in pulp and
     # scipy, which the light single-stage workflows do not install.
