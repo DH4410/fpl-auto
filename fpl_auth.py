@@ -73,77 +73,94 @@ def login(email: str, password: str) -> tuple[str, requests.Session]:
     resp.raise_for_status()
     data = resp.json()
     interaction_id = data.get("interactionId")
-    interaction_token = data.get("interactionToken")
     node_id = data.get("id")
 
-    # Step 2b — FPL added a "Protect SDK" probe node before the login form.
-    # The start node has interactionId + id but no interactionToken.
-    # Submitting an empty protectsdk payload advances to the actual login node.
-    if not interaction_token and interaction_id and node_id and data.get("connectionId"):
-        probe_resp = session.post(
-            f"{_AUTH_BASE}/davinci/connections/{data['connectionId']}/capabilities/{data.get('capabilityName', 'customHTMLTemplate')}",
-            headers={"interactionId": interaction_id, "Content-Type": "application/json"},
-            json={"id": node_id, "eventName": "continue", "parameters": {"protectsdk": ""}},
-        )
-        probe_resp.raise_for_status()
-        probe_data = probe_resp.json()
-        interaction_token = probe_data.get("interactionToken")
-        node_id = probe_data.get("id", node_id)
-
-    if not interaction_token or not interaction_id or not node_id:
+    if not interaction_id or not node_id:
         raise RuntimeError(
-            f"DaVinci login failed — could not get interactionToken after protect-SDK probe. "
-            f"Start response keys: {list(data.keys())}. FPL auth flow may have changed."
+            f"DaVinci login failed — no interactionId/id in start response. "
+            f"Keys: {list(data.keys())}. FPL auth flow may have changed."
         )
 
-    conn_url = f"{_AUTH_BASE}/davinci/connections/{_CONN_ID}/capabilities/customHTMLTemplate"
-    auth_headers = {"interactionId": interaction_id, "interactionToken": interaction_token}
+    # Step 3 — Walk the DaVinci node chain until the flow returns dvResponse.
+    #
+    # FPL now puts several nodes in front of (and behind) the login form:
+    #   node 0  Protect-SDK / polling probe   -> wants {"protectsdk": ""}
+    #   node 1  the actual login form         -> wants username + password
+    #   node 2  "Logging you in..." auto-post -> wants just the submit button
+    # There is NO interactionToken until the final node; the interaction is
+    # tracked by the interactionId header plus the cookie the session holds.
+    # Each node also names its own connectionId/capabilityName, so those are
+    # read fresh from the current node rather than from a hardcoded constant.
+    node = data
+    body = None
+    for step in range(6):
+        screen_props = node.get("screen", {}).get("properties", {})
+        fields = [
+            f.get("propertyName")
+            for f in screen_props.get("formFieldsList", {}).get("value", [])
+        ]
+        print(
+            f"[fpl_auth] davinci step {step + 1}: node={node.get('id')} "
+            f"cap={node.get('capabilityName')} fields={fields} keys={list(node.keys())}"
+        )
 
-    # Step 3a — Polling probe
-    resp = session.post(
-        conn_url,
-        headers=auth_headers,
-        json={
-            "id": node_id,
-            "eventName": "continue",
-            "parameters": {"eventType": "polling"},
-            "pollProps": {
-                "status": "continue",
-                "delayInMs": 10,
-                "retriesAllowed": 1,
-                "pollChallengeStatus": False,
-            },
-        },
-    )
-    resp.raise_for_status()
-    node_id = resp.json()["id"]
-
-    # Step 3b — Submit credentials
-    resp = session.post(
-        conn_url,
-        headers=auth_headers,
-        json={
-            "id": node_id,
-            "nextEvent": {
-                "constructType": "skEvent",
-                "eventName": "continue",
-                "params": [],
-                "eventType": "post",
-                "postProcess": {},
-            },
-            "parameters": {
+        # Pick the payload from the fields the node actually declares.
+        if "protectsdk" in fields:
+            params = {"protectsdk": ""}
+        elif "password" in fields:
+            params = {
                 "buttonType": "form-submit",
                 "buttonValue": "SIGNON",
                 "username": email,
                 "password": password,
+            }
+        else:
+            params = {"buttonType": "form-submit", "buttonValue": "SIGNON"}
+
+        resp = session.post(
+            f"{_AUTH_BASE}/davinci/connections/{node['connectionId']}"
+            f"/capabilities/{node['capabilityName']}",
+            headers={"interactionId": interaction_id, "Content-Type": "application/json"},
+            json={
+                "id": node["id"],
+                "nextEvent": {
+                    "constructType": "skEvent",
+                    "eventName": "continue",
+                    "params": [],
+                    "eventType": "post",
+                    "postProcess": {},
+                },
+                "parameters": params,
+                "eventName": "continue",
             },
-            "eventName": "continue",
-        },
-    )
-    resp.raise_for_status()
-    body = resp.json()
-    if "dvResponse" not in body:
-        raise RuntimeError(f"Login failed — check credentials. Response: {body}")
+        )
+        if resp.status_code >= 400:
+            # DaVinci reports bad credentials as HTTP 400 with the reason in the
+            # body, so parse it before raise_for_status() turns it into an
+            # opaque HTTPError.
+            print(f"[fpl_auth] davinci step {step + 1} HTTP {resp.status_code}: {resp.text[:600]}")
+            try:
+                err = resp.json()
+            except ValueError:
+                err = {}
+            if err.get("connectorId") == "errorConnector" or err.get("error_reason"):
+                raise RuntimeError(
+                    f"Login failed — check credentials. DaVinci error: "
+                    f"{err.get('error_reason') or err.get('message')}"
+                )
+        resp.raise_for_status()
+        node = resp.json()
+
+        if "dvResponse" in node:
+            body = node
+            break
+
+    if body is None:
+        raise RuntimeError(
+            f"DaVinci login failed — no dvResponse after walking the node chain. "
+            f"Last node keys: {list(node.keys())}, id={node.get('id')}, "
+            f"connectionId={node.get('connectionId')}. FPL auth flow may have changed."
+        )
     dv_response = body["dvResponse"]
 
     # Step 4 — Resume OAuth flow
