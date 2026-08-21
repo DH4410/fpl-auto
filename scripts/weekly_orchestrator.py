@@ -242,42 +242,43 @@ def is_gw_fully_scored(gw: int, session: requests.Session) -> bool:
 def determine_stage(bootstrap: dict, state_file: dict) -> str:
     """Derive the stage from the calendar and what has already been done.
 
-    Ordering note: a pending post-GW analysis is checked *before* the
-    international-break test. Analysis is entirely read-only, and the GW
-    immediately preceding a break is exactly the one worth analysing. The
-    break test then blocks the two stages that write to the live account.
+    Ordering note: deadline-critical work is checked *first*. A pending post-GW
+    analysis must never preempt planning or execution. Analysis is entirely
+    read-only and losing it for one 2-hourly tick costs nothing, but a missed
+    deadline cannot be recovered.
+
+    This ordering also removes a season-ending deadlock. ``last_analyzed_gw``
+    only advances once :func:`is_gw_fully_scored` returns True, which requires
+    every fixture in the GW to have a parseable kickoff more than 3h in the
+    past. A postponed fixture (``kickoff_time: null``) or a repeatedly failing
+    analysis therefore pins that check False forever — and under the old
+    "analysis first" ordering the orchestrator would return POST_GW_ANALYSIS on
+    every run for the rest of the season, silently never planning or executing
+    another transfer while every CI run still reported success.
     """
+    ev = next_event(bootstrap)
+    hours = hours_until_deadline(bootstrap) if ev else None
+    on_break = is_international_break(bootstrap)
+
+    if ev is not None and hours is not None and not on_break:
+        next_gw = int(ev["id"])
+        simulated = int(state_file.get("last_simulated_gw", 0)) >= next_gw
+        executed = int(state_file.get("last_executed_gw", 0)) >= next_gw
+
+        if PLAN_WINDOW[0] <= hours <= PLAN_WINDOW[1] and not simulated:
+            return PRE_DEADLINE_PLAN
+
+        if EXECUTE_WINDOW[0] <= hours < EXECUTE_WINDOW[1] and not executed:
+            # Missed the planning window (e.g. a CI outage) — plan now, and the
+            # next run inside the execute window will submit it.
+            return EXECUTE if simulated else PRE_DEADLINE_PLAN
+
     last_gw = get_last_finished_gw(bootstrap)
     if last_gw and int(state_file.get("last_analyzed_gw", 0)) < last_gw:
         return POST_GW_ANALYSIS
 
-    if is_international_break(bootstrap):
+    if on_break:
         return INTERNATIONAL_BREAK
-
-    ev = next_event(bootstrap)
-    if not ev:
-        return MONITORING  # season over
-
-    next_gw = int(ev["id"])
-    hours = hours_until_deadline(bootstrap)
-    if hours is None:
-        return MONITORING
-
-    if PLAN_WINDOW[0] <= hours <= PLAN_WINDOW[1]:
-        if int(state_file.get("last_simulated_gw", 0)) < next_gw:
-            return PRE_DEADLINE_PLAN
-        return MONITORING
-
-    if EXECUTE_WINDOW[0] <= hours < EXECUTE_WINDOW[1]:
-        simulated = int(state_file.get("last_simulated_gw", 0)) >= next_gw
-        executed = int(state_file.get("last_executed_gw", 0)) >= next_gw
-        if simulated and not executed:
-            return EXECUTE
-        if not simulated and not executed:
-            # Missed the planning window (e.g. a CI outage) — plan now, and the
-            # next run inside the execute window will submit it.
-            return PRE_DEADLINE_PLAN
-        return MONITORING
 
     return MONITORING
 
