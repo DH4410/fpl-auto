@@ -20,6 +20,10 @@ _REDIRECT_URI = "https://fantasy.premierleague.com/"
 _POLICY_ID = "262ce4b01d19dd9d385d26bddb4297b6"
 _CONN_ID = "0d8c928e4970386733ce110b9dda8412"
 
+#: Every auth call gets an explicit timeout. A hung socket here would block
+#: the whole CI job until its 30-minute cap with no alert raised.
+_TIMEOUT = 30
+
 
 def _verifier():
     return secrets.token_urlsafe(64)[:128]
@@ -51,6 +55,7 @@ def login(email: str, password: str) -> tuple[str, requests.Session]:
             "code_challenge": _challenge(verifier),
             "code_challenge_method": "S256",
         },
+        timeout=_TIMEOUT,
     )
     r.raise_for_status()
     html = r.text
@@ -69,6 +74,7 @@ def login(email: str, password: str) -> tuple[str, requests.Session]:
     resp = session.post(
         f"{_AUTH_BASE}/davinci/policy/{_POLICY_ID}/start",
         headers={"Authorization": f"Bearer {page_token}", "Content-Type": "application/json"},
+        timeout=_TIMEOUT,
     )
     resp.raise_for_status()
     data = resp.json()
@@ -133,6 +139,7 @@ def login(email: str, password: str) -> tuple[str, requests.Session]:
                 "parameters": params,
                 "eventName": "continue",
             },
+            timeout=_TIMEOUT,
         )
         if resp.status_code >= 400:
             # DaVinci reports bad credentials as HTTP 400 with the reason in the
@@ -168,6 +175,7 @@ def login(email: str, password: str) -> tuple[str, requests.Session]:
         f"{_AUTH_BASE}/as/resume",
         data={"dvResponse": dv_response, "state": form_state},
         allow_redirects=False,
+        timeout=_TIMEOUT,
     )
     location = resp.headers.get("Location", "")
     m = re.search(r"[?&]code=([^&]+)", location)
@@ -185,6 +193,7 @@ def login(email: str, password: str) -> tuple[str, requests.Session]:
             "code_verifier": verifier,
             "client_id": _CLIENT_ID,
         },
+        timeout=_TIMEOUT,
     )
     resp.raise_for_status()
     token_data = resp.json()
@@ -293,6 +302,7 @@ def login_browser() -> tuple[str, requests.Session]:
             "code_verifier": verifier,
             "client_id": _CLIENT_ID,
         },
+        timeout=_TIMEOUT,
     )
     resp.raise_for_status()
     token_data = resp.json()
@@ -324,6 +334,7 @@ def refresh_login(refresh_token: str) -> tuple[str, requests.Session]:
             "client_id": _CLIENT_ID,
             "scope": "openid profile email offline_access",
         },
+        timeout=_TIMEOUT,
     )
     if resp.status_code == 400:
         raise RuntimeError(

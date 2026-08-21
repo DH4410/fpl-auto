@@ -3,6 +3,10 @@ import requests
 
 _BASE = "https://fantasy.premierleague.com/api"
 
+#: Every call gets an explicit timeout. Without one a hung socket blocks
+#: until the GitHub Actions job cap (30 min) with no alert and no work done.
+TIMEOUT = 20
+
 
 def _headers(access_token: str, extra: dict = None) -> dict:
     h = {
@@ -16,21 +20,21 @@ def _headers(access_token: str, extra: dict = None) -> dict:
 
 def bootstrap(session: requests.Session) -> dict:
     """All players, teams, game settings. Public — no auth needed."""
-    r = session.get(f"{_BASE}/bootstrap-static/")
+    r = session.get(f"{_BASE}/bootstrap-static/", timeout=TIMEOUT)
     r.raise_for_status()
     return r.json()
 
 
 def me(session: requests.Session, token: str) -> dict:
     """Current user info, including player.entry (the FPL entry/team ID)."""
-    r = session.get(f"{_BASE}/me/", headers=_headers(token))
+    r = session.get(f"{_BASE}/me/", headers=_headers(token), timeout=TIMEOUT)
     r.raise_for_status()
     return r.json()
 
 
 def my_team(session: requests.Session, token: str, entry_id: int) -> dict:
     """Current 15-player squad with picks, chips, and budget."""
-    r = session.get(f"{_BASE}/my-team/{entry_id}/", headers=_headers(token))
+    r = session.get(f"{_BASE}/my-team/{entry_id}/", headers=_headers(token), timeout=TIMEOUT)
     r.raise_for_status()
     return r.json()
 
@@ -57,6 +61,7 @@ def transfer(
             "Referer": "https://fantasy.premierleague.com/transfers",
             "Origin": "https://fantasy.premierleague.com",
         }),
+        timeout=TIMEOUT,
     )
     if not r.ok:
         raise requests.exceptions.HTTPError(
@@ -82,6 +87,7 @@ def update_picks(
         f"{_BASE}/my-team/{entry_id}/",
         json={"picks": picks, "chips": chips or []},
         headers=_headers(token),
+        timeout=TIMEOUT,
     )
     if not r.ok:
         raise requests.exceptions.HTTPError(
@@ -93,7 +99,7 @@ def update_picks(
 
 def entry_info(session: requests.Session, token: str, entry_id: int) -> dict:
     """Entry details: team name, overall rank, bank balance, etc."""
-    r = session.get(f"{_BASE}/entry/{entry_id}/", headers=_headers(token))
+    r = session.get(f"{_BASE}/entry/{entry_id}/", headers=_headers(token), timeout=TIMEOUT)
     r.raise_for_status()
     return r.json()
 
@@ -106,55 +112,55 @@ def fixtures(session: requests.Session, event: int = None) -> list:
     """All 380 fixtures, or only those in a specific gameweek."""
     url = f"{_BASE}/fixtures/"
     params = {"event": event} if event is not None else {}
-    r = session.get(url, params=params)
+    r = session.get(url, params=params, timeout=TIMEOUT)
     r.raise_for_status()
     return r.json()
 
 
 def elements(session: requests.Session) -> list:
     """All player records (same as bootstrap['elements'], lighter refresh)."""
-    r = session.get(f"{_BASE}/elements/")
+    r = session.get(f"{_BASE}/elements/", timeout=TIMEOUT)
     r.raise_for_status()
     return r.json()
 
 
 def events(session: requests.Session) -> list:
     """All 38 gameweek metadata records."""
-    r = session.get(f"{_BASE}/events/")
+    r = session.get(f"{_BASE}/events/", timeout=TIMEOUT)
     r.raise_for_status()
     return r.json()
 
 
 def player_summary(session: requests.Session, player_id: int) -> dict:
     """Upcoming fixtures, current-season history, and past-season totals for one player."""
-    r = session.get(f"{_BASE}/element-summary/{player_id}/")
+    r = session.get(f"{_BASE}/element-summary/{player_id}/", timeout=TIMEOUT)
     r.raise_for_status()
     return r.json()
 
 
 def event_live(session: requests.Session, event: int) -> dict:
     """Live player stats/points for a gameweek. Empty list before kickoff."""
-    r = session.get(f"{_BASE}/event/{event}/live/")
+    r = session.get(f"{_BASE}/event/{event}/live/", timeout=TIMEOUT)
     r.raise_for_status()
     return r.json()
 
 
 def entry_history(session: requests.Session, entry_id: int) -> dict:
     """Public transfer history for a manager entry."""
-    r = session.get(f"{_BASE}/entry/{entry_id}/history/")
+    r = session.get(f"{_BASE}/entry/{entry_id}/history/", timeout=TIMEOUT)
     r.raise_for_status()
     return r.json()
 
 
 def entry_transfers(session: requests.Session, entry_id: int) -> list:
     """All transfers made by a manager entry (public)."""
-    r = session.get(f"{_BASE}/entry/{entry_id}/transfers/")
+    r = session.get(f"{_BASE}/entry/{entry_id}/transfers/", timeout=TIMEOUT)
     r.raise_for_status()
     return r.json()
 
 
 def set_piece_notes(session: requests.Session) -> dict:
     """Penalty, corner, and free-kick taker notes per team."""
-    r = session.get(f"{_BASE}/team/set-piece-notes/")
+    r = session.get(f"{_BASE}/team/set-piece-notes/", timeout=TIMEOUT)
     r.raise_for_status()
     return r.json()
