@@ -101,6 +101,19 @@ BREAK_DAYS = 14
 # Execute-stage pacing
 TRANSFER_GAP_RANGE_MIN = (4.0, 13.0)        # minutes between transfers
 MIN_MINUTES_BEFORE_DEADLINE = 30.0
+#: Total wall-clock the EXECUTE stage may spend pacing transfers. Must stay
+#: well under post_gw.yml's 30-minute job cap, or the runner is killed
+#: mid-sequence.
+MAX_EXECUTE_MINUTES = 18.0
+#: Below this many hours to the deadline, the pre-committed execution target is
+#: ignored and the plan is submitted immediately. The target is drawn as low as
+#: 0.5h before the deadline while cron only ticks every 2h, so without this
+#: override a GW whose target lands in a cron gap would never be submitted at
+#: all. Must stay above EXECUTE_WINDOW[0] or the override could never fire.
+EXECUTE_LAST_CHANCE_H = 2.5
+#: Chips consumed by the /transfers/ call. Every other chip is activated
+#: through the /my-team/ picks payload instead.
+TRANSFER_CHIPS = ("wildcard", "freehit")
 
 DEFAULT_EMAIL = "dimahuang8@gmail.com"
 
@@ -859,6 +872,33 @@ def _transfer_gap_minutes(deadline: datetime, transfers_left: int) -> float:
     return min(random.uniform(*TRANSFER_GAP_RANGE_MIN), budget / transfers_left)
 
 
+def _transfer_key(t: dict) -> str:
+    """Stable identity for one transfer pair, used to skip completed work."""
+    return f"{t['element_out']}->{t['element_in']}"
+
+
+def _executed_keys(state: dict, gw: int) -> set[str]:
+    """Transfer keys already confirmed submitted for ``gw``."""
+    rec = state.get("executed_transfers") or {}
+    try:
+        if int(rec.get("gw", 0)) != int(gw):
+            return set()
+    except (TypeError, ValueError):
+        return set()
+    return {str(k) for k in (rec.get("pairs") or [])}
+
+
+def _record_executed(state: dict, gw: int, key: str) -> None:
+    rec = state.get("executed_transfers") or {}
+    try:
+        same_gw = int(rec.get("gw", 0)) == int(gw)
+    except (TypeError, ValueError):
+        same_gw = False
+    pairs = list(rec.get("pairs") or []) if same_gw else []
+    pairs.append(key)
+    state["executed_transfers"] = {"gw": int(gw), "pairs": pairs}
+
+
 def stage_execute(bootstrap: dict, state: dict, dry_run: bool) -> dict:
     """Submit the approved plan: transfers one by one, then picks and chip."""
     ev = next_event(bootstrap)
@@ -894,11 +934,16 @@ def stage_execute(bootstrap: dict, state: dict, dry_run: bool) -> dict:
         try:
             target_dt = datetime.fromisoformat(target_str)
             now_utc = datetime.now(timezone.utc)
-            if now_utc < target_dt:
+            if now_utc < target_dt and hours_left > EXECUTE_LAST_CHANCE_H:
                 log.info("Execution target not reached (target=%s, now=%s) — "
                          "exiting; next 2h run will check.", target_dt.isoformat(),
                          now_utc.isoformat())
                 return {}
+            if now_utc < target_dt:
+                log.warning("Only %.1fh to the deadline (below the %.1fh last-chance "
+                            "threshold) — overriding execution target %s and "
+                            "submitting now.", hours_left, EXECUTE_LAST_CHANCE_H,
+                            target_dt.isoformat())
         except Exception as exc:  # noqa: BLE001
             log.warning("Could not parse execute_target_utc (%s) — proceeding now.", exc)
 
@@ -906,55 +951,100 @@ def stage_execute(bootstrap: dict, state: dict, dry_run: bool) -> dict:
     me = fpl_api.me(session, token)
     entry_id = me["player"]["entry"]
 
+    # Prices move every night (~01:30 UTC) and the plan was frozen up to 36h
+    # ago. FPL rejects a transfer whose purchase_price/selling_price disagree
+    # with the live values, and the rejection would repeat every run until the
+    # deadline passed. Re-read both from live data, exactly as apply_team.py does.
+    live_prices = {int(el["id"]): int(el["now_cost"])
+                   for el in bootstrap.get("elements", [])}
+    try:
+        selling_now = {int(p["element"]): int(p["selling_price"])
+                       for p in fpl_api.my_team(session, token, entry_id).get("picks", [])}
+    except Exception as exc:  # noqa: BLE001
+        log.warning("Could not re-read live selling prices (%s) — using planned values", exc)
+        selling_now = {}
+
+    # Skip anything a previous (crashed or timed-out) run already submitted.
+    done = _executed_keys(state, next_gw)
+    pending = [t for t in transfers if _transfer_key(t) not in done]
+    if done:
+        log.warning("Resuming GW%d execution: %d/%d transfer(s) already submitted "
+                    "by an earlier run — skipping them.", next_gw, len(done), len(transfers))
+
     deadline = _parse_deadline(ev["deadline_time"])
+    # Pace within the job's own budget too, not just the deadline: the runner is
+    # killed at 30 min, and three 13-minute gaps would exceed that.
+    pace_until = min(deadline, datetime.now(timezone.utc)
+                     + timedelta(minutes=MAX_EXECUTE_MINUTES))
     submitted: list[str] = []
-    for idx, t in enumerate(transfers):
-        if idx > 0:
-            gap = _transfer_gap_minutes(deadline, len(transfers) - idx)
-            log.info("Waiting %.1f min before transfer %d/%d...",
-                     gap, idx + 1, len(transfers))
-            if gap > 0 and not dry_run:
-                time.sleep(gap * 60)
+    try:
+        for idx, t in enumerate(pending):
+            if idx > 0:
+                gap = _transfer_gap_minutes(pace_until, len(pending) - idx)
+                log.info("Waiting %.1f min before transfer %d/%d...",
+                         gap, idx + 1, len(pending))
+                if gap > 0 and not dry_run:
+                    time.sleep(gap * 60)
 
-        # Wildcard / Free Hit activate on the transfer call; TC and BB are set
-        # through the picks payload instead.
-        chip_this = chip if (idx == 0 and chip in ("wildcard", "freehit")) else None
-        label = f"OUT {t['name_out']} -> IN {t['name_in']}"
-        log.info("Transfer %d/%d: %s", idx + 1, len(transfers), label)
+            # Wildcard / Free Hit activate on the transfer call; TC and BB are
+            # set through the picks payload instead.
+            chip_this = chip if (idx == 0 and chip in TRANSFER_CHIPS) else None
+            label = f"OUT {t['name_out']} -> IN {t['name_in']}"
+            log.info("Transfer %d/%d: %s", idx + 1, len(pending), label)
 
-        if dry_run:
-            log.info("[DRY RUN] would POST /transfers/ %s", t)
+            if dry_run:
+                log.info("[DRY RUN] would POST /transfers/ %s", t)
+                submitted.append(label)
+                continue
+
+            buy = live_prices.get(int(t["element_in"]), t["purchase_price"])
+            sell = selling_now.get(int(t["element_out"]), t["selling_price"])
+            if buy != t["purchase_price"] or sell != t["selling_price"]:
+                log.info("Price refresh: in %s->%s, out %s->%s (tenths)",
+                         t["purchase_price"], buy, t["selling_price"], sell)
+            payload = {
+                "element_in": t["element_in"],
+                "element_out": t["element_out"],
+                "purchase_price": buy,
+                "selling_price": sell,
+            }
+            result = fpl_api.transfer(session, token, entry_id, event=next_gw,
+                                      transfers=[payload], chip=chip_this)
+            log.info("Result: %s", result)
             submitted.append(label)
-            continue
-
-        payload = {
-            "element_in": t["element_in"],
-            "element_out": t["element_out"],
-            "purchase_price": t["purchase_price"],
-            "selling_price": t["selling_price"],
-        }
-        result = fpl_api.transfer(session, token, entry_id, event=next_gw,
-                                  transfers=[payload], chip=chip_this)
-        log.info("Result: %s", result)
-        submitted.append(label)
-        time.sleep(random.uniform(3, 8))
+            # Persist immediately. If the next transfer, the picks call or the
+            # runner itself dies, the following run must not resubmit this one.
+            _record_executed(state, next_gw, _transfer_key(t))
+            save_state(state)
+            commit_state(f"auto: GW{next_gw} transfer submitted ({label})")
+            time.sleep(random.uniform(3, 8))
+    except Exception:
+        if not dry_run:
+            save_state(state)
+            commit_state(f"auto: GW{next_gw} partial execution checkpoint")
+        raise
 
     if picks_payload:
         cap = next((p["element"] for p in picks_payload if p["is_captain"]), None)
+        # Wildcard/Free Hit were already consumed by the /transfers/ call above;
+        # sending them again here makes FPL reject the picks update, which used
+        # to abort the stage after the transfers had gone through.
+        picks_chips = [chip] if (chip and chip not in TRANSFER_CHIPS) else []
         log.info("Updating picks (captain element %s%s)...",
-                 cap, f", chip {chip}" if chip else "")
+                 cap, f", chip {picks_chips[0]}" if picks_chips else "")
         if dry_run:
             log.info("[DRY RUN] would POST /my-team/ with %d picks", len(picks_payload))
         else:
             time.sleep(random.uniform(3, 7))
             result2 = fpl_api.update_picks(
                 session, token, entry_id, picks=picks_payload,
-                chips=[chip] if chip else [],
+                chips=picks_chips,
             )
             log.info("Picks updated: %s", result2)
 
     if not dry_run:
         state["last_executed_gw"] = next_gw
+        state["executed_transfers"] = {}
         state["idea_list"] = []
         state["signing_ideas"] = []
         state["research_ideas"] = []
