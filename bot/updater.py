@@ -101,7 +101,7 @@ def build_current_state(
     else:
         bank_tenths = int(my_team.get("transfers", {}).get("bank", 0))
 
-    ft = int(my_team.get("transfers", {}).get("limit", 1))
+    ft = int(my_team.get("transfers", {}).get("limit") or 1)
 
     chips_status = my_team.get("chips", [])
     chips_used_this_half = {
