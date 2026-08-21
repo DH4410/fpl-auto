@@ -613,6 +613,110 @@ def stage_monitoring(bootstrap: dict, state: dict, session: requests.Session,
         log.info("Next deadline in %.1f hours.", hours)
 
 
+def _send_deadline_digest(next_gw: int, decision: dict, plan: dict, state: dict,
+                          bootstrap: dict, deadline_utc: datetime,
+                          target_h_before: float) -> None:
+    """Email a pre-deadline summary: transfers, captain, reasoning, injury news."""
+    try:
+        transfers = decision.get("approved_transfers") or []
+        chip = decision.get("approved_chip")
+        net_gain = decision.get("expected_net_gain", 0.0)
+        reasoning = decision.get("reasoning", "")
+        execute_target = decision.get("execute_target_utc", "")
+
+        lines: list[str] = [
+            f"GW{next_gw} Pre-Deadline Plan",
+            f"Deadline: {deadline_utc.strftime('%a %d %b %Y %H:%M UTC')}",
+            "",
+        ]
+
+        # --- Decision ---
+        if not transfers and not chip:
+            lines.append("DECISION: HOLD — rolling free transfer, no action this GW.")
+        else:
+            if chip:
+                lines.append(f"CHIP: {chip.upper()}")
+            if transfers:
+                lines.append(f"TRANSFERS ({len(transfers)}):")
+                for t in transfers:
+                    out_price = t.get("selling_price", t.get("price_out", "?"))
+                    in_price = t.get("cost", t.get("price_in", "?"))
+                    lines.append(f"  OUT {t.get('name_out','?')} (£{out_price}m)"
+                                 f"  →  IN {t.get('name_in','?')} (£{in_price}m)")
+            lines.append(f"Expected net gain: {net_gain:+.2f} pts")
+
+        # --- Captain ---
+        cap = (plan.get("captain") or {})
+        vc = None
+        gw_plan = plan.get("gw_plan") or []
+        if gw_plan:
+            vc = (gw_plan[0].get("vice") or {})
+        if cap.get("name"):
+            lines.append(f"\nCaptain:       {cap['name']} ({cap.get('xpts', '?')} xPts)")
+        if vc and vc.get("name"):
+            lines.append(f"Vice-captain:  {vc['name']} ({vc.get('xpts', '?')} xPts)")
+
+        # --- Reasoning ---
+        if reasoning:
+            lines += ["", "REASONING:", reasoning]
+
+        # --- Execution time ---
+        if execute_target:
+            try:
+                exec_dt = datetime.fromisoformat(execute_target)
+                lines.append(f"\nExecution scheduled: {exec_dt.strftime('%a %d %b %H:%M UTC')}"
+                             f" ({target_h_before:.1f}h before deadline)")
+            except Exception:
+                pass
+
+        # --- Injury / availability flags ---
+        flags = [i for i in (state.get("idea_list") or [])
+                 if i.get("action") == "transfer_out" and i.get("reason")]
+        if flags:
+            lines += ["", "AVAILABILITY WARNINGS (your squad):"]
+            for f in flags:
+                lines.append(f"  ⚠ {f['name']}: {f['reason']}")
+
+        # --- Transfer window / signing ideas ---
+        signing_ideas = state.get("signing_ideas") or []
+        if signing_ideas:
+            lines += ["", "TRANSFER WINDOW INTEL:"]
+            for idea in signing_ideas[:5]:
+                lines.append(f"  • {idea.get('name','?')}: {idea.get('reason','')}")
+
+        # --- Squad availability from bootstrap (fresh) ---
+        elements = {int(e["id"]): e for e in bootstrap.get("elements", [])}
+        my_team_ids = {p["element"] for p in (decision.get("picks_payload") or [])}
+        doubt_lines = []
+        for el_id in my_team_ids:
+            el = elements.get(el_id)
+            if not el:
+                continue
+            status = el.get("status", "a")
+            chance = el.get("chance_of_playing_next_round")
+            if status != "a" or (chance is not None and chance < 100):
+                doubt_lines.append(
+                    f"  {el.get('web_name','?')}: status={status},"
+                    f" chance={chance if chance is not None else '?'}%"
+                    f" — {(el.get('news') or '').strip()}"
+                )
+        if doubt_lines:
+            lines += ["", "DOUBTS / INJURIES IN SQUAD (from FPL API):"]
+            lines.extend(doubt_lines)
+
+        body = "\n".join(lines)
+        transfers_summary = (
+            f"{len(transfers)} transfer(s)" if transfers else
+            (chip.upper() if chip else "HOLD")
+        )
+        email_alerts.send_alert(
+            f"GW{next_gw} Digest — {transfers_summary}",
+            body,
+        )
+    except Exception as exc:  # noqa: BLE001
+        log.warning("Deadline digest email failed (%s) — continuing.", exc)
+
+
 def stage_pre_deadline_plan(bootstrap: dict, state: dict, dry_run: bool) -> dict:
     """Run the planner and freeze an approved plan for the upcoming GW."""
     ev = next_event(bootstrap)
@@ -685,6 +789,8 @@ def stage_pre_deadline_plan(bootstrap: dict, state: dict, dry_run: bool) -> dict
         state["approved_plan"] = decision
         save_state(state)
         commit_state(f"auto: GW{next_gw} pre-deadline plan")
+
+    _send_deadline_digest(next_gw, decision, plan, state, bootstrap, deadline_utc, target_h_before)
     return decision
 
 
