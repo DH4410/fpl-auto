@@ -142,5 +142,11 @@
       "reason": "New signing: Signed by Aston Villa, one of the strongest clubs \u2014 worth watching even at ep_next 1.7.",
       "priority": 0.4
     }
-  ]
+  ],
+  "executed_transfers": {
+    "gw": 1,
+    "pairs": [
+      "389->388"
+    ]
+  }
 }
