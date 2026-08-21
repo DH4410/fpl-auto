@@ -1018,22 +1018,33 @@ def stage_execute(bootstrap: dict, state: dict, dry_run: bool) -> dict:
             label = f"OUT {t['name_out']} -> IN {t['name_in']}"
             log.info("Transfer %d/%d: %s", idx + 1, len(pending), label)
 
-            if dry_run:
-                log.info("[DRY RUN] would POST /transfers/ %s", t)
-                submitted.append(label)
-                continue
-
+            # Resolved before the dry-run branch so --dry-run rehearses the
+            # exact payload the live path would send. Computing it afterwards
+            # left the only pre-flight tool blind to precisely the failures
+            # this block exists to prevent: a stale price, or an element_out
+            # missing from /my-team/ because the squad drifted from the plan.
             buy = live_prices.get(int(t["element_in"]), t["purchase_price"])
             sell = selling_now.get(int(t["element_out"]), t["selling_price"])
             if buy != t["purchase_price"] or sell != t["selling_price"]:
                 log.info("Price refresh: in %s->%s, out %s->%s (tenths)",
                          t["purchase_price"], buy, t["selling_price"], sell)
+            if int(t["element_out"]) not in selling_now:
+                log.warning("Element %s is not in the live squad — using the "
+                            "planned selling price %s.", t["element_out"],
+                            t["selling_price"])
             payload = {
                 "element_in": t["element_in"],
                 "element_out": t["element_out"],
                 "purchase_price": buy,
                 "selling_price": sell,
             }
+
+            if dry_run:
+                log.info("[DRY RUN] would POST /transfers/ %s (chip=%s)",
+                         payload, chip_this)
+                submitted.append(label)
+                continue
+
             result = fpl_api.transfer(session, token, entry_id, event=next_gw,
                                       transfers=[payload], chip=chip_this)
             log.info("Result: %s", result)
