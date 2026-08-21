@@ -72,9 +72,14 @@ def login(email: str, password: str) -> tuple[str, requests.Session]:
     )
     resp.raise_for_status()
     data = resp.json()
-    interaction_id = data["interactionId"]
-    interaction_token = data["interactionToken"]
-    node_id = data["id"]
+    interaction_id = data.get("interactionId")
+    interaction_token = data.get("interactionToken")
+    node_id = data.get("id")
+    if not interaction_token or not interaction_id or not node_id:
+        raise RuntimeError(
+            f"DaVinci policy/start returned unexpected structure (keys: {list(data.keys())}). "
+            f"FPL auth flow may have changed. Response: {data}"
+        )
 
     conn_url = f"{_AUTH_BASE}/davinci/connections/{_CONN_ID}/capabilities/customHTMLTemplate"
     auth_headers = {"interactionId": interaction_id, "interactionToken": interaction_token}
@@ -283,6 +288,7 @@ def refresh_login(refresh_token: str) -> tuple[str, requests.Session]:
             "grant_type": "refresh_token",
             "refresh_token": refresh_token,
             "client_id": _CLIENT_ID,
+            "scope": "openid profile email offline_access",
         },
     )
     if resp.status_code == 400:

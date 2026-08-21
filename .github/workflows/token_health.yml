@@ -2,13 +2,15 @@ name: Refresh Token Health Check
 
 on:
   schedule:
-    # Run on the 1st of every month at 10:00 UTC
-    - cron: '0 10 1 * *'
+    # Run on the 1st and 15th of every month at 10:00 UTC (every ~2 weeks)
+    - cron: '0 10 1,15 * *'
   workflow_dispatch:
 
 jobs:
   check-token:
     runs-on: ubuntu-latest
+    permissions:
+      issues: write
 
     steps:
       - name: Checkout
@@ -22,13 +24,14 @@ jobs:
       - name: Install dependencies
         run: pip install requests
 
-      - name: Check refresh token validity
+      - name: Check and rotate refresh token
         id: token_check
         env:
           FPL_REFRESH_TOKEN: ${{ secrets.FPL_REFRESH_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_SECRETS_PAT }}
         run: |
           python - <<'EOF'
-          import os, sys, requests
+          import os, sys, subprocess, requests
 
           token = os.environ.get("FPL_REFRESH_TOKEN", "").strip()
           if not token:
@@ -41,19 +44,77 @@ jobs:
                   "grant_type": "refresh_token",
                   "refresh_token": token,
                   "client_id": "bfcbaf69-aade-4c1b-8f00-c1cb8a193030",
+                  "scope": "openid profile email offline_access",
               },
               timeout=15,
           )
 
           if resp.status_code == 400:
-              print("::error::FPL refresh token has EXPIRED. Open the local app, log in with Google, visit /api/refresh-token, and update the FPL_REFRESH_TOKEN secret.")
+              print("::error::FPL refresh token has EXPIRED.")
               sys.exit(1)
 
           resp.raise_for_status()
-          print("Refresh token is valid.")
+          data = resp.json()
+          new_token = data.get("refresh_token", "")
+          if new_token and new_token != token:
+              # Rotate the secret so the token stays fresh
+              github_output = os.environ.get("GITHUB_OUTPUT", "")
+              if github_output:
+                  with open(github_output, "a") as f:
+                      f.write(f"new_refresh_token={new_token}\n")
+              print("New refresh token received — will rotate secret.")
+          else:
+              print("Refresh token is valid (no rotation needed).")
           EOF
 
-      - name: Open issue if token is expiring/expired
+      - name: Rotate refresh token secret
+        if: steps.token_check.outputs.new_refresh_token != ''
+        env:
+          GH_TOKEN: ${{ secrets.GH_SECRETS_PAT }}
+        run: |
+          echo "${{ steps.token_check.outputs.new_refresh_token }}" | \
+            gh secret set FPL_REFRESH_TOKEN --repo ${{ github.repository }}
+          echo "Refresh token rotated successfully."
+
+      - name: Send email alert if token expired
+        if: failure()
+        env:
+          GMAIL_FROM: ${{ secrets.GMAIL_FROM }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+        run: |
+          python - <<'EOF'
+          import os, smtplib
+          from email.mime.text import MIMEText
+
+          gmail_from = os.environ.get("GMAIL_FROM", "")
+          app_pass   = os.environ.get("GMAIL_APP_PASSWORD", "")
+          if not gmail_from or not app_pass:
+              print("No Gmail credentials — skipping email alert.")
+              raise SystemExit(0)
+
+          body = (
+              "Your FPL automation refresh token has EXPIRED.\n\n"
+              "Automated transfers will stop working until you renew it.\n\n"
+              "How to fix (2 minutes):\n"
+              "1. Open a terminal in the fpl-auto folder and run: python app.py\n"
+              "2. Open http://localhost:5000 in your browser\n"
+              "3. Click 'Sign in with Google' and log in\n"
+              "4. Visit http://localhost:5000/api/refresh-token and copy the token\n"
+              "5. Go to GitHub → Settings → Secrets → Actions\n"
+              "6. Update the FPL_REFRESH_TOKEN secret with the new value\n"
+          )
+          msg = MIMEText(body)
+          msg["Subject"] = "ACTION REQUIRED: FPL Refresh Token Expired"
+          msg["From"] = gmail_from
+          msg["To"] = gmail_from
+
+          with smtplib.SMTP_SSL("smtp.gmail.com", 465) as s:
+              s.login(gmail_from, app_pass)
+              s.send_message(msg)
+          print("Email alert sent.")
+          EOF
+
+      - name: Open GitHub issue if token expired
         if: failure()
         uses: actions/github-script@v7
         with:
@@ -71,14 +132,14 @@ jobs:
                 title: '⚠️ FPL Refresh Token Expired — Action Required',
                 labels: ['fpl-token-expired'],
                 body: `## Your FPL automation token has expired\n\n` +
-                  `The monthly token health check failed. Your automated transfers will not work until you renew it.\n\n` +
+                  `The bi-weekly token health check failed. Your automated transfers will not work until you renew it.\n\n` +
                   `### How to fix (2 minutes)\n\n` +
                   `1. Open a terminal in the \`fpl-auto\` folder and run \`python app.py\`\n` +
                   `2. Open **http://localhost:5000** in your browser\n` +
-                  `3. Click **"Sign in with Google / Apple"** and log in\n` +
+                  `3. Click **"Sign in with Google"** and log in\n` +
                   `4. Visit **http://localhost:5000/api/refresh-token** and copy the token\n` +
                   `5. Go to **GitHub → Settings → Secrets → Actions**\n` +
                   `6. Update the **\`FPL_REFRESH_TOKEN\`** secret with the new value\n\n` +
-                  `Once updated, close this issue and re-run the Post-GW workflow to confirm it works.`,
+                  `Once updated, close this issue and re-run the Weekly Orchestrator workflow to confirm it works.`,
               });
             }
