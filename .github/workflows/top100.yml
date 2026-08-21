@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: fpl-top100
+  group: fpl-state-writers
   cancel-in-progress: false
 
 jobs:

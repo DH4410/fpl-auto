@@ -27,8 +27,13 @@ on:
 # transfers. The EXECUTE stage no longer sleeps in CI — it exits immediately
 # if the pre-committed target time hasn't been reached yet, and the next
 # 2h cron run picks it up. Most runs finish in < 5 min.
+#
+# All three scheduled workflows commit to the same branch, and their crons
+# collide (0 */2 and 0 */6 coincide four times a day), so they share ONE
+# concurrency group. Separate groups let them race on git push; a state push
+# that loses the race is what allows a repeated write on the next run.
 concurrency:
-  group: fpl-weekly-orchestrator
+  group: fpl-state-writers
   cancel-in-progress: false
 
 jobs:
@@ -71,14 +76,54 @@ jobs:
           fi
           python scripts/weekly_orchestrator.py $ARGS
 
+      # Non-blocking: if GH_SECRETS_PAT has expired this fails, but password
+      # login is the fallback so the bot keeps working. Failing the job here
+      # would only produce a red X the user never sees.
       - name: Rotate refresh token in GitHub Secrets
+        id: rotate
         if: steps.orchestrator.outputs.new_refresh_token != ''
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ secrets.GH_SECRETS_PAT }}
         run: |
           echo "${{ steps.orchestrator.outputs.new_refresh_token }}" | \
             gh secret set FPL_REFRESH_TOKEN --repo ${{ github.repository }}
           echo "Refresh token rotated successfully."
+
+      # The user does not read the Actions tab, so anything that fails silently
+      # must be emailed. This covers both a dead PAT and the case where the
+      # orchestrator process died before its own Python-level alert could fire
+      # (OOM, job timeout, import error).
+      - name: Email if rotation or the run itself failed
+        if: always() && (steps.rotate.outcome == 'failure' || failure())
+        env:
+          GMAIL_FROM:         ${{ secrets.GMAIL_FROM }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          ROTATE_OUTCOME:     ${{ steps.rotate.outcome }}
+          ORCH_OUTCOME:       ${{ steps.orchestrator.outcome }}
+          RUN_URL:            ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          python - <<'EOF'
+          import os
+          from bot import email_alerts
+          rot = os.environ.get("ROTATE_OUTCOME", "")
+          orch = os.environ.get("ORCH_OUTCOME", "")
+          parts = []
+          if rot == "failure":
+              parts.append(
+                  "Refresh-token rotation FAILED (`gh secret set`).\n"
+                  "Most likely GH_SECRETS_PAT has expired or lost 'secrets: write'.\n"
+                  "Not urgent: password login is the fallback, so transfers continue.\n"
+                  "Fix by issuing a new PAT and updating the GH_SECRETS_PAT secret.")
+          if orch not in ("success", ""):
+              parts.append(
+                  f"The orchestrator step ended with status '{orch}'.\n"
+                  "If it did not send its own alert it died before it could "
+                  "(job timeout, OOM, or an import error).")
+          parts.append("Run log: " + os.environ.get("RUN_URL", "n/a"))
+          email_alerts.send_alert("Weekly orchestrator needs attention",
+                                  "\n\n".join(parts))
+          EOF
 
       # The orchestrator commits its own state after each stage so a crash
       # cannot cause a repeat submission. This is the catch-all for anything
@@ -91,6 +136,17 @@ jobs:
           git add reports/ data/
           git diff --cached --quiet && echo "No changes to commit" || {
             git commit -m "auto: orchestrator run $(date -u +%Y-%m-%dT%H:%MZ) [skip ci]"
-            git pull --rebase --autostash || true
-            git push
+            # Retry: a lost push race leaves state unpushed, which is what
+            # allows the next run to repeat a write it already made.
+            for i in 1 2 3; do
+              git pull --rebase --autostash || true
+              if git push; then
+                echo "Pushed on attempt $i"
+                exit 0
+              fi
+              echo "Push attempt $i failed; retrying..."
+              sleep $(( (RANDOM % 5) + 3 ))
+            done
+            echo "::error::Could not push state after 3 attempts"
+            exit 1
           }

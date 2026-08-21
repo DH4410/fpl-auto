@@ -43,8 +43,11 @@ jobs:
           fi
           python scripts/apply_team.py $DRY_ARG
 
+      # Non-blocking: password login is the fallback, so a dead PAT must not
+      # make a successful squad application look like a failed run.
       - name: Rotate refresh token in GitHub Secrets
         if: steps.apply_step.outputs.new_refresh_token != ''
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ secrets.GH_SECRETS_PAT }}
         run: |
