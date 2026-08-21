@@ -75,10 +75,25 @@ def login(email: str, password: str) -> tuple[str, requests.Session]:
     interaction_id = data.get("interactionId")
     interaction_token = data.get("interactionToken")
     node_id = data.get("id")
+
+    # Step 2b — FPL added a "Protect SDK" probe node before the login form.
+    # The start node has interactionId + id but no interactionToken.
+    # Submitting an empty protectsdk payload advances to the actual login node.
+    if not interaction_token and interaction_id and node_id and data.get("connectionId"):
+        probe_resp = session.post(
+            f"{_AUTH_BASE}/davinci/connections/{data['connectionId']}/capabilities/{data.get('capabilityName', 'customHTMLTemplate')}",
+            headers={"interactionId": interaction_id, "Content-Type": "application/json"},
+            json={"id": node_id, "eventName": "continue", "parameters": {"protectsdk": ""}},
+        )
+        probe_resp.raise_for_status()
+        probe_data = probe_resp.json()
+        interaction_token = probe_data.get("interactionToken")
+        node_id = probe_data.get("id", node_id)
+
     if not interaction_token or not interaction_id or not node_id:
         raise RuntimeError(
-            f"DaVinci policy/start returned unexpected structure (keys: {list(data.keys())}). "
-            f"FPL auth flow may have changed. Response: {data}"
+            f"DaVinci login failed — could not get interactionToken after protect-SDK probe. "
+            f"Start response keys: {list(data.keys())}. FPL auth flow may have changed."
         )
 
     conn_url = f"{_AUTH_BASE}/davinci/connections/{_CONN_ID}/capabilities/customHTMLTemplate"
