@@ -1,8 +1,129 @@
 {
   "last_analyzed_gw": 0,
-  "last_simulated_gw": 0,
+  "last_simulated_gw": 1,
   "last_executed_gw": 0,
-  "approved_plan": null,
+  "approved_plan": {
+    "gw": 1,
+    "approved_transfers": [
+      {
+        "element_in": 388,
+        "name_in": "Gu\u00e9hi",
+        "purchase_price": 60,
+        "element_out": 389,
+        "name_out": "Matheus N.",
+        "selling_price": 60
+      }
+    ],
+    "approved_chip": null,
+    "expected_net_gain": 8.25,
+    "expected_gross_gain": 8.25,
+    "hit_count": 0,
+    "captain": {
+      "element": 426,
+      "name": "B.Fernandes",
+      "xpts": 4.31
+    },
+    "vice": {
+      "element": 4,
+      "name": "Gabriel",
+      "xpts": 3.6
+    },
+    "reasoning": "Planner proposes 1 transfer(s) worth +8.25 xPts gross over 6 GWs (+8.25 net of 0 hit(s)).",
+    "picks_payload": [
+      {
+        "element": 226,
+        "position": 1,
+        "is_captain": false,
+        "is_vice_captain": false
+      },
+      {
+        "element": 4,
+        "position": 2,
+        "is_captain": false,
+        "is_vice_captain": true
+      },
+      {
+        "element": 142,
+        "position": 3,
+        "is_captain": false,
+        "is_vice_captain": false
+      },
+      {
+        "element": 200,
+        "position": 4,
+        "is_captain": false,
+        "is_vice_captain": false
+      },
+      {
+        "element": 387,
+        "position": 5,
+        "is_captain": false,
+        "is_vice_captain": false
+      },
+      {
+        "element": 388,
+        "position": 6,
+        "is_captain": false,
+        "is_vice_captain": false
+      },
+      {
+        "element": 124,
+        "position": 7,
+        "is_captain": false,
+        "is_vice_captain": false
+      },
+      {
+        "element": 368,
+        "position": 8,
+        "is_captain": false,
+        "is_vice_captain": false
+      },
+      {
+        "element": 399,
+        "position": 9,
+        "is_captain": false,
+        "is_vice_captain": false
+      },
+      {
+        "element": 426,
+        "position": 10,
+        "is_captain": true,
+        "is_vice_captain": false
+      },
+      {
+        "element": 106,
+        "position": 11,
+        "is_captain": false,
+        "is_vice_captain": false
+      },
+      {
+        "element": 28,
+        "position": 12,
+        "is_captain": false,
+        "is_vice_captain": false
+      },
+      {
+        "element": 346,
+        "position": 13,
+        "is_captain": false,
+        "is_vice_captain": false
+      },
+      {
+        "element": 463,
+        "position": 14,
+        "is_captain": false,
+        "is_vice_captain": false
+      },
+      {
+        "element": 86,
+        "position": 15,
+        "is_captain": false,
+        "is_vice_captain": false
+      }
+    ],
+    "entry_id": 2330027,
+    "execute_target_utc": "2026-08-21T13:31:37.547373+00:00"
+  },
   "execute_target_utc": null,
   "last_deep_research_gw": 0,
   "research_ideas": [],

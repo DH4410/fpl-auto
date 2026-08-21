@@ -1,0 +1,28 @@
+{
+  "gw": 1,
+  "approved_transfers": [
+    {
+      "element_in": 388,
+      "name_in": "Gu\u00e9hi",
+      "purchase_price": 60,
+      "element_out": 389,
+      "name_out": "Matheus N.",
+      "selling_price": 60
+    }
+  ],
+  "approved_chip": null,
+  "expected_net_gain": 8.25,
+  "expected_gross_gain": 8.25,
+  "hit_count": 0,
+  "captain": {
+    "element": 426,
+    "name": "B.Fernandes",
+    "xpts": 4.31
+  },
+  "vice": {
+    "element": 4,
+    "name": "Gabriel",
+    "xpts": 3.6
+  },
+  "reasoning": "Planner proposes 1 transfer(s) worth +8.25 xPts gross over 6 GWs (+8.25 net of 0 hit(s))."
+}
