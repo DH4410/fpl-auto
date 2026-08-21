@@ -1,7 +1,7 @@
 {
   "last_analyzed_gw": 0,
   "last_simulated_gw": 1,
-  "last_executed_gw": 0,
+  "last_executed_gw": 1,
   "approved_plan": {
     "gw": 1,
     "approved_transfers": [
@@ -127,26 +127,7 @@
   "execute_target_utc": null,
   "last_deep_research_gw": 0,
   "research_ideas": [],
-  "signing_ideas": [
-    {
-      "action": "transfer_in",
-      "element": 597,
-      "name": "Suzuki",
-      "reason": "New signing: Signed by Aston Villa, one of the strongest clubs \u2014 worth watching even at ep_next 2.6.",
-      "priority": 0.4
-    },
-    {
-      "action": "transfer_in",
-      "element": 596,
-      "name": "Ruggeri",
-      "reason": "New signing: Signed by Aston Villa, one of the strongest clubs \u2014 worth watching even at ep_next 1.7.",
-      "priority": 0.4
-    }
-  ],
-  "executed_transfers": {
-    "gw": 1,
-    "pairs": [
-      "389->388"
-    ]
-  }
+  "signing_ideas": [],
+  "executed_transfers": {},
+  "idea_list": []
 }
