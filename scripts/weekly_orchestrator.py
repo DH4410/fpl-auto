@@ -168,11 +168,22 @@ def commit_state(message: str) -> None:
             return
         subprocess.run(["git", "commit", "-m", f"{message} [skip ci]"],
                        cwd=ROOT, check=True, capture_output=True)
-        # Other workflows write to the same branch; rebase before pushing.
-        subprocess.run(["git", "pull", "--rebase", "--autostash"],
-                       cwd=ROOT, check=False, capture_output=True)
-        subprocess.run(["git", "push"], cwd=ROOT, check=True, capture_output=True)
-        log.info("State committed and pushed: %s", message)
+        # Other workflows write to the same branch and their crons collide
+        # (0 */2 and 0 */6 coincide four times a day), so a push can lose a
+        # race. A single attempt that loses it leaves the state unpushed, which
+        # is precisely what lets the next run repeat a write — so retry.
+        last_err = ""
+        for attempt in range(3):
+            subprocess.run(["git", "pull", "--rebase", "--autostash"],
+                           cwd=ROOT, check=False, capture_output=True)
+            pushed = subprocess.run(["git", "push"], cwd=ROOT, capture_output=True)
+            if pushed.returncode == 0:
+                log.info("State committed and pushed: %s", message)
+                return
+            last_err = (pushed.stderr or b"").decode("utf-8", "replace").strip()[-400:]
+            log.warning("Push attempt %d/3 failed: %s", attempt + 1, last_err)
+            time.sleep(random.uniform(2, 6))
+        raise RuntimeError(f"git push failed after 3 attempts: {last_err}")
     except Exception as exc:  # noqa: BLE001
         msg = (f"State commit/push failed ({type(exc).__name__}: {exc}) — "
                f"state persists locally only; risk of re-submission on next CI run")
@@ -332,8 +343,12 @@ def _emit_new_refresh_token() -> None:
     new_rt = fpl_auth._last_refresh_token.get("value", "")
     github_output = os.environ.get("GITHUB_OUTPUT", "")
     if new_rt and github_output:
+        # Heredoc form, not a bare key=value line: any newline in the token
+        # would otherwise corrupt the whole step-output file and could spill
+        # the remainder of the token into the build log.
+        delim = f"ghadelim_{os.urandom(16).hex()}"
         with open(github_output, "a", encoding="utf-8") as f:
-            f.write(f"new_refresh_token={new_rt}\n")
+            f.write(f"new_refresh_token<<{delim}\n{new_rt}\n{delim}\n")
         log.info("Rotated refresh token written to GITHUB_OUTPUT for secret rotation.")
 
 
@@ -627,6 +642,14 @@ def stage_monitoring(bootstrap: dict, state: dict, session: requests.Session,
         log.info("Next deadline in %.1f hours.", hours)
 
 
+def _fmt_price(tenths) -> str:
+    """FPL prices are carried in tenths of a million: 60 -> '£6.0m'."""
+    try:
+        return f"£{int(tenths) / 10.0:.1f}m"
+    except (TypeError, ValueError):
+        return "£?m"
+
+
 def _send_deadline_digest(next_gw: int, decision: dict, plan: dict, state: dict,
                           bootstrap: dict, deadline_utc: datetime,
                           target_h_before: float) -> None:
@@ -653,18 +676,21 @@ def _send_deadline_digest(next_gw: int, decision: dict, plan: dict, state: dict,
             if transfers:
                 lines.append(f"TRANSFERS ({len(transfers)}):")
                 for t in transfers:
-                    out_price = t.get("selling_price", t.get("price_out", "?"))
-                    in_price = t.get("cost", t.get("price_in", "?"))
-                    lines.append(f"  OUT {t.get('name_out','?')} (£{out_price}m)"
-                                 f"  →  IN {t.get('name_in','?')} (£{in_price}m)")
+                    lines.append(f"  OUT {t.get('name_out','?')} "
+                                 f"({_fmt_price(t.get('selling_price'))})"
+                                 f"  →  IN {t.get('name_in','?')} "
+                                 f"({_fmt_price(t.get('purchase_price'))})")
             lines.append(f"Expected net gain: {net_gain:+.2f} pts")
 
         # --- Captain ---
-        cap = (plan.get("captain") or {})
+        cap = plan.get("captain") or decision.get("captain") or {}
         vc = None
         gw_plan = plan.get("gw_plan") or []
         if gw_plan:
-            vc = (gw_plan[0].get("vice") or {})
+            vc = gw_plan[0].get("vice")
+        # The planner only exposes the vice inside gw_plan; the frozen decision
+        # carries it at the top level. Fall back so the digest is never blank.
+        vc = vc or decision.get("vice") or {}
         if cap.get("name"):
             lines.append(f"\nCaptain:       {cap['name']} ({cap.get('xpts', '?')} xPts)")
         if vc and vc.get("name"):
