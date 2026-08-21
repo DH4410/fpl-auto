@@ -188,6 +188,8 @@ def login(email: str, password: str) -> tuple[str, requests.Session]:
     )
     resp.raise_for_status()
     token_data = resp.json()
+    if token_data.get("refresh_token"):
+        _last_refresh_token["value"] = token_data["refresh_token"]
     return token_data["access_token"], session
 
 
