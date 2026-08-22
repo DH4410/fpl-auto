@@ -106,3 +106,21 @@ def is_international_break(
     if not event:
         return False
     return parse_fpl_time(event["deadline_time"]) - now > timedelta(days=break_days)
+
+
+# weekly_orchestrator imports this module before importing top100_post_deadline.
+# Install the cohort-safe class there so MONITORING can never select managers
+# from already-moving live Overall standings. The dedicated top100 workflow is
+# responsible for freezing the standings-only cohort before each deadline.
+def _install_cohort_safe_scout() -> None:
+    try:
+        from . import top100_post_deadline as target
+        from .top100_cohort_scout import CohortLockedTopManagerScout
+        target.PostDeadlineTopManagerScout = CohortLockedTopManagerScout
+    except Exception:
+        # Calendar helpers must remain importable even if optional scouting
+        # dependencies are unavailable in a lightweight environment.
+        return
+
+
+_install_cohort_safe_scout()
