@@ -1,0 +1,28 @@
+name: Unit tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install lightweight test dependencies
+        run: pip install requests
+      - name: Run pure unit tests
+        run: |
+          python -m unittest discover -s tests -v
+          python -m py_compile \
+            bot/orchestrator_runtime.py \
+            bot/reflection_insights.py \
+            bot/post_match_analyzer_extended.py \
+            bot/live_gameweek.py \
+            bot/top100_post_deadline.py \
+            bot/top100_cohort_scout.py \
+            scripts/weekly_orchestrator.py \
+            scripts/weekly_orchestrator_cohort.py

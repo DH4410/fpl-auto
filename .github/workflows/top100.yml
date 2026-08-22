@@ -1,8 +1,11 @@
-name: Top 100 Tracker
+name: Top 100 Pre/Post-Deadline Scout
 
 on:
   schedule:
-    - cron: '0 9 * * 1'  # every Monday 09:00 UTC
+    # Every 15 minutes. In the final hour before a deadline this freezes the
+    # public Overall standings only (manager IDs/ranks, no picks). After lock it
+    # fetches those same managers' newly-public teams once.
+    - cron: '*/15 * * * *'
   workflow_dispatch:
 
 concurrency:
@@ -28,14 +31,11 @@ jobs:
       - name: Install dependencies
         run: pip install requests python-dotenv pandas
 
-      # Snapshots the most recently finished GW. Public endpoints only, so no
-      # FPL credentials are needed here.
-      - name: Snapshot top 100 managers
-        env:
-          GMAIL_FROM:         ${{ secrets.GMAIL_FROM }}
-          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
-        run: python scripts/weekly_orchestrator.py --stage top100
+      - name: Freeze ranks / inspect newly locked teams
+        run: python scripts/weekly_orchestrator_cohort.py --stage top100
 
-      # Commit is handled inside stage_top100 via commit_state(), which also
-      # does git pull --rebase before pushing to avoid conflicts with the
-      # main orchestrator workflow writing to the same branch.
+      # Safety model:
+      # - BEFORE deadline: standings only; competitor picks are never requested.
+      # - AFTER deadline: picks are fetched only for the pre-deadline frozen cohort.
+      # - No pre-deadline cohort => strategy analysis is skipped rather than using
+      #   already-moving live Overall standings.
