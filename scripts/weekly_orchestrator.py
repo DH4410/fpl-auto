@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Runtime entrypoint for the weekly FPL orchestrator.
 
-The original implementation lives in ``weekly_orchestrator_core.py``.  This
+The original implementation lives in ``weekly_orchestrator_core.py``. This
 entrypoint keeps that mature state machine intact while correcting the live-GW
-calendar semantics and adding human-readable post-GW lessons.
+calendar semantics, adding a hard live-gameweek execution lock, and surfacing
+human-readable post-GW lessons.
 """
 from __future__ import annotations
 
@@ -15,6 +16,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from bot.orchestrator_runtime import (  # noqa: E402
+    active_live_event,
     hours_until_next_deadline,
     is_international_break as runtime_is_break,
     latest_started_gw,
@@ -41,6 +43,14 @@ def stage_monitoring(bootstrap: dict, state: dict, session, dry_run: bool) -> No
         core.warn_no_entry_id("MONITORING")
 
     squad_gw = latest_started_gw(bootstrap) or 0
+    live_ev = active_live_event(bootstrap)
+    if live_ev is not None:
+        core.log.info(
+            "GW%d is currently LIVE/LOCKED — no transfers, picks or chip actions "
+            "will be submitted until FPL marks the gameweek finished.",
+            int(live_ev["id"]),
+        )
+
     my_picks = core.fetch_public_picks(entry_id, squad_gw, session) if squad_gw else []
     my_ids = {int(p["element"]) for p in my_picks if p.get("element") is not None}
 
@@ -95,6 +105,28 @@ def stage_monitoring(bootstrap: dict, state: dict, session, dry_run: bool) -> No
 
 
 core.stage_monitoring = stage_monitoring
+
+# Defense in depth: even a forced EXECUTE stage or a future stage-detection bug
+# cannot submit transfers/picks/chips while the current gameweek remains live.
+_original_execute = core.stage_execute
+
+
+def stage_execute(bootstrap: dict, state: dict, dry_run: bool) -> dict:
+    live_ev = active_live_event(bootstrap)
+    if live_ev is not None:
+        target = next_future_event(bootstrap)
+        target_text = f"GW{int(target['id'])}" if target is not None else "the next GW"
+        core.log.warning(
+            "SAFETY LOCK: GW%d is still live. EXECUTE for %s is blocked — no "
+            "transfers, picks or chips will be submitted until the live GW finishes.",
+            int(live_ev["id"]),
+            target_text,
+        )
+        return {}
+    return _original_execute(bootstrap, state, dry_run)
+
+
+core.stage_execute = stage_execute
 
 _original_post_gw = core.stage_post_gw_analysis
 
