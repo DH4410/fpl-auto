@@ -121,9 +121,17 @@ def build_live_summary(
     }
 
 
-def live_score_distribution(manager_pick_lists: list[list[dict]], live_data: dict) -> dict:
-    """Aggregate provisional scores for a sample of locked manager teams."""
-    scores = [score_picks(picks, live_data)["net"] for picks in manager_pick_lists]
+def live_score_distribution(
+    manager_pick_lists: list[list[dict]],
+    live_data: dict,
+    transfer_costs: list[int | float] | None = None,
+) -> dict:
+    """Aggregate provisional net scores for a sample of locked manager teams."""
+    costs = list(transfer_costs or [])
+    scores = []
+    for idx, picks in enumerate(manager_pick_lists):
+        cost = costs[idx] if idx < len(costs) else 0
+        scores.append(score_picks(picks, live_data, transfer_cost=cost)["net"])
     if not scores:
         return {"sample_size": 0, "average": 0.0, "median": 0.0, "high": 0.0, "low": 0.0}
     return {
