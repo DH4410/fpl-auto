@@ -78,9 +78,16 @@ def build_reflection_messages(
 
     messages: list[str] = []
 
-    # Captaincy: compare raw points among the locked starting XI.
-    starters = [p for p in picks if int(p.get("position") or 99) <= 11]
-    captain = next((p for p in picks if p.get("is_captain")), None)
+    # Use the final effective XI. A nominal starter with multiplier 0 was
+    # autosubbed out and should not create a fake captain/bench regret.
+    starters = [
+        p for p in picks
+        if int(p.get("position") or 99) <= 11 and int(p.get("multiplier") or 0) > 0
+    ]
+    captain = next(
+        (p for p in picks if p.get("is_captain") and int(p.get("multiplier") or 0) > 0),
+        None,
+    )
     if captain and starters:
         cap_id = int(captain["element"])
         cap_pts = _points(live.get(cap_id, {}))
@@ -114,7 +121,7 @@ def build_reflection_messages(
             messages.append(
                 f"Bench call hurt: {bench_name} scored {bench_pts:.0f} on my bench while "
                 f"{start_name} scored {start_pts:.0f} in the XI — a {swing:.0f}-point selection "
-                "swing before any autosub. I should review the start/bench weighting."
+                "swing. I should review the start/bench weighting."
             )
 
     # Team exposure: combine what just happened with the *next* fixture run so
