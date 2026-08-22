@@ -12,7 +12,7 @@ choices.
 from __future__ import annotations
 
 import json
-from collections import Counter, defaultdict
+from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -37,6 +37,7 @@ class PostDeadlineTopManagerScout:
     """Snapshot top-manager locked teams only after a GW deadline."""
 
     SAMPLE_SIZE = 25
+    MIN_SAMPLE_SIZE = 10
 
     def __init__(self, data_dir: Path | None = None, sample_size: int | None = None):
         self.tracker = Top100Tracker(data_dir=data_dir)
@@ -85,15 +86,30 @@ class PostDeadlineTopManagerScout:
             return {
                 "created": False,
                 "blocked_pre_deadline": True,
+                "retry_later": False,
                 "reason": f"GW{int(gw)} deadline has not passed; manager picks will not be fetched.",
                 "snapshot": None,
             }
 
         existing = self.load_snapshot(gw)
         if existing and existing.get("post_deadline_locked"):
-            return {"created": False, "blocked_pre_deadline": False, "snapshot": existing}
+            return {
+                "created": False,
+                "blocked_pre_deadline": False,
+                "retry_later": False,
+                "snapshot": existing,
+            }
 
         standings = self.tracker.fetch_standings(session)
+        if not standings:
+            return {
+                "created": False,
+                "blocked_pre_deadline": False,
+                "retry_later": True,
+                "reason": "Overall standings have not propagated yet; retry on the next scout run.",
+                "snapshot": None,
+            }
+
         managers: list[dict] = []
         for row in standings[: self.sample_size]:
             entry_id = row.get("entry")
@@ -106,6 +122,8 @@ class PostDeadlineTopManagerScout:
             if not picks_data:
                 continue
             picks = picks_data.get("picks") or []
+            if not picks:
+                continue
             entry_hist = picks_data.get("entry_history") or {}
             captain = next((p.get("element") for p in picks if p.get("is_captain")), None)
             managers.append({
@@ -130,6 +148,19 @@ class PostDeadlineTopManagerScout:
                 "event_transfers_cost": entry_hist.get("event_transfers_cost"),
             })
 
+        required = min(self.MIN_SAMPLE_SIZE, self.sample_size)
+        if len(managers) < required:
+            return {
+                "created": False,
+                "blocked_pre_deadline": False,
+                "retry_later": True,
+                "reason": (
+                    f"Only {len(managers)}/{self.sample_size} locked squads are visible; "
+                    "FPL is probably still propagating post-deadline data."
+                ),
+                "snapshot": None,
+            }
+
         summary = self.tracker._summarise(int(gw), managers)
         strategy = self._strategy_summary(managers, bootstrap)
         event = self._event(bootstrap, gw) or {}
@@ -149,7 +180,12 @@ class PostDeadlineTopManagerScout:
         if persist:
             self.data_dir.mkdir(parents=True, exist_ok=True)
             self.path_for_gw(gw).write_text(json.dumps(snapshot, indent=2), encoding="utf-8")
-        return {"created": True, "blocked_pre_deadline": False, "snapshot": snapshot}
+        return {
+            "created": True,
+            "blocked_pre_deadline": False,
+            "retry_later": False,
+            "snapshot": snapshot,
+        }
 
     def _strategy_summary(self, managers: list[dict], bootstrap: dict) -> dict:
         elements = {
@@ -166,6 +202,9 @@ class PostDeadlineTopManagerScout:
         captains = Counter()
         club_slots = Counter()
         club_managers = Counter()
+        chips = Counter()
+        transfer_counts: list[int] = []
+        hit_managers = 0
 
         for manager in managers:
             squad_clubs: set[int] = set()
@@ -188,6 +227,13 @@ class PostDeadlineTopManagerScout:
                 formations[f"{pos.get(2, 0)}-{pos.get(3, 0)}-{pos.get(4, 0)}"] += 1
             if manager.get("captain") is not None:
                 captains[int(manager["captain"])] += 1
+            if manager.get("chip"):
+                chips[str(manager["chip"])] += 1
+            transfers = int(manager.get("event_transfers") or 0)
+            cost = int(manager.get("event_transfers_cost") or 0)
+            transfer_counts.append(transfers)
+            if cost > 0:
+                hit_managers += 1
 
         n = len(managers)
         club_exposure = []
@@ -213,6 +259,11 @@ class PostDeadlineTopManagerScout:
             {"formation": formation, "count": count, "pct": round(100 * count / n, 1) if n else 0.0}
             for formation, count in formations.most_common()
         ]
+        transfer_style = {
+            "avg_transfers": round(sum(transfer_counts) / n, 2) if n else 0.0,
+            "hit_pct": round(100 * hit_managers / n, 1) if n else 0.0,
+            "chips": dict(chips),
+        }
 
         observations: list[str] = []
         if club_exposure:
@@ -227,12 +278,21 @@ class PostDeadlineTopManagerScout:
         if formation_rows:
             top = formation_rows[0]
             observations.append(f"Most common starting formation: {top['formation']} ({top['pct']:.0f}% of sample).")
+        observations.append(
+            f"Transfer style: {transfer_style['avg_transfers']:.2f} transfers per sampled manager; "
+            f"{transfer_style['hit_pct']:.0f}% took a points hit."
+        )
+        if chips:
+            observations.append(
+                "Chips in sample: " + ", ".join(f"{chip}={count}" for chip, count in chips.most_common()) + "."
+            )
 
         return {
             "sample_size": n,
             "club_exposure": club_exposure[:10],
             "captaincy": captain_rows,
             "formations": formation_rows,
+            "transfer_style": transfer_style,
             "observations": observations,
         }
 
