@@ -23,4 +23,6 @@ jobs:
             bot/post_match_analyzer_extended.py \
             bot/live_gameweek.py \
             bot/top100_post_deadline.py \
-            scripts/weekly_orchestrator.py
+            bot/top100_cohort_scout.py \
+            scripts/weekly_orchestrator.py \
+            scripts/weekly_orchestrator_cohort.py
