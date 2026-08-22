@@ -1,8 +1,11 @@
-name: Top 100 Tracker
+name: Top 100 Post-Deadline Scout
 
 on:
   schedule:
-    - cron: '0 9 * * 1'  # every Monday 09:00 UTC
+    # Lightweight check every 15 minutes. Before a deadline it does nothing;
+    # after the deadline it snapshots the newly visible locked teams once.
+    # Scheduled workflows run from the default branch, so this activates after merge.
+    - cron: '*/15 * * * *'
   workflow_dispatch:
 
 concurrency:
@@ -28,14 +31,12 @@ jobs:
       - name: Install dependencies
         run: pip install requests python-dotenv pandas
 
-      # Snapshots the most recently finished GW. Public endpoints only, so no
-      # FPL credentials are needed here.
-      - name: Snapshot top 100 managers
-        env:
-          GMAIL_FROM:         ${{ secrets.GMAIL_FROM }}
-          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+      # The Python scout has a hard deadline guard. It will not request another
+      # manager's GW picks before that GW locks, even if this job is dispatched
+      # manually. After the first successful post-deadline snapshot, later
+      # 15-minute runs reuse the stored teams and make no picks requests.
+      - name: Snapshot newly locked elite managers
         run: python scripts/weekly_orchestrator.py --stage top100
 
-      # Commit is handled inside stage_top100 via commit_state(), which also
-      # does git pull --rebase before pushing to avoid conflicts with the
-      # main orchestrator workflow writing to the same branch.
+      # stage_top100 commits only when a new snapshot is created. The shared
+      # concurrency group prevents races with the weekly orchestrator.
