@@ -133,6 +133,9 @@ def _log_live_and_elite_watch(
     if result.get("blocked_pre_deadline"):
         core.log.info("Elite watch blocked: %s", result.get("reason"))
         return
+    if result.get("retry_later"):
+        core.log.info("Elite watch waiting for FPL post-deadline propagation: %s", result.get("reason"))
+        return
 
     snapshot = result.get("snapshot") or {}
     if result.get("created") and not dry_run:
@@ -157,7 +160,7 @@ def _log_live_and_elite_watch(
             "GW1 note: overall ranks are initially tied/unstable, so elite-strategy "
             "signals are provisional; the locked-team and live-score data are still valid."
         )
-    for observation in (strategy.get("observations") or [])[:3]:
+    for observation in (strategy.get("observations") or [])[:4]:
         core.log.info("ELITE STRATEGY: %s", observation)
 
 
@@ -263,6 +266,9 @@ def stage_top100(bootstrap: dict, dry_run: bool) -> dict:
     if result.get("blocked_pre_deadline"):
         core.log.info("Post-deadline scout blocked: %s", result.get("reason"))
         return {}
+    if result.get("retry_later"):
+        core.log.info("Post-deadline scout will retry: %s", result.get("reason"))
+        return {}
 
     snapshot = result.get("snapshot") or {}
     core.log.info(
@@ -282,7 +288,7 @@ def stage_top100(bootstrap: dict, dry_run: bool) -> dict:
     else:
         core.log.info("GW%d locked elite snapshot already exists — no refetch needed.", gw)
 
-    for observation in ((snapshot.get("strategy") or {}).get("observations") or [])[:3]:
+    for observation in ((snapshot.get("strategy") or {}).get("observations") or [])[:4]:
         core.log.info("ELITE STRATEGY: %s", observation)
     return snapshot.get("summary") or {"gw": gw}
 
