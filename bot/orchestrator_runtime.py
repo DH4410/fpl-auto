@@ -1,11 +1,12 @@
 """Small calendar helpers used by the weekly orchestrator entrypoint.
 
-FPL's ``event.finished`` flag means the whole gameweek has finished.  It does
-*not* mean its transfer deadline is still upcoming.  The orchestrator needs two
-separate concepts:
+FPL's ``event.finished`` flag means the whole gameweek has finished. It does
+*not* mean its transfer deadline is still upcoming. The orchestrator needs
+separate concepts for:
 
-* the next event whose deadline is still in the future (planning/execution), and
-* the latest event whose deadline has passed (current squad monitoring).
+* the next event whose deadline is still in the future (planning/execution),
+* the latest event whose deadline has passed (current squad monitoring), and
+* a gameweek whose deadline has passed but which is still live/unfinished.
 """
 from __future__ import annotations
 
@@ -61,6 +62,28 @@ def latest_started_gw(bootstrap: dict, now_utc: datetime | None = None) -> int |
         if deadline <= now:
             started.append((deadline, int(event["id"])))
     return max(started, key=lambda item: item[0])[1] if started else None
+
+
+def active_live_event(bootstrap: dict, now_utc: datetime | None = None) -> dict | None:
+    """Return the latest started gameweek that FPL still marks unfinished.
+
+    This is the orchestrator's hard safety signal. While such an event exists,
+    the already-locked GW is allowed to be monitored and analysed, but no live
+    transfer/picks/chip execution should be submitted.
+    """
+    now = _utc_now(now_utc)
+    live: list[tuple[datetime, dict]] = []
+    for event in bootstrap.get("events", []):
+        raw = event.get("deadline_time")
+        if not raw or event.get("id") is None or event.get("finished"):
+            continue
+        try:
+            deadline = parse_fpl_time(raw)
+        except (TypeError, ValueError):
+            continue
+        if deadline <= now:
+            live.append((deadline, event))
+    return max(live, key=lambda item: item[0])[1] if live else None
 
 
 def hours_until_next_deadline(bootstrap: dict, now_utc: datetime | None = None) -> float | None:
