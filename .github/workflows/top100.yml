@@ -1,10 +1,10 @@
-name: Top 100 Post-Deadline Scout
+name: Top 100 Pre/Post-Deadline Scout
 
 on:
   schedule:
-    # Lightweight check every 15 minutes. Before a deadline it does nothing;
-    # after the deadline it snapshots the newly visible locked teams once.
-    # Scheduled workflows run from the default branch, so this activates after merge.
+    # Every 15 minutes. In the final hour before a deadline this freezes the
+    # public Overall standings only (manager IDs/ranks, no picks). After lock it
+    # fetches those same managers' newly-public teams once.
     - cron: '*/15 * * * *'
   workflow_dispatch:
 
@@ -31,12 +31,11 @@ jobs:
       - name: Install dependencies
         run: pip install requests python-dotenv pandas
 
-      # The Python scout has a hard deadline guard. It will not request another
-      # manager's GW picks before that GW locks, even if this job is dispatched
-      # manually. After the first successful post-deadline snapshot, later
-      # 15-minute runs reuse the stored teams and make no picks requests.
-      - name: Snapshot newly locked elite managers
-        run: python scripts/weekly_orchestrator.py --stage top100
+      - name: Freeze ranks / inspect newly locked teams
+        run: python scripts/weekly_orchestrator_cohort.py --stage top100
 
-      # stage_top100 commits only when a new snapshot is created. The shared
-      # concurrency group prevents races with the weekly orchestrator.
+      # Safety model:
+      # - BEFORE deadline: standings only; competitor picks are never requested.
+      # - AFTER deadline: picks are fetched only for the pre-deadline frozen cohort.
+      # - No pre-deadline cohort => strategy analysis is skipped rather than using
+      #   already-moving live Overall standings.
