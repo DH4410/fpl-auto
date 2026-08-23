@@ -134,6 +134,13 @@
       "name": "Rowe",
       "reason": "New signing: Signed by Aston Villa, one of the strongest clubs \u2014 worth watching even at ep_next 0.0.",
       "priority": 0.4
+    },
+    {
+      "action": "transfer_in",
+      "element": 607,
+      "name": "Lynch",
+      "reason": "New signing: Signed by Aston Villa, one of the strongest clubs \u2014 worth watching even at ep_next 1.0.",
+      "priority": 0.4
     }
   ],
   "executed_transfers": {},
