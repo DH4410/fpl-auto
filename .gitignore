@@ -11,6 +11,13 @@ dist/
 .DS_Store
 bot/cache/
 
+# Multi-account credentials / local secret exports
+FPL-accounts.xlsx
+fpl-accounts.xlsx
+accounts.local.json
+*.secrets.json
+secrets/
+
 # Local data warehouse (too large for git — 38MB DuckDB file)
 data/warehouse.duckdb
 data/parquet/raw/
