@@ -1,0 +1,2296 @@
+{
+  "gw": 1,
+  "league_id": 314,
+  "n_standings": 100,
+  "n_picks_sampled": 10,
+  "standings": [
+    {
+      "club_badge_src": null,
+      "entry": 120245,
+      "entry_name": "LOCKER DOOR",
+      "event_total": 131,
+      "last_rank": 0,
+      "player_name": "Dull Menate",
+      "rank": 1,
+      "rank_sort": 1,
+      "total": 131
+    },
+    {
+      "club_badge_src": null,
+      "entry": 3648199,
+      "entry_name": "NOT INTO YOU",
+      "event_total": 124,
+      "last_rank": 0,
+      "player_name": "Jeremy Wang",
+      "rank": 2,
+      "rank_sort": 2,
+      "total": 124
+    },
+    {
+      "club_badge_src": null,
+      "entry": 1799570,
+      "entry_name": "FC Frigo",
+      "event_total": 124,
+      "last_rank": 0,
+      "player_name": "Alexander Polle",
+      "rank": 2,
+      "rank_sort": 3,
+      "total": 124
+    },
+    {
+      "club_badge_src": null,
+      "entry": 2022827,
+      "entry_name": "Gene's Team",
+      "event_total": 121,
+      "last_rank": 0,
+      "player_name": "Gene Lam",
+      "rank": 4,
+      "rank_sort": 4,
+      "total": 121
+    },
+    {
+      "club_badge_src": "https://fantasy.premierleague.com/gcs/plfpl-production-adobe-approved/plfpl-production/6629830/893d07b6-eb4b-485f-8f7a-e9f31cedeb68.png",
+      "entry": 6629830,
+      "entry_name": "Auraacle Fc",
+      "event_total": 121,
+      "last_rank": 0,
+      "player_name": "Big Auraaa",
+      "rank": 4,
+      "rank_sort": 5,
+      "total": 121
+    },
+    {
+      "club_badge_src": null,
+      "entry": 147424,
+      "entry_name": "Snoop Udogie Dogg",
+      "event_total": 120,
+      "last_rank": 0,
+      "player_name": "Alex Thomas",
+      "rank": 6,
+      "rank_sort": 6,
+      "total": 120
+    },
+    {
+      "club_badge_src": null,
+      "entry": 6722582,
+      "entry_name": "\u0634\u06ce\u0631\u06d5 \u0628\u06d5\u0631\u062f\u06d5\u0631\u06d5\u0634\u06cc  ipz",
+      "event_total": 120,
+      "last_rank": 0,
+      "player_name": "A ip",
+      "rank": 6,
+      "rank_sort": 7,
+      "total": 120
+    },
+    {
+      "club_badge_src": "https://fantasy.premierleague.com/gcs/plfpl-production-adobe-approved/plfpl-production/7500773/ba359b93-22bd-4ac7-a346-777ad94a3df5.png",
+      "entry": 141417,
+      "entry_name": "LUKEIO 4 REAL HUGO",
+      "event_total": 119,
+      "last_rank": 0,
+      "player_name": "Luke Englishby",
+      "rank": 8,
+      "rank_sort": 8,
+      "total": 119
+    },
+    {
+      "club_badge_src": null,
+      "entry": 244723,
+      "entry_name": "Haalandaise Sauce",
+      "event_total": 119,
+      "last_rank": 0,
+      "player_name": "Andre Aivazian",
+      "rank": 8,
+      "rank_sort": 9,
+      "total": 119
+    },
+    {
+      "club_badge_src": null,
+      "entry": 440955,
+      "entry_name": "il\u00f6vestenis",
+      "event_total": 119,
+      "last_rank": 0,
+      "player_name": "Pontus Bergander",
+      "rank": 8,
+      "rank_sort": 10,
+      "total": 119
+    },
+    {
+      "club_badge_src": null,
+      "entry": 3895646,
+      "entry_name": "hope and glory",
+      "event_total": 119,
+      "last_rank": 0,
+      "player_name": "dave atkinson",
+      "rank": 8,
+      "rank_sort": 11,
+      "total": 119
+    },
+    {
+      "club_badge_src": null,
+      "entry": 1099735,
+      "entry_name": "JonSnow",
+      "event_total": 118,
+      "last_rank": 0,
+      "player_name": "Lukas Paulsson",
+      "rank": 12,
+      "rank_sort": 12,
+      "total": 118
+    },
+    {
+      "club_badge_src": null,
+      "entry": 5999624,
+      "entry_name": "HosannaG",
+      "event_total": 117,
+      "last_rank": 0,
+      "player_name": "Hosanna Gbrx",
+      "rank": 13,
+      "rank_sort": 13,
+      "total": 117
+    },
+    {
+      "club_badge_src": null,
+      "entry": 1026920,
+      "entry_name": "Delap of Honour",
+      "event_total": 117,
+      "last_rank": 0,
+      "player_name": "Owen Richardson",
+      "rank": 13,
+      "rank_sort": 14,
+      "total": 117
+    },
+    {
+      "club_badge_src": null,
+      "entry": 4938752,
+      "entry_name": "mYTeam",
+      "event_total": 117,
+      "last_rank": 0,
+      "player_name": "Fairuz Muhamad Nor",
+      "rank": 13,
+      "rank_sort": 15,
+      "total": 117
+    },
+    {
+      "club_badge_src": null,
+      "entry": 1390232,
+      "entry_name": "Change Name",
+      "event_total": 117,
+      "last_rank": 0,
+      "player_name": "Russell Lancaster",
+      "rank": 13,
+      "rank_sort": 16,
+      "total": 117
+    },
+    {
+      "club_badge_src": null,
+      "entry": 3358247,
+      "entry_name": "Regimental Utd",
+      "event_total": 117,
+      "last_rank": 0,
+      "player_name": "Carrie Roberts",
+      "rank": 13,
+      "rank_sort": 17,
+      "total": 117
+    },
+    {
+      "club_badge_src": null,
+      "entry": 6973235,
+      "entry_name": "Cahyong",
+      "event_total": 117,
+      "last_rank": 0,
+      "player_name": "Venom Vanguard Celestial Cipher",
+      "rank": 13,
+      "rank_sort": 18,
+      "total": 117
+    },
+    {
+      "club_badge_src": "https://fantasy.premierleague.com/gcs/plfpl-production-adobe-approved/plfpl-production/313270/75fa4009-52ae-4abb-927e-b5b83eb637b2.png",
+      "entry": 7133,
+      "entry_name": "SuperSoul",
+      "event_total": 116,
+      "last_rank": 0,
+      "player_name": "jason cormier",
+      "rank": 19,
+      "rank_sort": 19,
+      "total": 116
+    },
+    {
+      "club_badge_src": "https://fantasy.premierleague.com/gcs/plfpl-production-adobe-approved/plfpl-production/1821530/22692a4a-1e12-4cc1-9382-909a3210da14.png",
+      "entry": 1821530,
+      "entry_name": "Its Coming Home",
+      "event_total": 116,
+      "last_rank": 0,
+      "player_name": "Ben Robinson",
+      "rank": 19,
+      "rank_sort": 20,
+      "total": 116
+    },
+    {
+      "club_badge_src": null,
+      "entry": 331434,
+      "entry_name": "ELIXIR",
+      "event_total": 116,
+      "last_rank": 0,
+      "player_name": "saif ali",
+      "rank": 19,
+      "rank_sort": 21,
+      "total": 116
+    },
+    {
+      "club_badge_src": "https://fantasy.premierleague.com/gcs/plfpl-production-adobe-approved/plfpl-production/9996/cda4dd9e-6b6d-42f8-89df-bcf6b8a9a769.png",
+      "entry": 43242,
+      "entry_name": "Odd man out",
+      "event_total": 116,
+      "last_rank": 0,
+      "player_name": "Erik Nes Ohnstad",
+      "rank": 19,
+      "rank_sort": 22,
+      "total": 116
+    },
+    {
+      "club_badge_src": null,
+      "entry": 8494713,
+      "entry_name": "Nick",
+      "event_total": 116,
+      "last_rank": 0,
+      "player_name": "Nick Dent",
+      "rank": 19,
+      "rank_sort": 23,
+      "total": 116
+    },
+    {
+      "club_badge_src": null,
+      "entry": 6922784,
+      "entry_name": "S8",
+      "event_total": 116,
+      "last_rank": 0,
+      "player_name": "Pannapat Homsuwan",
+      "rank": 19,
+      "rank_sort": 24,
+      "total": 116
+    },
+    {
+      "club_badge_src": null,
+      "entry": 342486,
+      "entry_name": "Hjertoham dahl",
+      "event_total": 116,
+      "last_rank": 0,
+      "player_name": "Alex Marr",
+      "rank": 19,
+      "rank_sort": 25,
+      "total": 116
+    },
+    {
+      "club_badge_src": null,
+      "entry": 2237954,
+      "entry_name": "Young Trafford",
+      "event_total": 116,
+      "last_rank": 0,
+      "player_name": "Shane Gaffney",
+      "rank": 19,
+      "rank_sort": 26,
+      "total": 116
+    },
+    {
+      "club_badge_src": null,
+      "entry": 3821304,
+      "entry_name": "awra",
+      "event_total": 116,
+      "last_rank": 0,
+      "player_name": "awra familia",
+      "rank": 19,
+      "rank_sort": 27,
+      "total": 116
+    },
+    {
+      "club_badge_src": null,
+      "entry": 1161935,
+      "entry_name": "ya ali fc",
+      "event_total": 116,
+      "last_rank": 0,
+      "player_name": "Ayman Daref",
+      "rank": 19,
+      "rank_sort": 28,
+      "total": 116
+    },
+    {
+      "club_badge_src": null,
+      "entry": 2989614,
+      "entry_name": "Miss\u00e4 ruisleiv\u00e4t ?",
+      "event_total": 115,
+      "last_rank": 0,
+      "player_name": "Gianluca Catania",
+      "rank": 29,
+      "rank_sort": 29,
+      "total": 115
+    },
+    {
+      "club_badge_src": null,
+      "entry": 6043688,
+      "entry_name": "Tarik Muharemofiets",
+      "event_total": 115,
+      "last_rank": 0,
+      "player_name": "Matteo Magaldi",
+      "rank": 29,
+      "rank_sort": 30,
+      "total": 115
+    },
+    {
+      "club_badge_src": null,
+      "entry": 282411,
+      "entry_name": "The Boss",
+      "event_total": 115,
+      "last_rank": 0,
+      "player_name": "Ahmed Yassin",
+      "rank": 29,
+      "rank_sort": 31,
+      "total": 115
+    },
+    {
+      "club_badge_src": null,
+      "entry": 4045224,
+      "entry_name": "Howe's Moving Castle",
+      "event_total": 115,
+      "last_rank": 0,
+      "player_name": "Scott Matthewson",
+      "rank": 29,
+      "rank_sort": 32,
+      "total": 115
+    },
+    {
+      "club_badge_src": null,
+      "entry": 369586,
+      "entry_name": "Hussein Adan",
+      "event_total": 115,
+      "last_rank": 0,
+      "player_name": "Huss Team",
+      "rank": 29,
+      "rank_sort": 33,
+      "total": 115
+    },
+    {
+      "club_badge_src": null,
+      "entry": 4226106,
+      "entry_name": "Evyseleven",
+      "event_total": 115,
+      "last_rank": 0,
+      "player_name": "Alex Evason",
+      "rank": 29,
+      "rank_sort": 34,
+      "total": 115
+    },
+    {
+      "club_badge_src": null,
+      "entry": 781960,
+      "entry_name": "Dunk And Disorderly",
+      "event_total": 115,
+      "last_rank": 0,
+      "player_name": "Rory Craig",
+      "rank": 29,
+      "rank_sort": 35,
+      "total": 115
+    },
+    {
+      "club_badge_src": null,
+      "entry": 1068212,
+      "entry_name": "Yemen \u0627\u0628",
+      "event_total": 115,
+      "last_rank": 0,
+      "player_name": "Zakaria Husain",
+      "rank": 29,
+      "rank_sort": 36,
+      "total": 115
+    },
+    {
+      "club_badge_src": null,
+      "entry": 3084630,
+      "entry_name": "wengerboys",
+      "event_total": 115,
+      "last_rank": 0,
+      "player_name": "lee francis",
+      "rank": 29,
+      "rank_sort": 37,
+      "total": 115
+    },
+    {
+      "club_badge_src": null,
+      "entry": 1493451,
+      "entry_name": "KenyaFifa19Champion",
+      "event_total": 115,
+      "last_rank": 0,
+      "player_name": "Patrick Komu",
+      "rank": 29,
+      "rank_sort": 38,
+      "total": 115
+    },
+    {
+      "club_badge_src": "https://fantasy.premierleague.com/gcs/plfpl-production-adobe-approved/plfpl-production/3099/3a573251-5db5-4538-bbb5-935e896894b8.png",
+      "entry": 3099,
+      "entry_name": "Requiem for a team",
+      "event_total": 115,
+      "last_rank": 0,
+      "player_name": "Eran Musman",
+      "rank": 29,
+      "rank_sort": 39,
+      "total": 115
+    },
+    {
+      "club_badge_src": null,
+      "entry": 1434512,
+      "entry_name": "\u00d8de to joy",
+      "event_total": 115,
+      "last_rank": 0,
+      "player_name": "David Long",
+      "rank": 29,
+      "rank_sort": 40,
+      "total": 115
+    },
+    {
+      "club_badge_src": null,
+      "entry": 1332153,
+      "entry_name": "Mohmmed2007",
+      "event_total": 114,
+      "last_rank": 0,
+      "player_name": "Mohmmed Muftah",
+      "rank": 41,
+      "rank_sort": 41,
+      "total": 114
+    },
+    {
+      "club_badge_src": null,
+      "entry": 253468,
+      "entry_name": "teddy's bears",
+      "event_total": 114,
+      "last_rank": 0,
+      "player_name": "Teddy Cairns",
+      "rank": 41,
+      "rank_sort": 42,
+      "total": 114
+    },
+    {
+      "club_badge_src": "https://fantasy.premierleague.com/gcs/plfpl-production-adobe-approved/plfpl-production/2260524/e5621fe0-a258-43d1-a04f-3581f5226954.png",
+      "entry": 2260524,
+      "entry_name": "Acun\u2019s Army",
+      "event_total": 114,
+      "last_rank": 0,
+      "player_name": "Jack Wilson",
+      "rank": 41,
+      "rank_sort": 43,
+      "total": 114
+    },
+    {
+      "club_badge_src": null,
+      "entry": 93650,
+      "entry_name": "Ganu FC",
+      "event_total": 114,
+      "last_rank": 0,
+      "player_name": "Amar 77",
+      "rank": 41,
+      "rank_sort": 44,
+      "total": 114
+    },
+    {
+      "club_badge_src": null,
+      "entry": 6666455,
+      "entry_name": "Jack to the future",
+      "event_total": 114,
+      "last_rank": 0,
+      "player_name": "Harry Quilley",
+      "rank": 41,
+      "rank_sort": 45,
+      "total": 114
+    },
+    {
+      "club_badge_src": null,
+      "entry": 3590452,
+      "entry_name": "Txuri-Urdin",
+      "event_total": 114,
+      "last_rank": 0,
+      "player_name": "Matthew Green",
+      "rank": 41,
+      "rank_sort": 46,
+      "total": 114
+    },
+    {
+      "club_badge_src": null,
+      "entry": 6413914,
+      "entry_name": "Fly me to the league",
+      "event_total": 114,
+      "last_rank": 0,
+      "player_name": "Dida Elkholy",
+      "rank": 41,
+      "rank_sort": 47,
+      "total": 114
+    },
+    {
+      "club_badge_src": null,
+      "entry": 4448761,
+      "entry_name": "Fernandes & Furious",
+      "event_total": 114,
+      "last_rank": 0,
+      "player_name": "David Blackburne",
+      "rank": 41,
+      "rank_sort": 48,
+      "total": 114
+    },
+    {
+      "club_badge_src": null,
+      "entry": 7491201,
+      "entry_name": "cr7 Abo",
+      "event_total": 114,
+      "last_rank": 0,
+      "player_name": "A S",
+      "rank": 41,
+      "rank_sort": 49,
+      "total": 114
+    },
+    {
+      "club_badge_src": "https://fantasy.premierleague.com/gcs/plfpl-production-adobe-approved/plfpl-production/653031/a9ed17ed-2cf4-4300-988a-1adb5922c8fe.png",
+      "entry": 653031,
+      "entry_name": "kladashk",
+      "event_total": 114,
+      "last_rank": 0,
+      "player_name": "Evert Bratberg Heed",
+      "rank": 41,
+      "rank_sort": 50,
+      "total": 114
+    },
+    {
+      "club_badge_src": null,
+      "entry": 3965821,
+      "entry_name": "infantinoooooo",
+      "event_total": 114,
+      "last_rank": 0,
+      "player_name": "Sebastian Dahlberg",
+      "rank": 41,
+      "rank_sort": 51,
+      "total": 114
+    },
+    {
+      "club_badge_src": "https://fantasy.premierleague.com/gcs/plfpl-production-adobe-approved/plfpl-production/7490099/a76daee8-c7a5-4180-a5cd-42e094a7f730.png",
+      "entry": 7490099,
+      "entry_name": "the moore i look",
+      "event_total": 114,
+      "last_rank": 0,
+      "player_name": "eric obanya",
+      "rank": 41,
+      "rank_sort": 52,
+      "total": 114
+    },
+    {
+      "club_badge_src": null,
+      "entry": 306414,
+      "entry_name": "Robin Red Best",
+      "event_total": 113,
+      "last_rank": 0,
+      "player_name": "Tony Hich",
+      "rank": 53,
+      "rank_sort": 53,
+      "total": 113
+    },
+    {
+      "club_badge_src": null,
+      "entry": 1135502,
+      "entry_name": "No place for old men",
+      "event_total": 113,
+      "last_rank": 0,
+      "player_name": "Abdulaziz Altamimi",
+      "rank": 53,
+      "rank_sort": 54,
+      "total": 113
+    },
+    {
+      "club_badge_src": null,
+      "entry": 5243315,
+      "entry_name": "FC Gamey Gumay",
+      "event_total": 113,
+      "last_rank": 0,
+      "player_name": "Ugyen Thinley",
+      "rank": 53,
+      "rank_sort": 55,
+      "total": 113
+    },
+    {
+      "club_badge_src": null,
+      "entry": 2212828,
+      "entry_name": "Two Pints o Schlager",
+      "event_total": 113,
+      "last_rank": 0,
+      "player_name": "William Garrison",
+      "rank": 53,
+      "rank_sort": 56,
+      "total": 113
+    },
+    {
+      "club_badge_src": null,
+      "entry": 2751413,
+      "entry_name": "saber237",
+      "event_total": 113,
+      "last_rank": 0,
+      "player_name": "saber 123",
+      "rank": 53,
+      "rank_sort": 57,
+      "total": 113
+    },
+    {
+      "club_badge_src": null,
+      "entry": 1816889,
+      "entry_name": "Harold finch",
+      "event_total": 113,
+      "last_rank": 0,
+      "player_name": "Momo Gaballah",
+      "rank": 53,
+      "rank_sort": 58,
+      "total": 113
+    },
+    {
+      "club_badge_src": null,
+      "entry": 6017029,
+      "entry_name": "reben",
+      "event_total": 113,
+      "last_rank": 0,
+      "player_name": "ranya reben",
+      "rank": 53,
+      "rank_sort": 59,
+      "total": 113
+    },
+    {
+      "club_badge_src": null,
+      "entry": 321234,
+      "entry_name": "Sammy CFC",
+      "event_total": 113,
+      "last_rank": 0,
+      "player_name": "sam Constable",
+      "rank": 53,
+      "rank_sort": 60,
+      "total": 113
+    },
+    {
+      "club_badge_src": null,
+      "entry": 7296522,
+      "entry_name": "Saka Potatoes",
+      "event_total": 113,
+      "last_rank": 0,
+      "player_name": "Anna Greening",
+      "rank": 53,
+      "rank_sort": 61,
+      "total": 113
+    },
+    {
+      "club_badge_src": null,
+      "entry": 6613747,
+      "entry_name": "Beja Hajen",
+      "event_total": 113,
+      "last_rank": 0,
+      "player_name": "Benjamin Wallman",
+      "rank": 53,
+      "rank_sort": 62,
+      "total": 113
+    },
+    {
+      "club_badge_src": null,
+      "entry": 712804,
+      "entry_name": "penpalmer",
+      "event_total": 113,
+      "last_rank": 0,
+      "player_name": "Ian Nesbitt",
+      "rank": 53,
+      "rank_sort": 63,
+      "total": 113
+    },
+    {
+      "club_badge_src": null,
+      "entry": 4092146,
+      "entry_name": "Fee-fi-Foden",
+      "event_total": 113,
+      "last_rank": 0,
+      "player_name": "Luke Waters",
+      "rank": 53,
+      "rank_sort": 64,
+      "total": 113
+    },
+    {
+      "club_badge_src": null,
+      "entry": 244224,
+      "entry_name": "Adele FC",
+      "event_total": 113,
+      "last_rank": 0,
+      "player_name": "Ainoa Sarasketa",
+      "rank": 53,
+      "rank_sort": 65,
+      "total": 113
+    },
+    {
+      "club_badge_src": null,
+      "entry": 8190426,
+      "entry_name": "Jayden FC",
+      "event_total": 113,
+      "last_rank": 0,
+      "player_name": "Jaiden Singh",
+      "rank": 53,
+      "rank_sort": 66,
+      "total": 113
+    },
+    {
+      "club_badge_src": null,
+      "entry": 4391360,
+      "entry_name": "bombino",
+      "event_total": 113,
+      "last_rank": 0,
+      "player_name": "Hamrawi Bamboo",
+      "rank": 53,
+      "rank_sort": 67,
+      "total": 113
+    },
+    {
+      "club_badge_src": null,
+      "entry": 3467492,
+      "entry_name": "It's PP Time",
+      "event_total": 112,
+      "last_rank": 0,
+      "player_name": "PatrickEnis patrickenis",
+      "rank": 68,
+      "rank_sort": 68,
+      "total": 112
+    },
+    {
+      "club_badge_src": null,
+      "entry": 202823,
+      "entry_name": "Dangerous Danimals",
+      "event_total": 112,
+      "last_rank": 0,
+      "player_name": "Daniel Mendes",
+      "rank": 68,
+      "rank_sort": 69,
+      "total": 112
+    },
+    {
+      "club_badge_src": null,
+      "entry": 138943,
+      "entry_name": "DONT COPY PASTE",
+      "event_total": 112,
+      "last_rank": 0,
+      "player_name": "Bukan Anwar Ibrahim",
+      "rank": 68,
+      "rank_sort": 70,
+      "total": 112
+    },
+    {
+      "club_badge_src": null,
+      "entry": 461741,
+      "entry_name": "LLXI",
+      "event_total": 112,
+      "last_rank": 0,
+      "player_name": "Lewis Londesborough jr",
+      "rank": 68,
+      "rank_sort": 71,
+      "total": 112
+    },
+    {
+      "club_badge_src": "https://fantasy.premierleague.com/gcs/plfpl-production-adobe-approved/plfpl-production/835397/a99ce30b-0e39-4a30-bea8-0a9b67508abf.png",
+      "entry": 835397,
+      "entry_name": "seth's Team",
+      "event_total": 112,
+      "last_rank": 0,
+      "player_name": "seth Tissong",
+      "rank": 68,
+      "rank_sort": 72,
+      "total": 112
+    },
+    {
+      "club_badge_src": null,
+      "entry": 4592714,
+      "entry_name": "Ehab Fc",
+      "event_total": 112,
+      "last_rank": 0,
+      "player_name": "Ehab Nidal ismail",
+      "rank": 68,
+      "rank_sort": 73,
+      "total": 112
+    },
+    {
+      "club_badge_src": null,
+      "entry": 6259328,
+      "entry_name": "DaBoyAsh",
+      "event_total": 112,
+      "last_rank": 0,
+      "player_name": "Ashwin Thakral",
+      "rank": 68,
+      "rank_sort": 74,
+      "total": 112
+    },
+    {
+      "club_badge_src": "https://fantasy.premierleague.com/gcs/plfpl-production-adobe-approved/plfpl-production/3690851/8e73d1c2-03f7-4cd8-9286-536e590acebc.png",
+      "entry": 3690851,
+      "entry_name": "Cold Palmer FC",
+      "event_total": 112,
+      "last_rank": 0,
+      "player_name": "Kieran Chester",
+      "rank": 68,
+      "rank_sort": 75,
+      "total": 112
+    },
+    {
+      "club_badge_src": null,
+      "entry": 4731437,
+      "entry_name": "Gangsta\u2019s Allardyce",
+      "event_total": 112,
+      "last_rank": 0,
+      "player_name": "Nick Cavaday",
+      "rank": 68,
+      "rank_sort": 76,
+      "total": 112
+    },
+    {
+      "club_badge_src": "https://fantasy.premierleague.com/gcs/plfpl-production-adobe-approved/plfpl-production/7158592/994e7132-e0c9-482a-ac0f-1e05b49c600d.png",
+      "entry": 7158592,
+      "entry_name": "Glory's Team",
+      "event_total": 112,
+      "last_rank": 0,
+      "player_name": "Agawu Jeremiah",
+      "rank": 68,
+      "rank_sort": 77,
+      "total": 112
+    },
+    {
+      "club_badge_src": null,
+      "entry": 436819,
+      "entry_name": "Cherki Club on Wheat",
+      "event_total": 112,
+      "last_rank": 0,
+      "player_name": "Jared Fagerstrom",
+      "rank": 68,
+      "rank_sort": 78,
+      "total": 112
+    },
+    {
+      "club_badge_src": null,
+      "entry": 1976723,
+      "entry_name": "The Bammers",
+      "event_total": 112,
+      "last_rank": 0,
+      "player_name": "Sam Caldecourt",
+      "rank": 68,
+      "rank_sort": 79,
+      "total": 112
+    },
+    {
+      "club_badge_src": null,
+      "entry": 3122175,
+      "entry_name": "Ten Handicaps",
+      "event_total": 112,
+      "last_rank": 0,
+      "player_name": "Anthony James",
+      "rank": 68,
+      "rank_sort": 80,
+      "total": 112
+    },
+    {
+      "club_badge_src": null,
+      "entry": 7629633,
+      "entry_name": "RT FC",
+      "event_total": 112,
+      "last_rank": 0,
+      "player_name": "Rhys Thomas",
+      "rank": 68,
+      "rank_sort": 81,
+      "total": 112
+    },
+    {
+      "club_badge_src": null,
+      "entry": 5649838,
+      "entry_name": "plavci",
+      "event_total": 112,
+      "last_rank": 0,
+      "player_name": "Matej Bosnjakovic",
+      "rank": 68,
+      "rank_sort": 82,
+      "total": 112
+    },
+    {
+      "club_badge_src": null,
+      "entry": 197673,
+      "entry_name": "Gaztello",
+      "event_total": 112,
+      "last_rank": 0,
+      "player_name": "Artem Filatov",
+      "rank": 68,
+      "rank_sort": 83,
+      "total": 112
+    },
+    {
+      "club_badge_src": "https://fantasy.premierleague.com/gcs/plfpl-production-adobe-approved/plfpl-production/7351074/33aa39af-624c-486e-9588-97a5466a6c88.png",
+      "entry": 7351074,
+      "entry_name": "Kulkarni FC",
+      "event_total": 112,
+      "last_rank": 0,
+      "player_name": "Adya Kulkarni",
+      "rank": 68,
+      "rank_sort": 84,
+      "total": 112
+    },
+    {
+      "club_badge_src": null,
+      "entry": 1471949,
+      "entry_name": "Rail Horse Inn",
+      "event_total": 111,
+      "last_rank": 0,
+      "player_name": "Neil Harrison",
+      "rank": 85,
+      "rank_sort": 85,
+      "total": 111
+    },
+    {
+      "club_badge_src": null,
+      "entry": 1537181,
+      "entry_name": "Hobbsy's Lions",
+      "event_total": 111,
+      "last_rank": 0,
+      "player_name": "stuart hobbs",
+      "rank": 85,
+      "rank_sort": 86,
+      "total": 111
+    },
+    {
+      "club_badge_src": null,
+      "entry": 1062962,
+      "entry_name": "Calafiori Love",
+      "event_total": 111,
+      "last_rank": 0,
+      "player_name": "Joseph Caulfield",
+      "rank": 85,
+      "rank_sort": 87,
+      "total": 111
+    },
+    {
+      "club_badge_src": null,
+      "entry": 1217286,
+      "entry_name": "piero get your culo",
+      "event_total": 111,
+      "last_rank": 0,
+      "player_name": "Roberto Soracchi",
+      "rank": 85,
+      "rank_sort": 88,
+      "total": 111
+    },
+    {
+      "club_badge_src": "https://fantasy.premierleague.com/gcs/plfpl-production-adobe-approved/plfpl-production/1197832/68806dac-ef31-4665-a317-2cf785febefd.png",
+      "entry": 1197832,
+      "entry_name": "D Jai! Trump FC",
+      "event_total": 111,
+      "last_rank": 0,
+      "player_name": "Padi Tapa",
+      "rank": 85,
+      "rank_sort": 89,
+      "total": 111
+    },
+    {
+      "club_badge_src": null,
+      "entry": 7041067,
+      "entry_name": "MarcoTeam",
+      "event_total": 111,
+      "last_rank": 0,
+      "player_name": "Marek W\u00f3jtowicz",
+      "rank": 85,
+      "rank_sort": 90,
+      "total": 111
+    },
+    {
+      "club_badge_src": "https://fantasy.premierleague.com/gcs/plfpl-production-adobe-approved/plfpl-production/324488/3cedc05c-a1ba-45c1-a77e-346a8baa425e.png",
+      "entry": 606768,
+      "entry_name": "Palmer Chameleon",
+      "event_total": 111,
+      "last_rank": 0,
+      "player_name": "Mike Spicer",
+      "rank": 85,
+      "rank_sort": 91,
+      "total": 111
+    },
+    {
+      "club_badge_src": null,
+      "entry": 1351863,
+      "entry_name": "Fred's Team",
+      "event_total": 111,
+      "last_rank": 0,
+      "player_name": "Fred Malone",
+      "rank": 85,
+      "rank_sort": 92,
+      "total": 111
+    },
+    {
+      "club_badge_src": "https://fantasy.premierleague.com/gcs/plfpl-production-adobe-approved/plfpl-production/5086711/de676cae-0eab-43db-af7e-c5f9b583649c.png",
+      "entry": 1378562,
+      "entry_name": "Not too Xabi",
+      "event_total": 111,
+      "last_rank": 0,
+      "player_name": "Khamzat Mamadou",
+      "rank": 85,
+      "rank_sort": 93,
+      "total": 111
+    },
+    {
+      "club_badge_src": null,
+      "entry": 5638311,
+      "entry_name": "Zabarnyi",
+      "event_total": 111,
+      "last_rank": 0,
+      "player_name": "Abdalrhamn Alakrami",
+      "rank": 85,
+      "rank_sort": 94,
+      "total": 111
+    },
+    {
+      "club_badge_src": null,
+      "entry": 1159441,
+      "entry_name": "Total Fuelball",
+      "event_total": 111,
+      "last_rank": 0,
+      "player_name": "Rachel Edwards",
+      "rank": 85,
+      "rank_sort": 95,
+      "total": 111
+    },
+    {
+      "club_badge_src": null,
+      "entry": 2831042,
+      "entry_name": "25-1 is a BET",
+      "event_total": 111,
+      "last_rank": 0,
+      "player_name": "Lee Waller",
+      "rank": 85,
+      "rank_sort": 96,
+      "total": 111
+    },
+    {
+      "club_badge_src": null,
+      "entry": 8486161,
+      "entry_name": "Mhamad's Team",
+      "event_total": 111,
+      "last_rank": 0,
+      "player_name": "Mhamad Ahmad",
+      "rank": 85,
+      "rank_sort": 97,
+      "total": 111
+    },
+    {
+      "club_badge_src": null,
+      "entry": 1462458,
+      "entry_name": "Doak Furnitureland",
+      "event_total": 111,
+      "last_rank": 0,
+      "player_name": "Luke Mackay",
+      "rank": 85,
+      "rank_sort": 98,
+      "total": 111
+    },
+    {
+      "club_badge_src": null,
+      "entry": 3495591,
+      "entry_name": "Liverpool\u2764\ufe0f\u2764\ufe0fRos\u00e1lia",
+      "event_total": 111,
+      "last_rank": 0,
+      "player_name": "isabel coxa",
+      "rank": 85,
+      "rank_sort": 99,
+      "total": 111
+    },
+    {
+      "club_badge_src": null,
+      "entry": 534233,
+      "entry_name": "Farke",
+      "event_total": 111,
+      "last_rank": 0,
+      "player_name": "Einar Floberg",
+      "rank": 85,
+      "rank_sort": 100,
+      "total": 111
+    }
+  ],
+  "managers": [
+    {
+      "entry": 120245,
+      "rank": 1,
+      "player_name": "Dull Menate",
+      "total": 131,
+      "event_total": 131,
+      "picks": [
+        {
+          "element": 109,
+          "position": 1,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 387,
+          "position": 2,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 10,
+          "position": 3,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 4,
+          "position": 4,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 397,
+          "position": 5,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 154,
+          "position": 6,
+          "multiplier": 2,
+          "is_captain": true
+        },
+        {
+          "element": 15,
+          "position": 7,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 237,
+          "position": 8,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 426,
+          "position": 9,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 125,
+          "position": 10,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 165,
+          "position": 11,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 385,
+          "position": 12,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 115,
+          "position": 13,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 334,
+          "position": 14,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 316,
+          "position": 15,
+          "multiplier": 1,
+          "is_captain": false
+        }
+      ],
+      "captain": 154,
+      "chip": "bboost",
+      "event_transfers": 0,
+      "event_transfers_cost": 0
+    },
+    {
+      "entry": 3648199,
+      "rank": 2,
+      "player_name": "Jeremy Wang",
+      "total": 124,
+      "event_total": 124,
+      "picks": [
+        {
+          "element": 82,
+          "position": 1,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 4,
+          "position": 2,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 88,
+          "position": 3,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 10,
+          "position": 4,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 87,
+          "position": 5,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 8,
+          "position": 6,
+          "multiplier": 2,
+          "is_captain": true
+        },
+        {
+          "element": 367,
+          "position": 7,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 237,
+          "position": 8,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 165,
+          "position": 9,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 346,
+          "position": 10,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 552,
+          "position": 11,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 109,
+          "position": 12,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 208,
+          "position": 13,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 154,
+          "position": 14,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 40,
+          "position": 15,
+          "multiplier": 1,
+          "is_captain": false
+        }
+      ],
+      "captain": 8,
+      "chip": "bboost",
+      "event_transfers": 0,
+      "event_transfers_cost": 0
+    },
+    {
+      "entry": 1799570,
+      "rank": 2,
+      "player_name": "Alexander Polle",
+      "total": 124,
+      "event_total": 124,
+      "picks": [
+        {
+          "element": 109,
+          "position": 1,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 10,
+          "position": 2,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 504,
+          "position": 3,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 391,
+          "position": 4,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 8,
+          "position": 5,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 154,
+          "position": 6,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 15,
+          "position": 7,
+          "multiplier": 2,
+          "is_captain": true
+        },
+        {
+          "element": 427,
+          "position": 8,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 249,
+          "position": 9,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 165,
+          "position": 10,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 411,
+          "position": 11,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 496,
+          "position": 12,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 368,
+          "position": 13,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 423,
+          "position": 14,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 565,
+          "position": 15,
+          "multiplier": 1,
+          "is_captain": false
+        }
+      ],
+      "captain": 15,
+      "chip": "bboost",
+      "event_transfers": 0,
+      "event_transfers_cost": 0
+    },
+    {
+      "entry": 2022827,
+      "rank": 4,
+      "player_name": "Gene Lam",
+      "total": 121,
+      "event_total": 121,
+      "picks": [
+        {
+          "element": 496,
+          "position": 1,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 4,
+          "position": 2,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 10,
+          "position": 3,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 8,
+          "position": 4,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 334,
+          "position": 5,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 335,
+          "position": 6,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 40,
+          "position": 7,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 237,
+          "position": 8,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 154,
+          "position": 9,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 411,
+          "position": 10,
+          "multiplier": 2,
+          "is_captain": true
+        },
+        {
+          "element": 165,
+          "position": 11,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 109,
+          "position": 12,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 249,
+          "position": 13,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 127,
+          "position": 14,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 332,
+          "position": 15,
+          "multiplier": 1,
+          "is_captain": false
+        }
+      ],
+      "captain": 411,
+      "chip": "bboost",
+      "event_transfers": 0,
+      "event_transfers_cost": 0
+    },
+    {
+      "entry": 6629830,
+      "rank": 4,
+      "player_name": "Big Auraaa",
+      "total": 121,
+      "event_total": 121,
+      "picks": [
+        {
+          "element": 384,
+          "position": 1,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 8,
+          "position": 2,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 88,
+          "position": 3,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 327,
+          "position": 4,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 388,
+          "position": 5,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 236,
+          "position": 6,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 40,
+          "position": 7,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 154,
+          "position": 8,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 237,
+          "position": 9,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 411,
+          "position": 10,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 165,
+          "position": 11,
+          "multiplier": 3,
+          "is_captain": true
+        },
+        {
+          "element": 28,
+          "position": 12,
+          "multiplier": 0,
+          "is_captain": false
+        },
+        {
+          "element": 473,
+          "position": 13,
+          "multiplier": 0,
+          "is_captain": false
+        },
+        {
+          "element": 315,
+          "position": 14,
+          "multiplier": 0,
+          "is_captain": false
+        },
+        {
+          "element": 552,
+          "position": 15,
+          "multiplier": 0,
+          "is_captain": false
+        }
+      ],
+      "captain": 165,
+      "chip": "3xc",
+      "event_transfers": 0,
+      "event_transfers_cost": 0
+    },
+    {
+      "entry": 147424,
+      "rank": 6,
+      "player_name": "Alex Thomas",
+      "total": 120,
+      "event_total": 120,
+      "picks": [
+        {
+          "element": 109,
+          "position": 1,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 10,
+          "position": 2,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 391,
+          "position": 3,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 8,
+          "position": 4,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 428,
+          "position": 5,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 154,
+          "position": 6,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 565,
+          "position": 7,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 557,
+          "position": 8,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 411,
+          "position": 9,
+          "multiplier": 2,
+          "is_captain": true
+        },
+        {
+          "element": 552,
+          "position": 10,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 165,
+          "position": 11,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 412,
+          "position": 12,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 237,
+          "position": 13,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 329,
+          "position": 14,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 115,
+          "position": 15,
+          "multiplier": 1,
+          "is_captain": false
+        }
+      ],
+      "captain": 411,
+      "chip": "bboost",
+      "event_transfers": 0,
+      "event_transfers_cost": 0
+    },
+    {
+      "entry": 6722582,
+      "rank": 6,
+      "player_name": "A ip",
+      "total": 120,
+      "event_total": 120,
+      "picks": [
+        {
+          "element": 109,
+          "position": 1,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 10,
+          "position": 2,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 87,
+          "position": 3,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 473,
+          "position": 4,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 8,
+          "position": 5,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 115,
+          "position": 6,
+          "multiplier": 2,
+          "is_captain": true
+        },
+        {
+          "element": 427,
+          "position": 7,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 426,
+          "position": 8,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 15,
+          "position": 9,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 94,
+          "position": 10,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 346,
+          "position": 11,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 496,
+          "position": 12,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 379,
+          "position": 13,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 154,
+          "position": 14,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 165,
+          "position": 15,
+          "multiplier": 1,
+          "is_captain": false
+        }
+      ],
+      "captain": 115,
+      "chip": "bboost",
+      "event_transfers": 0,
+      "event_transfers_cost": 0
+    },
+    {
+      "entry": 141417,
+      "rank": 8,
+      "player_name": "Luke Englishby",
+      "total": 119,
+      "event_total": 119,
+      "picks": [
+        {
+          "element": 1,
+          "position": 1,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 8,
+          "position": 2,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 473,
+          "position": 3,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 10,
+          "position": 4,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 426,
+          "position": 5,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 154,
+          "position": 6,
+          "multiplier": 2,
+          "is_captain": true
+        },
+        {
+          "element": 366,
+          "position": 7,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 40,
+          "position": 8,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 367,
+          "position": 9,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 379,
+          "position": 10,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 165,
+          "position": 11,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 496,
+          "position": 12,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 125,
+          "position": 13,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 115,
+          "position": 14,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 539,
+          "position": 15,
+          "multiplier": 1,
+          "is_captain": false
+        }
+      ],
+      "captain": 154,
+      "chip": "bboost",
+      "event_transfers": 0,
+      "event_transfers_cost": 0
+    },
+    {
+      "entry": 244723,
+      "rank": 8,
+      "player_name": "Andre Aivazian",
+      "total": 119,
+      "event_total": 119,
+      "picks": [
+        {
+          "element": 1,
+          "position": 1,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 532,
+          "position": 2,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 334,
+          "position": 3,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 84,
+          "position": 4,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 557,
+          "position": 5,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 236,
+          "position": 6,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 368,
+          "position": 7,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 40,
+          "position": 8,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 123,
+          "position": 9,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 411,
+          "position": 10,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 165,
+          "position": 11,
+          "multiplier": 2,
+          "is_captain": true
+        },
+        {
+          "element": 109,
+          "position": 12,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 295,
+          "position": 13,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 229,
+          "position": 14,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 10,
+          "position": 15,
+          "multiplier": 1,
+          "is_captain": false
+        }
+      ],
+      "captain": 165,
+      "chip": "bboost",
+      "event_transfers": 0,
+      "event_transfers_cost": 0
+    },
+    {
+      "entry": 440955,
+      "rank": 8,
+      "player_name": "Pontus Bergander",
+      "total": 119,
+      "event_total": 119,
+      "picks": [
+        {
+          "element": 1,
+          "position": 1,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 8,
+          "position": 2,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 469,
+          "position": 3,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 498,
+          "position": 4,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 154,
+          "position": 5,
+          "multiplier": 2,
+          "is_captain": true
+        },
+        {
+          "element": 40,
+          "position": 6,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 237,
+          "position": 7,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 557,
+          "position": 8,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 565,
+          "position": 9,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 411,
+          "position": 10,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 165,
+          "position": 11,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 496,
+          "position": 12,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 534,
+          "position": 13,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 115,
+          "position": 14,
+          "multiplier": 1,
+          "is_captain": false
+        },
+        {
+          "element": 552,
+          "position": 15,
+          "multiplier": 1,
+          "is_captain": false
+        }
+      ],
+      "captain": 154,
+      "chip": "bboost",
+      "event_transfers": 0,
+      "event_transfers_cost": 0
+    }
+  ],
+  "summary": {
+    "gw": 1,
+    "sample_size": 10,
+    "most_owned_players": [
+      {
+        "element": 165,
+        "count": 10,
+        "ownership_pct": 100.0,
+        "started": 10
+      },
+      {
+        "element": 154,
+        "count": 9,
+        "ownership_pct": 90.0,
+        "started": 9
+      },
+      {
+        "element": 10,
+        "count": 8,
+        "ownership_pct": 80.0,
+        "started": 8
+      },
+      {
+        "element": 8,
+        "count": 8,
+        "ownership_pct": 80.0,
+        "started": 8
+      },
+      {
+        "element": 109,
+        "count": 7,
+        "ownership_pct": 70.0,
+        "started": 7
+      },
+      {
+        "element": 237,
+        "count": 6,
+        "ownership_pct": 60.0,
+        "started": 6
+      },
+      {
+        "element": 40,
+        "count": 6,
+        "ownership_pct": 60.0,
+        "started": 6
+      },
+      {
+        "element": 411,
+        "count": 6,
+        "ownership_pct": 60.0,
+        "started": 6
+      },
+      {
+        "element": 115,
+        "count": 5,
+        "ownership_pct": 50.0,
+        "started": 5
+      },
+      {
+        "element": 496,
+        "count": 5,
+        "ownership_pct": 50.0,
+        "started": 5
+      },
+      {
+        "element": 552,
+        "count": 4,
+        "ownership_pct": 40.0,
+        "started": 3
+      },
+      {
+        "element": 4,
+        "count": 3,
+        "ownership_pct": 30.0,
+        "started": 3
+      },
+      {
+        "element": 15,
+        "count": 3,
+        "ownership_pct": 30.0,
+        "started": 3
+      },
+      {
+        "element": 426,
+        "count": 3,
+        "ownership_pct": 30.0,
+        "started": 3
+      },
+      {
+        "element": 334,
+        "count": 3,
+        "ownership_pct": 30.0,
+        "started": 3
+      },
+      {
+        "element": 565,
+        "count": 3,
+        "ownership_pct": 30.0,
+        "started": 3
+      },
+      {
+        "element": 473,
+        "count": 3,
+        "ownership_pct": 30.0,
+        "started": 2
+      },
+      {
+        "element": 557,
+        "count": 3,
+        "ownership_pct": 30.0,
+        "started": 3
+      },
+      {
+        "element": 1,
+        "count": 3,
+        "ownership_pct": 30.0,
+        "started": 3
+      },
+      {
+        "element": 125,
+        "count": 2,
+        "ownership_pct": 20.0,
+        "started": 2
+      }
+    ],
+    "most_captained": [
+      {
+        "element": 154,
+        "count": 3
+      },
+      {
+        "element": 411,
+        "count": 2
+      },
+      {
+        "element": 165,
+        "count": 2
+      },
+      {
+        "element": 8,
+        "count": 1
+      },
+      {
+        "element": 15,
+        "count": 1
+      }
+    ],
+    "popular_transfers": {
+      "in": [],
+      "out": []
+    },
+    "chips_played": {
+      "bboost": 9,
+      "3xc": 1
+    }
+  }
+}
