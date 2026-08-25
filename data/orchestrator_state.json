@@ -141,6 +141,13 @@
       "name": "Lynch",
       "reason": "New signing: Signed by Aston Villa, one of the strongest clubs \u2014 worth watching even at ep_next 1.0.",
       "priority": 0.4
+    },
+    {
+      "action": "transfer_in",
+      "element": 611,
+      "name": "Wan-Bissaka",
+      "reason": "New signing: Signed by Aston Villa, one of the strongest clubs \u2014 worth watching even at ep_next 1.7.",
+      "priority": 0.4
     }
   ],
   "executed_transfers": {},
