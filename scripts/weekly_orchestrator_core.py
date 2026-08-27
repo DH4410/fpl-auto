@@ -700,6 +700,13 @@ def _send_deadline_digest(next_gw: int, decision: dict, plan: dict, state: dict,
         if reasoning:
             lines += ["", "REASONING:", reasoning]
 
+        # --- Forecast sanity warnings ---
+        proj_warnings = plan.get("projection_warnings") or []
+        if proj_warnings:
+            lines += ["", "PROJECTION SANITY WARNING (the forward model looks off — "
+                          "treat any chip / big-move recommendation with suspicion):"]
+            lines += [f"  ! {w}" for w in proj_warnings]
+
         # --- Execution time ---
         if execute_target:
             try:
