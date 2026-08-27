@@ -61,6 +61,7 @@ def build_report(
     sections = [
         _header(current_gw),
         _model_note(),
+        _projection_warning_block(plan),
         _immediate_action(plan, current_gw),
         _squad_rationale(plan, current_gw, gw_fore, teams_by_id),
         _transfer_rationale(plan, current_gw, gw_fore),
@@ -92,6 +93,25 @@ def _header(current_gw: int) -> str:
     )
 
 
+def _projection_warning_block(plan: dict) -> str:
+    """Loud banner when the forecast handed the planner implausible inputs.
+
+    Empty (and dropped from the report) in the normal case.
+    """
+    warnings = plan.get("projection_warnings") or []
+    if not warnings:
+        return ""
+    lines = [
+        "## Projection sanity warning",
+        "",
+        "The forward projection looks corrupted — treat the chip schedule and "
+        "any Wildcard/Triple-Captain recommendation below with suspicion:",
+        "",
+    ]
+    lines += [f"- {w}" for w in warnings]
+    return "\n".join(lines)
+
+
 def _model_note() -> str:
     return (
         "## How the Bot Works\n\n"
@@ -99,9 +119,11 @@ def _model_note() -> str:
         "GitHub Actions fetches fresh FPL data every run, re-scores all players, "
         "and solves the MILP. Nothing is hardcoded between gameweeks.\n\n"
         "**Scoring model:** FPL's own `ep_next` × P(start) × fixture-difficulty multiplier "
-        "for the immediate GW. For subsequent GWs, points-per-game × FDR is used as a "
-        "stable proxy. The result is a 6-GW forward projection per player, which the MILP "
-        "uses to find the optimal squad and transfer.\n\n"
+        "for the immediate GW. For subsequent GWs the base rate is a reliability-adjusted "
+        "points-per-game — raw current-season PPG regressed toward a position / `ep_next` "
+        "prior so a one- or two-game sample can't inflate the projection — then scaled by "
+        "FDR. The result is a 6-GW forward projection per player, which the MILP uses to "
+        "find the optimal squad and transfer.\n\n"
         "**DEFCON:** The training data includes CBIT, recoveries, and tackles from 2025-26 "
         "onward. Players with consistently high defensive activity score higher on the DC model "
         "sub-head, so DEFCON potential is captured indirectly. FPL's own `ep_next` also "

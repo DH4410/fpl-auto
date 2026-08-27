@@ -12,8 +12,12 @@ live planning cadence.
 Design notes
 ------------
 * Base rate uses FPL's ``ep_next`` for the immediate next GW because it
-  already incorporates fixture and form. For subsequent GWs, ``points_per_game``
-  (PPG) scaled by fixture difficulty is used as a stable proxy.
+  already incorporates fixture and form. For subsequent GWs a
+  reliability-adjusted PPG (raw ``points_per_game`` regressed toward a
+  position / fixture-neutral ``ep_next`` prior — see :data:`PRIOR_MATCHES`)
+  scaled by fixture difficulty is used. Early in the season the prior
+  dominates, so a single big score does not turn a fringe player into a
+  captain pick or flood the candidate pool.
 * ``p_start`` is inferred from the status flag and
   ``chance_of_playing_next_round``. The status flag carries more information
   than the percentage alone (it separates injury from rotation risk).
@@ -68,6 +72,29 @@ CHANCE_SCALE = {100: 0.90, 75: 0.70, 50: 0.55, 25: 0.25, 0: 0.00}
 #: Minimum meaningful PPG. Prevents very new or rarely-playing players from
 #: getting projected as zero when they do have real point potential.
 MIN_PPG = 1.0
+
+#: Early-season reliability adjustment. Raw ``points_per_game`` is meaningless
+#: after one or two matches — a single 17-point haul makes PPG = 17, which the
+#: future-GW branch and the candidate ranking would then treat as a repeatable
+#: per-game rate. Both instead use :func:`_stabilized_ppg`, which regresses raw
+#: PPG toward a prior with Bayesian-style shrinkage::
+#:
+#:     stab_ppg = (eff_games * raw_ppg + PRIOR_MATCHES * prior) / (eff_games + PRIOR_MATCHES)
+#:
+#: ``eff_games`` is the current-season sample size (max of ``starts`` and
+#: ``minutes`` / 90). With PRIOR_MATCHES = 10 a single standout GW barely moves
+#: the estimate; real form carries the majority of the weight by ~GW10-12 and
+#: dominates by late season.
+PRIOR_MATCHES = 10.0
+
+#: Per-game points a replacement-level starter in each position averages. Used
+#: as the shrinkage prior, blended 50/50 with a fixture-neutralised ``ep_next``
+#: when FPL has published one.
+POS_BASELINE_PPG = {GKP: 3.0, DEF: 3.0, MID: 3.2, FWD: 3.2}
+
+#: An individual player projecting above this for a single (non-double) fixture
+#: almost always means a corrupt input, not a real edge. Logged, never clamped.
+SANITY_MAX_SINGLE_XPTS = 12.0
 
 #: Uncertainty grows per gameweek beyond GW1. Stored as fraction of mean xPts.
 UNCERTAINTY_PER_GW = 0.08
@@ -159,9 +186,10 @@ class SeasonForecaster:
                         # Scale ML value as a per-game base rate for future GWs.
                         xpts = ml_val * fdr_mult * p_start * n_fixtures
                     else:
-                        # GW1 projection: use FPL's ep_next which already accounts for
-                        # the immediate fixture (including DGW scaling). Further GWs
-                        # use PPG × FDR, explicitly multiplied by n_fixtures.
+                        # Immediate GW: use FPL's ep_next, which already accounts
+                        # for the fixture (including DGW scaling). Further GWs use
+                        # the reliability-adjusted PPG × FDR × n_fixtures so a
+                        # one-game sample cannot drive the projection.
                         using_ep_next = (
                             gw_offset == 0
                             and p["ep_next"] is not None
@@ -171,8 +199,7 @@ class SeasonForecaster:
                             base = float(p["ep_next"])
                             xpts = base * p_start  # ep_next is already DGW-aware
                         else:
-                            ppg = max(MIN_PPG, float(p["ppg"]))
-                            base = ppg * fdr_mult
+                            base = float(p["stab_ppg"]) * fdr_mult
                             xpts = base * p_start * n_fixtures
                     p_60 = p_start * 0.85  # approximate: most starters play 60+
 
@@ -194,6 +221,20 @@ class SeasonForecaster:
         df = pd.DataFrame(rows)
         if df.empty:
             log.warning("forecast produced an empty table; check data sources")
+            return df
+
+        # Sanity guard — surfaced, never clamped. A single-fixture projection
+        # this high almost always means a corrupt input (typically a raw PPG
+        # from a one- or two-game sample leaking into the base rate).
+        hot = df[df["xpts"] > SANITY_MAX_SINGLE_XPTS]
+        if not hot.empty:
+            worst = hot.loc[hot["xpts"].idxmax()]
+            log.warning(
+                "forecast: %d player-GW rows exceed %.0f xPts (worst %.1f — %s, GW%d); "
+                "check for single-sample PPG inflation",
+                len(hot), SANITY_MAX_SINGLE_XPTS, worst["xpts"],
+                worst["name"], int(worst["gw"]),
+            )
         return df
 
     # ------------------------------------------------------------------
@@ -221,10 +262,21 @@ class SeasonForecaster:
         # Soft exclusion: 0% chance of playing in any upcoming fixture.
         p_start_arr = players.apply(self._player_p_start, axis=1)
         players["p_start"] = p_start_arr
-        players["ppg"] = players["points_per_game"].apply(
-            lambda x: max(MIN_PPG, _safe_float(x))
-        )
         players["ep_next"] = players["ep_next"].apply(_safe_float)
+
+        # Reliability-adjusted PPG — the base rate for every future GW. Ranking
+        # and forecast() MUST use the same stabilized value, otherwise a GW1
+        # one-hit wonder floods the candidate pool even if forecast() is sane.
+        imm_mult = {
+            int(tid): (
+                FDR_MULTIPLIER.get(round(fdr[0]), 1.0)
+                if (fdr := fdr_map.get((int(tid), current_gw))) else 1.0
+            )
+            for tid in players["team"].unique()
+        }
+        players["stab_ppg"] = players.apply(
+            lambda r: _stabilized_ppg(r, imm_mult.get(int(r["team"]), 1.0)), axis=1
+        )
 
         # Horizon xPts estimate for ranking.
         def horizon_xpts(row):
@@ -235,8 +287,7 @@ class SeasonForecaster:
                     continue
                 avg_fdr, n_fixtures = fdr
                 mult = FDR_MULTIPLIER.get(round(avg_fdr), 1.0)
-                ppg = max(MIN_PPG, float(row["ppg"]))
-                base = ppg * mult
+                base = float(row["stab_ppg"]) * mult
                 total += base * float(row["p_start"]) * (self.decay ** gw_offset) * n_fixtures
             return total
 
@@ -304,3 +355,62 @@ def _safe_float(value) -> float:
         return float(value) if value is not None else 0.0
     except (TypeError, ValueError):
         return 0.0
+
+
+def _stabilized_ppg(row, immediate_fdr_mult: float = 1.0) -> float:
+    """Reliability-adjusted points-per-game for future-GW projection and ranking.
+
+    ``row`` is any mapping exposing ``points_per_game``, ``minutes``, ``starts``,
+    ``ep_next`` and ``element_type`` (a plain dict or a DataFrame row both work).
+    ``immediate_fdr_mult`` is the FDR multiplier of the player's *next* fixture;
+    it is divided out of ``ep_next`` so the prior stays fixture-neutral and the
+    immediate opponent does not leak into GW+2..GW+5.
+
+    See :data:`PRIOR_MATCHES` for the shrinkage formula and rationale.
+    """
+    raw_ppg = _safe_float(row.get("points_per_game"))
+    eff_games = max(_safe_float(row.get("starts")), _safe_float(row.get("minutes")) / 90.0)
+
+    pos = int(row.get("element_type") or MID)
+    baseline = POS_BASELINE_PPG.get(pos, 3.0)
+
+    ep_next = _safe_float(row.get("ep_next"))
+    if ep_next > 0:
+        mult = immediate_fdr_mult or 1.0
+        prior = 0.5 * (ep_next / mult) + 0.5 * baseline
+    else:
+        prior = baseline
+
+    adjusted = (eff_games * raw_ppg + PRIOR_MATCHES * prior) / (eff_games + PRIOR_MATCHES)
+    return max(MIN_PPG, adjusted)
+
+
+#: A future GW's XI projection above this multiple of the immediate GW's is
+#: implausible for normal single fixtures. Chip GWs are exempt — Bench Boost
+#: and Triple Captain legitimately lift the total.
+XI_JUMP_RATIO = 1.6
+
+
+def projection_warnings(gw_plan: list[dict]) -> list[str]:
+    """Flag future-GW XI projections that tower over the immediate GW.
+
+    A healthy single-fixture plan stays near the first GW's XI total. A later
+    GW running far above it means the forecast fed the planner corrupt base
+    rates (the early-season raw-PPG failure mode). Returns human-readable
+    strings — advisory only, nothing is modified or clamped.
+    """
+    if not gw_plan:
+        return []
+    base = float(gw_plan[0].get("xi_xpts") or 0.0)
+    if base <= 0:
+        return []
+    out: list[str] = []
+    for g in gw_plan[1:]:
+        xi = float(g.get("xi_xpts") or 0.0)
+        if not g.get("chip") and xi > base * XI_JUMP_RATIO:
+            out.append(
+                f"GW{g['gw']} XI projection {xi:.1f} is {xi / base:.1f}x the "
+                f"GW{gw_plan[0]['gw']} total ({base:.1f}) with no chip — "
+                f"likely inflated forecast inputs"
+            )
+    return out
