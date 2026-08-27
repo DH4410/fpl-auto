@@ -30,7 +30,7 @@ import pandas as pd
 import requests
 
 from . import data_collector, reporter
-from .season_forecaster import SeasonForecaster
+from .season_forecaster import SeasonForecaster, projection_warnings
 from .season_planner import SeasonPlanner
 from .chip_planner import ChipPlanner
 from .fpl_rules import chip_half, CHIP_WILDCARD, CHIP_FREE_HIT, CHIP_TRIPLE_CAPTAIN, CHIP_BENCH_BOOST, CHIP_LABELS
@@ -275,6 +275,15 @@ class SeasonUpdater:
             plan["hits"],
             plan["captain"]["name"],
         )
+
+        # Projection sanity guard — warn, don't clamp. A healthy single-fixture
+        # plan sits near the immediate GW's XI total; a future GW running far
+        # above it means the forecast fed the MILP corrupt base rates (the
+        # early-season raw-PPG failure mode). Surface it so a bad Wildcard /
+        # Triple-Captain plan is questioned rather than trusted.
+        plan["projection_warnings"] = projection_warnings(plan.get("gw_plan", []))
+        for w in plan["projection_warnings"]:
+            log.warning("projection sanity: %s", w)
 
         # 6. Chips.
         chip_result = self.chip_planner.evaluate(
