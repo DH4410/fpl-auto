@@ -139,6 +139,13 @@
       "name": "Wan-Bissaka",
       "reason": "New signing: Signed by Aston Villa, one of the strongest clubs \u2014 worth watching even at ep_next 1.7.",
       "priority": 0.4
+    },
+    {
+      "action": "transfer_in",
+      "element": 616,
+      "name": "Bouaddi",
+      "reason": "New signing: Signed by Man City, one of the strongest clubs \u2014 worth watching even at ep_next 2.0.",
+      "priority": 0.4
     }
   ],
   "executed_transfers": {},
