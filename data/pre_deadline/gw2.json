@@ -1,0 +1,19 @@
+{
+  "gw": 2,
+  "approved_transfers": [],
+  "approved_chip": null,
+  "expected_net_gain": 0.0,
+  "expected_gross_gain": 0.0,
+  "hit_count": 0,
+  "captain": {
+    "element": 426,
+    "name": "B.Fernandes",
+    "xpts": 4.31
+  },
+  "vice": {
+    "element": 4,
+    "name": "Gabriel",
+    "xpts": 3.6
+  },
+  "reasoning": "Planner recommends no transfer this GW (rolling the free transfer)."
+}

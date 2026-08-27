@@ -1,22 +1,13 @@
 {
   "last_analyzed_gw": 1,
-  "last_simulated_gw": 1,
+  "last_simulated_gw": 2,
   "last_executed_gw": 1,
   "approved_plan": {
-    "gw": 1,
-    "approved_transfers": [
-      {
-        "element_in": 388,
-        "name_in": "Gu\u00e9hi",
-        "purchase_price": 60,
-        "element_out": 389,
-        "name_out": "Matheus N.",
-        "selling_price": 60
-      }
-    ],
+    "gw": 2,
+    "approved_transfers": [],
     "approved_chip": null,
-    "expected_net_gain": 8.25,
-    "expected_gross_gain": 8.25,
+    "expected_net_gain": 0.0,
+    "expected_gross_gain": 0.0,
     "hit_count": 0,
     "captain": {
       "element": 426,
@@ -28,7 +19,7 @@
       "name": "Gabriel",
       "xpts": 3.6
     },
-    "reasoning": "Planner proposes 1 transfer(s) worth +8.25 xPts gross over 6 GWs (+8.25 net of 0 hit(s)).",
+    "reasoning": "Planner recommends no transfer this GW (rolling the free transfer).",
     "picks_payload": [
       {
         "element": 226,
@@ -122,7 +113,7 @@
       }
     ],
     "entry_id": 2330027,
-    "execute_target_utc": "2026-08-21T13:31:37.547373+00:00"
+    "execute_target_utc": "2026-08-28T14:49:39.879198+00:00"
   },
   "execute_target_utc": null,
   "last_deep_research_gw": 0,
