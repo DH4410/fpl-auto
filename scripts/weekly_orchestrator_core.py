@@ -1038,6 +1038,25 @@ def _picks_readback_errors(expected: list[dict], live_team: dict) -> list[str]:
     return errors
 
 
+
+def _chip_readback_error(chip: str | None, gw: int, live_team: dict) -> str | None:
+    if not chip:
+        return None
+    rows = list(live_team.get("chips") or [])
+    for row in rows:
+        if str(row.get("name") or "") != str(chip):
+            continue
+        status = str(row.get("status_for_entry") or "").lower()
+        event = row.get("event")
+        try:
+            event_id = int(event) if event is not None else None
+        except (TypeError, ValueError):
+            event_id = None
+        if status == "played" and event_id == int(gw):
+            return None
+    return f"chip {chip} is not confirmed played for GW{gw} in /my-team read-back"
+
+
 def _replan_stale_execution(
     bootstrap: dict,
     state: dict,
@@ -1262,9 +1281,12 @@ def stage_execute(bootstrap: dict, state: dict, dry_run: bool) -> dict:
     if not dry_run:
         verified_team = fpl_api.my_team(session, token, entry_id)
         readback_errors = _picks_readback_errors(picks_payload, verified_team)
+        chip_error = _chip_readback_error(chip, next_gw, verified_team)
+        if chip_error:
+            readback_errors.append(chip_error)
         if readback_errors:
             raise RuntimeError(
-                "Exact post-write picks read-back failed: "
+                "Exact post-write FPL read-back failed: "
                 + "; ".join(readback_errors[:8])
             )
 
