@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Post-GW transfer analysis and optional auto-apply.
+Post-GW transfer analysis (legacy advisory entrypoint).
 
 Usage:
     python scripts/post_gw.py [--gw N] [--dry-run] [--auto]
@@ -8,8 +8,8 @@ Usage:
     --gw N       Gameweek to plan FOR (next GW to be played).
                  If omitted, auto-detects from bootstrap (last finished GW + 1).
     --dry-run    Fetch and plan, but do not submit any transfers.
-    --auto       Apply recommended transfer and chip without confirmation.
-                 Submits even if hits are required.
+    --auto       Deprecated safety flag. Live writes are refused; use the
+                 Weekly Orchestrator production workflow instead.
 
 Credentials (read from environment / .env):
     FPL_EMAIL     required for password-login fallback
@@ -20,7 +20,7 @@ What it does:
     2. Runs the 6-GW rolling MILP planner on fresh data.
     3. Writes a report to reports/season_plan_latest.{md,csv}.
     4. Prints the recommended transfer.
-    5. With --auto and 0 hits, submits the transfer with human-like delays.
+    5. Never writes to FPL. Production writes belong to the guarded orchestrator.
 """
 import argparse
 import os
@@ -76,7 +76,7 @@ def main() -> None:
     parser.add_argument("--dry-run", action="store_true",
                         help="Fetch and plan, skip API writes.")
     parser.add_argument("--auto", action="store_true",
-                        help="Auto-apply transfer and chip without confirmation (includes hits).")
+                        help="Deprecated: live writes are disabled in this legacy script.")
     args = parser.parse_args()
 
     # --- Authenticate ---
@@ -172,6 +172,12 @@ def main() -> None:
     if args.dry_run:
         print("[DRY RUN] Skipping submission.")
         return
+
+    print(
+        "LIVE WRITE REFUSED: scripts/post_gw.py is now advisory-only. "
+        "Use the Weekly Orchestrator workflow for guarded transfers, picks and chips."
+    )
+    return
 
     if not args.auto:
         ans = input("Apply? [y/N]: ").strip().lower()
