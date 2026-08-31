@@ -14,16 +14,14 @@ jobs:
           python-version: '3.11'
       - name: Install lightweight test dependencies
         run: pip install requests pandas numpy pulp python-dotenv
-      - name: Run pure unit tests
+      - name: Run unit tests
+        run: python -m unittest discover -s tests -v
+
+      - name: Compile all production Python
         run: |
-          python -m unittest discover -s tests -v
-          python -m py_compile \
-            bot/orchestrator_runtime.py \
-            bot/reflection_insights.py \
-            bot/post_match_analyzer_extended.py \
-            bot/live_gameweek.py \
-            bot/top100_post_deadline.py \
-            bot/top100_cohort_scout.py \
-            scripts/weekly_orchestrator_core.py \
-            scripts/weekly_orchestrator.py \
-            scripts/weekly_orchestrator_cohort.py
+          python -m compileall -q bot scripts
+          python -m py_compile fpl_api.py fpl_auth.py app.py
+
+      - name: Parse every Actions workflow as YAML
+        run: |
+          ruby -e 'require "yaml"; Dir[".github/workflows/*.{yml,yaml}"].sort.each { |path| YAML.load_file(path, aliases: true); puts "workflow_yaml_ok=#{path}" }'
