@@ -115,7 +115,7 @@ EXECUTE_LAST_CHANCE_H = 2.5
 #: through the /my-team/ picks payload instead.
 TRANSFER_CHIPS = ("wildcard", "freehit")
 
-DEFAULT_EMAIL = "dimahuang8@gmail.com"
+DEFAULT_EMAIL = ""
 
 
 # ---------------------------------------------------------------------------
@@ -324,8 +324,10 @@ def authenticate() -> tuple[str, requests.Session]:
         except Exception as exc:  # noqa: BLE001
             log.warning("Refresh token login failed (%s) — trying password.", exc)
 
-    email = os.environ.get("FPL_EMAIL", DEFAULT_EMAIL)
+    email = os.environ.get("FPL_EMAIL", DEFAULT_EMAIL).strip()
     password = os.environ.get("FPL_PASSWORD", "")
+    if not email:
+        raise RuntimeError("No FPL_REFRESH_TOKEN worked and FPL_EMAIL is unset.")
     if not password:
         raise RuntimeError("No FPL_REFRESH_TOKEN worked and FPL_PASSWORD is unset.")
     log.info("Authenticating as %s (password)...", email)
