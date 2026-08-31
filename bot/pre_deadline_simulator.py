@@ -42,7 +42,13 @@ from typing import Any
 import pandas as pd
 
 from .chip_planner import ChipPlanner
-from .fpl_rules import CHIP_BENCH_BOOST, CHIP_TRIPLE_CAPTAIN, HIT_COST
+from .fpl_rules import (
+    CHIP_BENCH_BOOST,
+    CHIP_FREE_HIT,
+    CHIP_TRIPLE_CAPTAIN,
+    CHIP_WILDCARD,
+    HIT_COST,
+)
 
 log = logging.getLogger(__name__)
 
@@ -274,6 +280,18 @@ class PreDeadlineSimulator:
         """
         if not chip:
             return None, ""
+
+        # WC/FH change the transfer-state semantics. The current single-account
+        # season planner optimises ordinary permanent transfers; it does not yet
+        # build a dedicated unlimited Wildcard rebuild or a temporary Free Hit
+        # squad that reverts next GW while preserving banked FTs. Never attach
+        # those chips to an ordinary transfer plan and pretend it is equivalent.
+        if chip in (CHIP_WILDCARD, CHIP_FREE_HIT):
+            return None, (
+                f"REJECTED chip {chip}: the current plan is an ordinary transfer "
+                "plan, not a dedicated chip-specific squad rebuild. Preserving "
+                "the chip is safer than executing the wrong squad."
+            )
 
         entry = next(
             (c for c in (plan.get("chip_plan") or []) if c.get("gw") == next_gw),
