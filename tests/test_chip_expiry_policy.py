@@ -120,6 +120,27 @@ class ChipExpiryPolicyTests(unittest.TestCase):
             }],
         )
 
+    def test_below_threshold_chip_cannot_block_valid_chip_same_gw(self):
+        # BB has the larger raw gain but misses its 11-point floor; TC clears
+        # its 6-point floor. The LP must choose TC rather than letting invalid
+        # BB occupy the only chip slot and disappear after solving.
+        planner = FixedGainPlanner({
+            (CHIP_BENCH_BOOST, 8): 10.9,
+            (CHIP_TRIPLE_CAPTAIN, 8): 6.1,
+        })
+        result = planner.evaluate(
+            forecasts=pd.DataFrame(),
+            gw_plan=[{"gw": 8}],
+            chips_available=[CHIP_BENCH_BOOST, CHIP_TRIPLE_CAPTAIN],
+            current_gw=8,
+            current_half=1,
+        )
+        self.assertEqual(result["recommendation"], CHIP_TRIPLE_CAPTAIN)
+        self.assertEqual(
+            [(row["chip"], row["gw"]) for row in result["chip_plan"]],
+            [(CHIP_TRIPLE_CAPTAIN, 8)],
+        )
+
     def test_execution_gate_uses_expiry_aware_threshold_from_plan(self):
         chip, reason = PreDeadlineSimulator._check_chip(
             {
