@@ -809,6 +809,20 @@ def stage_pre_deadline_plan(bootstrap: dict, state: dict, dry_run: bool) -> dict
 
     decision["picks_payload"] = build_picks_payload(plan)
     decision["entry_id"] = entry_id
+    decision["source_squad_signature"] = sorted(
+        int(element) for element in current_state.get("squad", [])
+    )
+    decision["target_squad_signature"] = sorted(
+        int(pick["element"]) for pick in decision["picks_payload"]
+    )
+    guard_ids = sorted(
+        set(decision["source_squad_signature"])
+        | set(decision["target_squad_signature"])
+    )
+    decision["planning_news_guard"] = _build_planning_news_guard(
+        bootstrap,
+        guard_ids,
+    )
 
     # Pre-commit a randomised execution time so EXECUTE stage never sleeps in CI.
     # The target is drawn [0.5h, 18h] before the deadline, clamped so all
@@ -932,6 +946,125 @@ def _record_executed(state: dict, gw: int, key: str) -> None:
     state["executed_transfers"] = {"gw": int(gw), "pairs": pairs}
 
 
+def _build_planning_news_guard(bootstrap: dict, element_ids: list[int]) -> list[dict]:
+    """Stable official-FPL availability snapshot used to detect late news."""
+    elements = {
+        int(row["id"]): row
+        for row in bootstrap.get("elements", [])
+        if row.get("id") is not None
+    }
+    guard: list[dict] = []
+    for element in sorted(set(int(value) for value in element_ids)):
+        row = elements.get(element) or {}
+        news = " ".join(str(row.get("news") or "").split())
+        chance = row.get("chance_of_playing_next_round")
+        guard.append({
+            "element": element,
+            "status": str(row.get("status") or "missing"),
+            "chance_next_round": chance,
+            "news": news,
+        })
+    return guard
+
+
+def _guard_changed(frozen: list[dict] | None, bootstrap: dict) -> tuple[bool, str]:
+    if not frozen:
+        return False, ""
+    ids = [int(row.get("element") or 0) for row in frozen if row.get("element")]
+    current = _build_planning_news_guard(bootstrap, ids)
+    if current == frozen:
+        return False, ""
+
+    before = {int(row["element"]): row for row in frozen}
+    after = {int(row["element"]): row for row in current}
+    changed = []
+    for element in sorted(set(before) | set(after)):
+        if before.get(element) != after.get(element):
+            old = before.get(element) or {}
+            new = after.get(element) or {}
+            changed.append(
+                f"{element}: status {old.get('status')}→{new.get('status')}, "
+                f"chance {old.get('chance_next_round')}→{new.get('chance_next_round')}, "
+                f"news changed={old.get('news') != new.get('news')}"
+            )
+    return True, "; ".join(changed[:8])
+
+
+def _expected_live_squad(decision: dict, completed_keys: set[str]) -> set[int]:
+    expected = {
+        int(value) for value in (decision.get("source_squad_signature") or [])
+    }
+    if not expected:
+        return set()
+    for transfer in decision.get("approved_transfers") or []:
+        if _transfer_key(transfer) not in completed_keys:
+            continue
+        expected.discard(int(transfer["element_out"]))
+        expected.add(int(transfer["element_in"]))
+    return expected
+
+
+def _picks_readback_errors(expected: list[dict], live_team: dict) -> list[str]:
+    live = list(live_team.get("picks") or [])
+    errors: list[str] = []
+    if len(live) != len(expected):
+        errors.append(f"pick count {len(live)} != {len(expected)}")
+        return errors
+
+    expected_by_pos = {
+        int(row["position"]): (
+            int(row["element"]),
+            bool(row.get("is_captain")),
+            bool(row.get("is_vice_captain")),
+        )
+        for row in expected
+    }
+    live_by_pos = {
+        int(row.get("position") or 0): (
+            int(row.get("element") or 0),
+            bool(row.get("is_captain")),
+            bool(row.get("is_vice_captain")),
+        )
+        for row in live
+    }
+    for position in sorted(expected_by_pos):
+        if live_by_pos.get(position) != expected_by_pos[position]:
+            errors.append(
+                f"position {position}: expected {expected_by_pos[position]} "
+                f"got {live_by_pos.get(position)}"
+            )
+    return errors
+
+
+def _replan_stale_execution(
+    bootstrap: dict,
+    state: dict,
+    dry_run: bool,
+    reason: str,
+) -> dict:
+    """Invalidate a frozen plan and build a fresh one before any new write."""
+    log.warning("Frozen execution plan is stale: %s", reason)
+    email_alerts.send_alert(
+        "FPL plan invalidated before execution",
+        reason + "\n\nNo new FPL write was made from the stale plan. Replanning now.",
+    )
+    state["last_simulated_gw"] = 0
+    state["approved_plan"] = None
+    state["executed_transfers"] = {}
+    if not dry_run:
+        save_state(state)
+        commit_state("auto: invalidate stale pre-deadline plan")
+    fresh = stage_pre_deadline_plan(bootstrap, state, dry_run)
+    hours_left = hours_until_deadline(bootstrap) or 0.0
+    if not dry_run and hours_left <= EXECUTE_LAST_CHANCE_H:
+        log.warning(
+            "Replan completed with only %.2fh left; executing the fresh plan now.",
+            hours_left,
+        )
+        return stage_execute(bootstrap, state, dry_run)
+    return fresh
+
+
 def stage_execute(bootstrap: dict, state: dict, dry_run: bool) -> dict:
     """Submit the approved plan: transfers one by one, then picks and chip."""
     ev = next_event(bootstrap)
@@ -947,6 +1080,27 @@ def stage_execute(bootstrap: dict, state: dict, dry_run: bool) -> dict:
     transfers = decision.get("approved_transfers") or []
     chip = decision.get("approved_chip")
     picks_payload = decision.get("picks_payload") or []
+
+    changed, change_detail = _guard_changed(
+        decision.get("planning_news_guard"),
+        bootstrap,
+    )
+    if changed:
+        return _replan_stale_execution(
+            bootstrap,
+            state,
+            dry_run,
+            "Official FPL availability/news changed since planning: " + change_detail,
+        )
+
+    if chip in TRANSFER_CHIPS:
+        return _replan_stale_execution(
+            bootstrap,
+            state,
+            dry_run,
+            f"Approved plan contains unsupported transfer chip {chip}; "
+            "a dedicated Wildcard/Free Hit squad plan is required.",
+        )
 
     if not transfers and not chip and not picks_payload:
         log.info("Approved plan is a hold — nothing to submit for GW%d.", next_gw)
@@ -991,14 +1145,30 @@ def stage_execute(bootstrap: dict, state: dict, dry_run: bool) -> dict:
     live_prices = {int(el["id"]): int(el["now_cost"])
                    for el in bootstrap.get("elements", [])}
     try:
-        selling_now = {int(p["element"]): int(p["selling_price"])
-                       for p in fpl_api.my_team(session, token, entry_id).get("picks", [])}
+        live_team = fpl_api.my_team(session, token, entry_id)
+        live_picks = list(live_team.get("picks", []))
+        selling_now = {
+            int(p["element"]): int(p["selling_price"])
+            for p in live_picks
+        }
     except Exception as exc:  # noqa: BLE001
-        log.warning("Could not re-read live selling prices (%s) — using planned values", exc)
-        selling_now = {}
+        raise RuntimeError(
+            f"Could not re-read live squad/selling prices before execution: {exc}"
+        ) from exc
 
     # Skip anything a previous (crashed or timed-out) run already submitted.
     done = _executed_keys(state, next_gw)
+
+    expected_live = _expected_live_squad(decision, done)
+    actual_live = {int(p["element"]) for p in live_picks}
+    if expected_live and actual_live != expected_live:
+        return _replan_stale_execution(
+            bootstrap,
+            state,
+            dry_run,
+            "Live FPL squad no longer matches the frozen plan source state "
+            f"(expected {sorted(expected_live)}, got {sorted(actual_live)}).",
+        )
     pending = [t for t in transfers if _transfer_key(t) not in done]
     if done:
         log.warning("Resuming GW%d execution: %d/%d transfer(s) already submitted "
@@ -1036,9 +1206,10 @@ def stage_execute(bootstrap: dict, state: dict, dry_run: bool) -> dict:
                 log.info("Price refresh: in %s->%s, out %s->%s (tenths)",
                          t["purchase_price"], buy, t["selling_price"], sell)
             if int(t["element_out"]) not in selling_now:
-                log.warning("Element %s is not in the live squad — using the "
-                            "planned selling price %s.", t["element_out"],
-                            t["selling_price"])
+                raise RuntimeError(
+                    f"Planned outgoing element {t['element_out']} is not in the "
+                    "live squad; refusing a stale transfer payload."
+                )
             payload = {
                 "element_in": t["element_in"],
                 "element_out": t["element_out"],
@@ -1087,6 +1258,14 @@ def stage_execute(bootstrap: dict, state: dict, dry_run: bool) -> dict:
             log.info("Picks updated: %s", result2)
 
     if not dry_run:
+        verified_team = fpl_api.my_team(session, token, entry_id)
+        readback_errors = _picks_readback_errors(picks_payload, verified_team)
+        if readback_errors:
+            raise RuntimeError(
+                "Exact post-write picks read-back failed: "
+                + "; ".join(readback_errors[:8])
+            )
+
         state["last_executed_gw"] = next_gw
         state["executed_transfers"] = {}
         state["idea_list"] = []
