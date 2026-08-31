@@ -122,6 +122,7 @@ class SeasonForecaster:
         fixtures: list[dict],
         current_gw: int,
         owned_ids: list[int] | None = None,
+        forced_ids: list[int] | None = None,
         ml_xpts: dict[int, float] | None = None,
     ) -> pd.DataFrame:
         """Compute xPts for every player over the next ``horizon`` gameweeks.
@@ -136,7 +137,13 @@ class SeasonForecaster:
             The gameweek being planned from (i.e. the next GW to be played).
         owned_ids:
             Element IDs already in the manager's squad. These are always
-            included in the candidate pool regardless of projected points.
+            included in the candidate pool regardless of projected points or
+            current availability, so the planner can legally hold/sell them.
+        forced_ids:
+            Selectable external players that must be evaluated even if their
+            short history/ep_next would rank below the normal candidate cutoff.
+            Used for transfer-window/research watchlists; inclusion does not
+            force the optimizer to buy them.
         ml_xpts:
             Optional mapping of ``element_id → predicted xPts for GW1``.
             When provided, the ML value replaces the rule-based base for the
@@ -159,7 +166,13 @@ class SeasonForecaster:
         fdr_map = self._build_fdr_map(fixtures, current_gw, current_gw + self.horizon - 1)
 
         # Candidate pool: eligible players with a realistic chance of playing.
-        pool = self._filter_candidates(players, fdr_map, current_gw, owned_ids or [])
+        pool = self._filter_candidates(
+            players,
+            fdr_map,
+            current_gw,
+            owned_ids or [],
+            forced_ids or [],
+        )
 
         rows: list[dict] = []
         for gw_offset, gw in enumerate(range(current_gw, current_gw + self.horizon)):
@@ -247,6 +260,7 @@ class SeasonForecaster:
         fdr_map: dict,
         current_gw: int,
         owned_ids: list[int],
+        forced_ids: list[int],
     ) -> pd.DataFrame:
         """Return the top :attr:`max_candidates` players by projected horizon value.
 
@@ -255,9 +269,18 @@ class SeasonForecaster:
         """
         players = players.copy()
 
-        # Hard exclusions: cannot select or has been removed.
-        players = players[players["can_select"].fillna(True).astype(bool)]
-        players = players[~players["status"].isin(["u"])]
+        # An owned player must remain in the universe even if newly injured,
+        # suspended/removed or temporarily unselectable; otherwise the transfer
+        # continuity equations cannot represent "keep" versus "sell" correctly.
+        # External watchlist candidates are only forced when FPL still allows
+        # them to be selected.
+        owned_mask = players["id"].isin(owned_ids)
+        forced_mask = players["id"].isin(forced_ids)
+        can_select = players["can_select"].fillna(True).astype(bool)
+        not_removed = ~players["status"].isin(["u"])
+        external_eligible = can_select & not_removed
+        players = players[external_eligible | owned_mask].copy()
+        forced_mask = players["id"].isin(forced_ids) & ~players["id"].isin(owned_ids)
 
         # Soft exclusion: 0% chance of playing in any upcoming fixture.
         p_start_arr = players.apply(self._player_p_start, axis=1)
@@ -293,17 +316,23 @@ class SeasonForecaster:
 
         players["horizon_xpts"] = players.apply(horizon_xpts, axis=1)
 
-        # Always keep owned players; rank the rest.
+        # Always keep owned players and explicitly watched selectable players;
+        # rank only the remaining open pool. Forced/watchlist inclusion means
+        # "consider this player", never "buy this player".
         owned = players[players["id"].isin(owned_ids)]
-        rest = players[~players["id"].isin(owned_ids)]
+        forced = players[forced_mask]
+        rest = players[
+            ~players["id"].isin(owned_ids)
+            & ~players["id"].isin(forced_ids)
+        ]
         rest_sorted = rest.sort_values("horizon_xpts", ascending=False)
-        slots = max(0, self.max_candidates - len(owned))
+        slots = max(0, self.max_candidates - len(owned) - len(forced))
         candidates = pd.concat(
-            [owned, rest_sorted.head(slots)], ignore_index=True
+            [owned, forced, rest_sorted.head(slots)], ignore_index=True
         )
         log.debug(
-            "candidate pool: %d players (%d owned, %d from open pool)",
-            len(candidates), len(owned), slots,
+            "candidate pool: %d players (%d owned, %d forced/watchlist, %d ranked open-pool slots)",
+            len(candidates), len(owned), len(forced), slots,
         )
         return candidates.reset_index(drop=True)
 
