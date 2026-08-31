@@ -8,6 +8,8 @@ from scripts.weekly_orchestrator_core import (
     _guard_changed,
     _picks_readback_errors,
     _chip_readback_error,
+    _candidate_watch_ids,
+    build_picks_payload,
 )
 
 
@@ -64,6 +66,47 @@ class ExecutionGuardTests(unittest.TestCase):
         self.assertIsNone(_chip_readback_error("3xc", 9, live))
         self.assertIsNotNone(_chip_readback_error("3xc", 10, live))
         self.assertIsNotNone(_chip_readback_error("bboost", 9, live))
+
+    def test_watchlist_collects_only_transfer_in_targets(self):
+        state = {
+            "signing_ideas": [
+                {"action": "transfer_in", "element": 101},
+                {"action": "transfer_out", "element": 202},
+            ],
+            "research_ideas": [
+                {"action": "transfer_in", "element": 303},
+            ],
+            "idea_list": [
+                {"action": "hold", "element": 404},
+            ],
+        }
+        self.assertEqual(_candidate_watch_ids(state), [101, 303])
+
+    def test_picks_payload_orders_outfield_bench_by_current_xpts(self):
+        starters = [
+            {"element": i, "position": 2 if i <= 4 else 3, "cost": 5.0}
+            for i in range(1, 12)
+        ]
+        bench = [
+            {"element": 12, "position": 1, "cost": 4.0, "xpts": 3.0},
+            {"element": 13, "position": 2, "cost": 7.0, "xpts": 1.5},
+            {"element": 14, "position": 3, "cost": 4.5, "xpts": 4.0},
+            {"element": 15, "position": 4, "cost": 5.5, "xpts": 2.5},
+        ]
+        payload = build_picks_payload({
+            "captain": {"element": 5},
+            "gw_plan": [{
+                "starting_xi": starters,
+                "bench": bench,
+                "vice": {"element": 6},
+            }],
+        })
+        by_position = {row["position"]: row["element"] for row in payload}
+        self.assertEqual(by_position[12], 12)
+        self.assertEqual(
+            [by_position[13], by_position[14], by_position[15]],
+            [14, 15, 13],
+        )
 
     def test_exact_picks_readback_checks_positions_captain_and_vice(self):
         expected = [
