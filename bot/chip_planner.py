@@ -75,6 +75,96 @@ class ChipPlanner:
     # blocking ordinary weeks where bench typically scores 9-10 pts.
     min_tc_gain: float = 6.0
     min_bb_gain: float = 11.0
+    min_fh_gain: float = float(HIT_COST)
+    min_wc_gain: float = float(HIT_COST)
+    # Soft expiry policy: thresholds may ease as a half closes, but never by
+    # more than 30% and never below a sensible per-chip floor. This prevents
+    # "panic chip" behaviour while still avoiding pointless hoarding.
+    expiry_max_discount: float = 0.30
+    # Small synergy preference for a prepared Wildcard -> Bench Boost sequence.
+    # It can break a close tie, but it cannot outweigh a clearly better
+    # standalone chip week.
+    wc_bb_combo_bonus: float = 1.5
+
+    @staticmethod
+    def _half_end(current_half: int) -> int:
+        return 19 if int(current_half) == 1 else 38
+
+    def _base_min_gain(self, chip: str) -> float:
+        if chip == CHIP_TRIPLE_CAPTAIN:
+            return float(self.min_tc_gain)
+        if chip == CHIP_BENCH_BOOST:
+            return float(self.min_bb_gain)
+        if chip == CHIP_FREE_HIT:
+            return float(self.min_fh_gain)
+        if chip == CHIP_WILDCARD:
+            return float(self.min_wc_gain)
+        return float(HIT_COST)
+
+    def _minimum_floor(self, chip: str) -> float:
+        # Expiry should make the bot less fussy, not reckless.
+        if chip == CHIP_TRIPLE_CAPTAIN:
+            return max(5.0, self.min_tc_gain * 0.75)
+        if chip == CHIP_BENCH_BOOST:
+            return max(9.0, self.min_bb_gain * 0.75)
+        # WC/FH should still need to beat roughly one paid transfer's value.
+        return float(HIT_COST)
+
+    def _effective_min_gain(
+        self,
+        chip: str,
+        gw: int,
+        current_half: int,
+        chips_remaining: int,
+    ) -> float:
+        """Softly lower a chip's reservation value as its half expires.
+
+        The model still chooses the best projected week in its horizon. This
+        function only answers "how good must that opportunity be?" It never
+        forces a chip merely because time is running out.
+        """
+        base = self._base_min_gain(chip)
+        half_end = self._half_end(current_half)
+        gws_left = max(1, half_end - int(gw) + 1)
+        slack = gws_left - max(1, int(chips_remaining))
+
+        # Plenty of calendar room: no expiry pressure at all.
+        if slack >= 7:
+            discount = 0.0
+        elif slack >= 4:
+            discount = 0.05
+        elif slack >= 2:
+            discount = 0.10
+        elif slack == 1:
+            discount = 0.15
+        elif slack == 0:
+            discount = 0.20
+        else:
+            discount = min(self.expiry_max_discount, 0.20 + 0.05 * abs(slack))
+
+        # A lone remaining chip also gets a small timing nudge in the final
+        # couple of weeks, but never enough to cross the hard floor.
+        if gws_left <= 2:
+            discount = max(discount, 0.15)
+        discount = min(self.expiry_max_discount, discount)
+        return round(max(self._minimum_floor(chip), base * (1.0 - discount)), 3)
+
+    def _expiry_context(
+        self,
+        current_gw: int,
+        current_half: int,
+        chips_available: list[str],
+    ) -> dict[str, int | bool]:
+        half_end = self._half_end(current_half)
+        gws_left = max(0, half_end - int(current_gw) + 1)
+        chips_left = len(chips_available)
+        return {
+            "half_end_gw": half_end,
+            "gws_remaining": gws_left,
+            "chips_remaining": chips_left,
+            "calendar_slack": gws_left - chips_left,
+            "chip_loss_risk": chips_left > gws_left,
+        }
 
     def evaluate(
         self,
@@ -128,17 +218,24 @@ class ChipPlanner:
                 "advisory_only": True,
             }
 
-        # Build gain estimates per chip per GW.
+        # Build gain estimates and expiry-aware reservation thresholds per chip/GW.
         gains: dict[str, dict[int, float]] = {}
+        thresholds: dict[str, dict[int, float]] = {}
+        chips_remaining = len(chips_available)
         for chip in chips_available:
             chip_gains: dict[int, float] = {}
+            chip_thresholds: dict[int, float] = {}
             for gw_dict in gw_plan:
                 gw = gw_dict["gw"]
                 if gw not in candidate_gws:
                     continue
                 chip_gains[gw] = self._estimate_gain(chip, gw_dict, forecasts, gw)
+                chip_thresholds[gw] = self._effective_min_gain(
+                    chip, gw, current_half, chips_remaining
+                )
             if chip_gains:
                 gains[chip] = chip_gains
+                thresholds[chip] = chip_thresholds
 
         if not gains:
             return {
@@ -149,16 +246,44 @@ class ChipPlanner:
             }
 
         # Small LP: assign at most 1 chip per GW, at most 1 per chip type.
+        # Raw expected gain still dominates week selection. A tiny WC->BB
+        # sequence bonus only breaks close calls when both opportunities already
+        # clear their own thresholds.
         prob = pulp.LpProblem("fpl_chips", pulp.LpMaximize)
         play = {
             (chip, gw): pulp.LpVariable(f"p_{chip}_{gw}", cat="Binary")
             for chip, gw_gains in gains.items()
             for gw in gw_gains
         }
-        prob += pulp.lpSum(
+        objective_terms = [
             gains[chip][gw] * play[(chip, gw)]
             for (chip, gw) in play
-        )
+        ]
+
+        combo_vars: dict[tuple[int, int], pulp.LpVariable] = {}
+        if CHIP_WILDCARD in gains and CHIP_BENCH_BOOST in gains:
+            for wc_gw in gains[CHIP_WILDCARD]:
+                for bb_gw in gains[CHIP_BENCH_BOOST]:
+                    gap = int(bb_gw) - int(wc_gw)
+                    if gap not in (1, 2):
+                        continue
+                    if gains[CHIP_WILDCARD][wc_gw] < thresholds[CHIP_WILDCARD][wc_gw]:
+                        continue
+                    if gains[CHIP_BENCH_BOOST][bb_gw] < thresholds[CHIP_BENCH_BOOST][bb_gw]:
+                        continue
+                    var = pulp.LpVariable(f"combo_wc_bb_{wc_gw}_{bb_gw}", cat="Binary")
+                    combo_vars[(wc_gw, bb_gw)] = var
+                    prob += var <= play[(CHIP_WILDCARD, wc_gw)]
+                    prob += var <= play[(CHIP_BENCH_BOOST, bb_gw)]
+                    prob += var >= (
+                        play[(CHIP_WILDCARD, wc_gw)]
+                        + play[(CHIP_BENCH_BOOST, bb_gw)]
+                        - 1
+                    )
+                    gap_weight = 1.0 if gap == 1 else 0.6
+                    objective_terms.append(self.wc_bb_combo_bonus * gap_weight * var)
+
+        prob += pulp.lpSum(objective_terms)
         for chip in gains:
             prob += pulp.lpSum(play[(chip, gw)] for gw in gains[chip]) <= 1
         for gw in candidate_gws:
@@ -171,39 +296,86 @@ class ChipPlanner:
         if pulp.LpStatus[status] != "Optimal":
             log.warning("chip LP did not solve optimally: %s", pulp.LpStatus[status])
 
-        # Only include chip assignments that clear per-chip minimum thresholds.
-        # TC and BB use elevated minimums (6 / 13 pts) to prevent playing them
-        # in ordinary GWs — their value is highest in double gameweeks where
-        # the captain or bench players appear twice. HIT_COST (4 pts) is the
-        # floor for WC / FH which are less sensitive to DGW timing.
-        def _min_for(chip: str) -> float:
-            if chip == CHIP_TRIPLE_CAPTAIN:
-                return self.min_tc_gain
-            if chip == CHIP_BENCH_BOOST:
-                return self.min_bb_gain
-            return float(HIT_COST)
-
+        # Only include assignments that clear their effective reservation value.
+        # Expiry can soften that value, but the hard per-chip floors above mean
+        # the planner is still allowed to let a chip expire rather than panic.
         chip_plan = sorted(
             [
-                {"chip": chip, "gw": gw,
-                 "chip_label": CHIP_LABELS.get(chip, chip),
-                 "expected_gain": round(gains[chip].get(gw, 0.0), 2)}
+                {
+                    "chip": chip,
+                    "gw": gw,
+                    "chip_label": CHIP_LABELS.get(chip, chip),
+                    "expected_gain": round(gains[chip].get(gw, 0.0), 2),
+                    "required_gain": round(thresholds[chip][gw], 2),
+                    "base_required_gain": round(self._base_min_gain(chip), 2),
+                }
                 for (chip, gw), var in play.items()
                 if (pulp.value(var) or 0.0) > 0.5
-                and gains[chip].get(gw, 0.0) >= _min_for(chip)
+                and gains[chip].get(gw, 0.0) >= thresholds[chip][gw]
             ],
             key=lambda d: d["gw"],
         )
 
+        combo_plan = []
+        for (wc_gw, bb_gw), var in combo_vars.items():
+            if (pulp.value(var) or 0.0) > 0.5:
+                combo_plan.append(
+                    {
+                        "sequence": "Wildcard -> Bench Boost",
+                        "wildcard_gw": int(wc_gw),
+                        "bench_boost_gw": int(bb_gw),
+                    }
+                )
+
+        expiry = self._expiry_context(current_gw, current_half, chips_available)
         now = [p for p in chip_plan if p["gw"] == current_gw]
         rec = now[0]["chip"] if now else None
-        reason = (
-            f"Play {CHIP_LABELS.get(rec, rec)} this GW "
-            f"(est. +{now[0]['expected_gain']:.1f} pts)." if rec
-            else "Hold all chips — no chip this GW offers ≥4 pts; save for a double/blank gameweek."
+        if rec:
+            entry = now[0]
+            reason = (
+                f"Play {CHIP_LABELS.get(rec, rec)} this GW "
+                f"(est. +{entry['expected_gain']:.1f} pts; "
+                f"needs {entry['required_gain']:.1f})."
+            )
+            current_combo = next(
+                (
+                    combo for combo in combo_plan
+                    if combo["wildcard_gw"] == current_gw
+                    or combo["bench_boost_gw"] == current_gw
+                ),
+                None,
+            )
+            if current_combo:
+                reason += (
+                    f" Preferred sequence: Wildcard GW{current_combo['wildcard_gw']} "
+                    f"-> Bench Boost GW{current_combo['bench_boost_gw']}."
+                )
+        else:
+            future = next((p for p in chip_plan if p["gw"] > current_gw), None)
+            if future:
+                reason = (
+                    f"Hold all chips this GW — the model currently prefers "
+                    f"{future['chip_label']} in GW{future['gw']} "
+                    f"(+{future['expected_gain']:.1f} pts)."
+                )
+            else:
+                reason = "Hold all chips this GW — no modeled opportunity clears its reservation value."
+            if combo_plan:
+                combo = combo_plan[0]
+                reason += (
+                    f" Best combo currently: Wildcard GW{combo['wildcard_gw']} "
+                    f"-> Bench Boost GW{combo['bench_boost_gw']}."
+                )
+
+        reason += (
+            f" {expiry['gws_remaining']} GW(s) remain before this chip set expires "
+            f"with {expiry['chips_remaining']} chip(s) unused; expiry only softens "
+            f"thresholds and never forces a chip."
         )
         return {
             "chip_plan": chip_plan,
+            "combo_plan": combo_plan,
+            "expiry_context": expiry,
             "recommendation": rec,
             "reason": reason,
             "advisory_only": True,
