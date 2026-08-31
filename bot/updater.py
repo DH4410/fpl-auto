@@ -207,8 +207,8 @@ class SeasonUpdater:
 
         # 1. Fetch data.
         log.info("Fetching bootstrap and fixtures…")
-        bootstrap = data_collector.fetch_bootstrap()
-        fixtures = data_collector.fetch_fixtures()
+        bootstrap = data_collector.fetch_bootstrap(force=True)
+        fixtures = data_collector.fetch_fixtures(force=True)
 
         # 2. Build current state.
         state = build_current_state(bootstrap, my_team, current_gw, entry_info)
@@ -246,7 +246,7 @@ class SeasonUpdater:
         # the planner to incorrectly sell players who should be held.
         try:
             from .news_collector import build_news_features
-            pool_df = data_collector.build_player_pool()
+            pool_df = data_collector.build_player_pool(bootstrap=bootstrap)
             pool_with_news = build_news_features(pool_df, espn_enriched=True)
             avail = {
                 int(row["id"]): float(row.get("availability_index", 1.0))
@@ -459,7 +459,7 @@ class SeasonUpdater:
         with the ep_next + PPG forecaster branch.
         """
         try:
-            pool = data_collector.build_player_pool()
+            pool = data_collector.build_player_pool(bootstrap=bootstrap)
             ep_by_id: dict[int, float] = {
                 int(row["id"]): float(row.get("ep_next") or 0)
                 for _, row in pool.iterrows()
