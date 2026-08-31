@@ -770,6 +770,26 @@ def _send_deadline_digest(next_gw: int, decision: dict, plan: dict, state: dict,
         log.warning("Deadline digest email failed (%s) — continuing.", exc)
 
 
+def _candidate_watch_ids(state: dict) -> list[int]:
+    """Selectable ideas that deserve evaluation outside the normal top-N cutoff.
+
+    This does not endorse or force a transfer. It simply guarantees that a
+    newly added player or research target reaches the forecaster/MILP once.
+    """
+    values: set[int] = set()
+    for bucket in ("signing_ideas", "research_ideas", "idea_list"):
+        for idea in state.get(bucket) or []:
+            if str(idea.get("action") or "") != "transfer_in":
+                continue
+            try:
+                element = int(idea.get("element") or 0)
+            except (TypeError, ValueError):
+                continue
+            if element > 0:
+                values.add(element)
+    return sorted(values)
+
+
 def stage_pre_deadline_plan(bootstrap: dict, state: dict, dry_run: bool) -> dict:
     """Run the planner and freeze an approved plan for the upcoming GW."""
     ev = next_event(bootstrap)
@@ -793,13 +813,30 @@ def stage_pre_deadline_plan(bootstrap: dict, state: dict, dry_run: bool) -> dict
     from bot.pre_deadline_simulator import PreDeadlineSimulator
     from bot.updater import SeasonUpdater, build_current_state
 
+    candidate_watch_ids = _candidate_watch_ids(state)
+    if candidate_watch_ids:
+        log.info(
+            "Forcing %d transfer/research watchlist player(s) into candidate evaluation.",
+            len(candidate_watch_ids),
+        )
     updater = SeasonUpdater(horizon=6)
-    plan = updater.run(current_gw=next_gw, my_team=my_team, entry_info=entry_info)
+    plan = updater.run(
+        current_gw=next_gw,
+        my_team=my_team,
+        entry_info=entry_info,
+        forced_ids=candidate_watch_ids,
+    )
     current_state = build_current_state(bootstrap, my_team, next_gw, entry_info)
 
     # Rebuild the forecast table the planner used, so the simulator can value
     # the proposed transfers and the post-GW analyzer gets a genuine pre-GW view.
-    forecasts = _rebuild_forecasts(updater, bootstrap, next_gw, current_state)
+    forecasts = _rebuild_forecasts(
+        updater,
+        bootstrap,
+        next_gw,
+        current_state,
+        forced_ids=candidate_watch_ids,
+    )
     save_forecast_snapshot(forecasts, next_gw)
 
     idea_list = (list(state.get("idea_list") or [])
@@ -861,12 +898,17 @@ def stage_pre_deadline_plan(bootstrap: dict, state: dict, dry_run: bool) -> dict
     return decision
 
 
-def _rebuild_forecasts(updater, bootstrap: dict, next_gw: int,
-                       current_state: dict) -> pd.DataFrame:
-    """Reproduce the forecaster output for valuation/snapshot purposes."""
+def _rebuild_forecasts(
+    updater,
+    bootstrap: dict,
+    next_gw: int,
+    current_state: dict,
+    forced_ids: list[int] | None = None,
+) -> pd.DataFrame:
+    """Reproduce the exact candidate universe used for valuation/snapshots."""
     try:
         from bot import data_collector
-        fixtures = data_collector.fetch_fixtures()
+        fixtures = data_collector.fetch_fixtures(force=True)
         ml_xpts = None
         if updater._predictor is not None:
             ml_xpts = updater._compute_ml_xpts(bootstrap, next_gw) or None
@@ -875,6 +917,7 @@ def _rebuild_forecasts(updater, bootstrap: dict, next_gw: int,
             fixtures=fixtures,
             current_gw=next_gw,
             owned_ids=current_state["squad"],
+            forced_ids=forced_ids or [],
             ml_xpts=ml_xpts,
         )
     except Exception as exc:  # noqa: BLE001
