@@ -826,13 +826,20 @@ def stage_pre_deadline_plan(bootstrap: dict, state: dict, dry_run: bool) -> dict
         entry_info=entry_info,
         forced_ids=candidate_watch_ids,
     )
-    current_state = build_current_state(bootstrap, my_team, next_gw, entry_info)
+    planning_bootstrap = updater._last_bootstrap or bootstrap
+    current_state = build_current_state(
+        planning_bootstrap,
+        my_team,
+        next_gw,
+        entry_info,
+    )
 
     # Rebuild the forecast table the planner used, so the simulator can value
     # the proposed transfers and the post-GW analyzer gets a genuine pre-GW view.
+    # Reuse the updater's exact bootstrap/fixture snapshot.
     forecasts = _rebuild_forecasts(
         updater,
-        bootstrap,
+        planning_bootstrap,
         next_gw,
         current_state,
         forced_ids=candidate_watch_ids,
@@ -863,7 +870,7 @@ def stage_pre_deadline_plan(bootstrap: dict, state: dict, dry_run: bool) -> dict
         | set(decision["target_squad_signature"])
     )
     decision["planning_news_guard"] = _build_planning_news_guard(
-        bootstrap,
+        planning_bootstrap,
         guard_ids,
     )
 
@@ -894,7 +901,15 @@ def stage_pre_deadline_plan(bootstrap: dict, state: dict, dry_run: bool) -> dict
         save_state(state)
         commit_state(f"auto: GW{next_gw} pre-deadline plan")
 
-    _send_deadline_digest(next_gw, decision, plan, state, bootstrap, deadline_utc, target_h_before)
+    _send_deadline_digest(
+        next_gw,
+        decision,
+        plan,
+        state,
+        planning_bootstrap,
+        deadline_utc,
+        target_h_before,
+    )
     return decision
 
 
@@ -907,8 +922,10 @@ def _rebuild_forecasts(
 ) -> pd.DataFrame:
     """Reproduce the exact candidate universe used for valuation/snapshots."""
     try:
-        from bot import data_collector
-        fixtures = data_collector.fetch_fixtures(force=True)
+        fixtures = list(updater._last_fixtures or [])
+        if not fixtures:
+            from bot import data_collector
+            fixtures = data_collector.fetch_fixtures(force=True)
         ml_xpts = None
         if updater._predictor is not None:
             ml_xpts = updater._compute_ml_xpts(bootstrap, next_gw) or None
