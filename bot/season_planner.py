@@ -376,11 +376,14 @@ class SeasonPlanner:
                 "bench_xpts": round(bench_xpts, 2),
             })
 
-        # Build the report table.
+        # Build the report table. "Initial squad" is only correct when
+        # the planner truly started from no owned players; an established team
+        # with zero GW1 transfers is a Roll, not an initial-selection event.
         report_rows = []
+        was_initial_squad = int(sum(owned)) == 0
         for g in gw_plan:
             trans_str = (
-                "Initial squad" if g["gw"] == gws[0] and not g["transfers_in"] and not g["transfers_out"]
+                "Initial squad" if g["gw"] == gws[0] and was_initial_squad
                 else (", ".join(
                     f"{t['name']} ← {o['name']}"
                     for t, o in zip(g["transfers_in"], g["transfers_out"])
