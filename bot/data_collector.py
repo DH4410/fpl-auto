@@ -544,16 +544,26 @@ def fetch_fpl_core_insights(resource: str = "players", season: str = "2026-2027"
 # Derived helpers
 # ---------------------------------------------------------------------------
 
-def build_player_pool(force: bool = False) -> pd.DataFrame:
-    """Current player pool joined to team names -- the optimiser's input frame.
+def build_player_pool(
+    force: bool = False,
+    bootstrap: dict | None = None,
+) -> pd.DataFrame:
+    """Current player pool joined to team names -- the optimiser input frame.
+
+    Pass an already-fetched bootstrap when a caller needs every downstream
+    calculation to use the exact same live snapshot (for example immediately
+    before a deadline). Otherwise the normal cache-aware fetch path is used.
 
     Columns kept are the ones the optimiser and predictor actually consume:
     identity, position, club, price, availability and the FPL-provided season
-    aggregates. Prices stay in integer tenths (``now_cost``) plus a ``price``
-    float for reporting.
+    aggregates. Prices stay in integer tenths plus a price float for reporting.
     """
-    frames = bootstrap_frames(force=force)
-    players, teams = frames["players"], frames["teams"]
+    if bootstrap is None:
+        frames = bootstrap_frames(force=force)
+        players, teams = frames["players"], frames["teams"]
+    else:
+        players = pd.DataFrame(bootstrap.get("elements") or [])
+        teams = pd.DataFrame(bootstrap.get("teams") or [])
 
     team_lookup = teams.set_index("id")["name"].to_dict()
     short_lookup = teams.set_index("id")["short_name"].to_dict()
