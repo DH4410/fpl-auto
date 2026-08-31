@@ -13,7 +13,7 @@ jobs:
         with:
           python-version: '3.11'
       - name: Install lightweight test dependencies
-        run: pip install requests pandas numpy
+        run: pip install requests pandas numpy pulp
       - name: Run pure unit tests
         run: |
           python -m unittest discover -s tests -v
