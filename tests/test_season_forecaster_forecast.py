@@ -62,10 +62,17 @@ class ForecastTests(unittest.TestCase):
         }
         self.fixtures = _league_fixtures()
 
-    def _run(self, current_gw=1, owned=None, ml=None, fixtures=None):
-        fc = SeasonForecaster(horizon=6, max_candidates=50)
-        return fc.forecast(self.bootstrap, fixtures or self.fixtures, current_gw,
-                           owned_ids=owned or [], ml_xpts=ml)
+    def _run(self, current_gw=1, owned=None, forced=None, ml=None, fixtures=None,
+             max_candidates=50):
+        fc = SeasonForecaster(horizon=6, max_candidates=max_candidates)
+        return fc.forecast(
+            self.bootstrap,
+            fixtures or self.fixtures,
+            current_gw,
+            owned_ids=owned or [],
+            forced_ids=forced or [],
+            ml_xpts=ml,
+        )
 
     def test_hero_future_gw_not_near_raw_ppg(self):
         df = self._run()
@@ -113,6 +120,30 @@ class ForecastTests(unittest.TestCase):
     def test_owned_player_always_retained(self):
         df = self._run(owned=[5])
         self.assertIn(5, set(df["element"]), "owned player dropped from forecast")
+
+    def test_owned_unavailable_player_is_retained_for_hold_or_sale(self):
+        unavailable = next(p for p in self.bootstrap["elements"] if p["id"] == 5)
+        unavailable["status"] = "u"
+        unavailable["can_select"] = False
+        df = self._run(owned=[5], max_candidates=5)
+        self.assertIn(
+            5,
+            set(df["element"]),
+            "owned unavailable player vanished from transfer-planning universe",
+        )
+
+    def test_forced_watchlist_player_bypasses_candidate_cutoff_without_forcing_buy(self):
+        # Junk would rank near the bottom with no history/ep_next. Forcing it
+        # means only "evaluate it", so it must enter even with a 1-player pool.
+        df = self._run(forced=[5], max_candidates=1)
+        self.assertEqual(set(df["element"]), {5})
+
+    def test_unselectable_external_watchlist_player_is_not_forced(self):
+        watched = next(p for p in self.bootstrap["elements"] if p["id"] == 5)
+        watched["status"] = "u"
+        watched["can_select"] = False
+        df = self._run(forced=[5], max_candidates=1)
+        self.assertNotIn(5, set(df["element"]))
 
     def test_ml_future_gw_stays_bounded(self):
         df = self._run(ml={1: 3.0, 2: 4.0})
