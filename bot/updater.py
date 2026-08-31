@@ -155,6 +155,8 @@ class SeasonUpdater:
         self.forecaster = SeasonForecaster(horizon=horizon, max_candidates=max_candidates)
         self.planner = SeasonPlanner(horizon=horizon)
         self.chip_planner = ChipPlanner()
+        self._last_bootstrap: dict = {}
+        self._last_fixtures: list[dict] = []
         if verbose:
             logging.basicConfig(level=logging.DEBUG)
         else:
@@ -214,6 +216,11 @@ class SeasonUpdater:
         log.info("Fetching bootstrap and fixtures…")
         bootstrap = data_collector.fetch_bootstrap(force=True)
         fixtures = data_collector.fetch_fixtures(force=True)
+        # Expose the exact authoritative snapshot used by this plan so the
+        # orchestrator can freeze news/squad guards and rebuild valuation from
+        # identical inputs rather than a second near-simultaneous fetch.
+        self._last_bootstrap = bootstrap
+        self._last_fixtures = fixtures
 
         # 2. Build current state.
         state = build_current_state(bootstrap, my_team, current_gw, entry_info)
