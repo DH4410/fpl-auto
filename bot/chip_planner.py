@@ -33,8 +33,6 @@ import numpy as np
 import pandas as pd
 import pulp
 
-import numpy as np
-
 from .fpl_rules import (
     CHIP_BENCH_BOOST, CHIP_FREE_HIT, CHIP_TRIPLE_CAPTAIN, CHIP_WILDCARD,
     CHIP_LABELS, chip_half, FIRST_HALF_GWS, SECOND_HALF_GWS,
@@ -259,6 +257,14 @@ class ChipPlanner:
             gains[chip][gw] * play[(chip, gw)]
             for (chip, gw) in play
         ]
+
+        # A below-threshold chip is not merely hidden after solving: it must be
+        # impossible inside the LP. Otherwise a high raw-but-insufficient BB/FH
+        # could occupy a GW, block a genuinely valid TC/WC through the one-chip
+        # constraint, then disappear during post-solve filtering.
+        for (chip, gw), var in play.items():
+            if gains[chip][gw] < thresholds[chip][gw]:
+                prob += var == 0
 
         combo_vars: dict[tuple[int, int], pulp.LpVariable] = {}
         if CHIP_WILDCARD in gains and CHIP_BENCH_BOOST in gains:
