@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import unittest
+from unittest.mock import Mock, patch
 
+from scripts import weekly_orchestrator_core as core
 from scripts.weekly_orchestrator_core import (
     _build_planning_news_guard,
     _expected_live_squad,
@@ -107,6 +109,115 @@ class ExecutionGuardTests(unittest.TestCase):
             [by_position[13], by_position[14], by_position[15]],
             [14, 15, 13],
         )
+
+    def test_two_transfer_execution_is_one_atomic_batch(self):
+        source_ids = list(range(1, 16))
+        target_ids = list(range(3, 18))
+        elements = [
+            {
+                "id": element,
+                "now_cost": 50,
+                "status": "a",
+                "chance_of_playing_next_round": 100,
+                "news": "",
+            }
+            for element in range(1, 18)
+        ]
+        bootstrap = {
+            "events": [{
+                "id": 3,
+                "deadline_time": "2099-09-05T11:00:00Z",
+                "finished": False,
+            }],
+            "elements": elements,
+        }
+        picks_payload = [
+            {
+                "element": element,
+                "position": position,
+                "is_captain": position == 1,
+                "is_vice_captain": position == 2,
+            }
+            for position, element in enumerate(target_ids, 1)
+        ]
+        before_team = {
+            "picks": [
+                {
+                    "element": element,
+                    "selling_price": 50,
+                    "position": position,
+                    "is_captain": False,
+                    "is_vice_captain": False,
+                }
+                for position, element in enumerate(source_ids, 1)
+            ],
+            "chips": [],
+        }
+        after_team = {
+            "picks": [dict(row, selling_price=50) for row in picks_payload],
+            "chips": [],
+        }
+        decision = {
+            "gw": 3,
+            "approved_transfers": [
+                {
+                    "element_out": 1,
+                    "name_out": "P1",
+                    "selling_price": 50,
+                    "element_in": 16,
+                    "name_in": "P16",
+                    "purchase_price": 50,
+                },
+                {
+                    "element_out": 2,
+                    "name_out": "P2",
+                    "selling_price": 50,
+                    "element_in": 17,
+                    "name_in": "P17",
+                    "purchase_price": 50,
+                },
+            ],
+            "approved_chip": None,
+            "picks_payload": picks_payload,
+            "source_squad_signature": source_ids,
+            "target_squad_signature": target_ids,
+            "planning_news_guard": _build_planning_news_guard(
+                bootstrap, list(range(1, 18))
+            ),
+            "expected_net_gain": 5.0,
+            "hit_count": 0,
+            "reasoning": "test",
+        }
+        state = {"approved_plan": decision}
+
+        transfer_mock = Mock(return_value={"status": "ok"})
+        picks_mock = Mock(return_value={"status": "ok"})
+        with (
+            patch.object(core, "authenticate", return_value=("token", object())),
+            patch.object(core.fpl_api, "me", return_value={"player": {"entry": 42}}),
+            patch.object(
+                core.fpl_api,
+                "my_team",
+                side_effect=[before_team, after_team],
+            ),
+            patch.object(core.fpl_api, "transfer", transfer_mock),
+            patch.object(core.fpl_api, "update_picks", picks_mock),
+            patch.object(core, "save_state"),
+            patch.object(core, "commit_state"),
+            patch.object(core.email_alerts, "send_alert"),
+            patch.object(core.time, "sleep"),
+        ):
+            core.stage_execute(bootstrap, state, dry_run=False)
+
+        self.assertEqual(transfer_mock.call_count, 1)
+        kwargs = transfer_mock.call_args.kwargs
+        self.assertEqual(len(kwargs["transfers"]), 2)
+        self.assertEqual(
+            {(row["element_out"], row["element_in"]) for row in kwargs["transfers"]},
+            {(1, 16), (2, 17)},
+        )
+        self.assertEqual(picks_mock.call_count, 1)
+        self.assertEqual(state["last_executed_gw"], 3)
 
     def test_exact_picks_readback_checks_positions_captain_and_vice(self):
         expected = [
