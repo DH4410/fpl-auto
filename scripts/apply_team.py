@@ -42,7 +42,7 @@ def _emit_new_refresh_token() -> None:
         print(f"  [new refresh token written to GITHUB_OUTPUT for secret rotation]")
 
 SQUAD_FILE = Path(__file__).parent.parent / "research" / "gw1_squad_2026.json"
-DEFAULT_EMAIL = "dimahuang8@gmail.com"
+DEFAULT_EMAIL = ""
 
 
 def load_squad() -> dict:
@@ -81,8 +81,11 @@ def apply_squad(squad: dict, dry_run: bool) -> None:
             print(f"Refresh token failed ({e}), falling back to password login...")
 
     if token is None:
-        email = os.environ.get("FPL_EMAIL", DEFAULT_EMAIL)
+        email = os.environ.get("FPL_EMAIL", DEFAULT_EMAIL).strip()
         password = os.environ.get("FPL_PASSWORD") or input("FPL password: ").strip()
+        if not email:
+            print("ERROR: Set FPL_EMAIL when using password login.")
+            sys.exit(1)
         if not password:
             print("ERROR: Set FPL_REFRESH_TOKEN or FPL_PASSWORD.")
             sys.exit(1)
