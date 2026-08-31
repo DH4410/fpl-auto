@@ -266,7 +266,12 @@ class PreDeadlineSimulator:
 
     @staticmethod
     def _check_chip(plan: dict, chip: str | None, next_gw: int) -> tuple[str | None, str]:
-        """Re-apply the chip_planner minimum-gain thresholds to this GW's chip."""
+        """Re-apply the exact threshold used by the chip planner.
+
+        Newer plans persist an expiry-aware required_gain per chip/GW. Older
+        saved plans fall back to the historical static TC/BB thresholds so
+        recovery remains backwards compatible.
+        """
         if not chip:
             return None, ""
 
@@ -278,13 +283,30 @@ class PreDeadlineSimulator:
             return chip, f"Chip {chip} recommended for GW{next_gw}."
 
         gain = float(entry.get("expected_gain", 0.0))
-        defaults = ChipPlanner()
-        thresholds = {
-            CHIP_TRIPLE_CAPTAIN: defaults.min_tc_gain,
-            CHIP_BENCH_BOOST: defaults.min_bb_gain,
-        }
-        required = thresholds.get(chip)
+        required_raw = entry.get("required_gain")
+        if required_raw is None:
+            defaults = ChipPlanner()
+            thresholds = {
+                CHIP_TRIPLE_CAPTAIN: defaults.min_tc_gain,
+                CHIP_BENCH_BOOST: defaults.min_bb_gain,
+            }
+            required = thresholds.get(chip)
+        else:
+            required = float(required_raw)
+
         if required is not None and gain < required:
-            return None, (f"REJECTED chip {chip}: expected gain {gain:.1f} < "
-                          f"{required:.1f} threshold.")
-        return chip, f"Chip {chip} approved for GW{next_gw} (est. {gain:+.1f} pts)."
+            return None, (
+                f"REJECTED chip {chip}: expected gain {gain:.1f} < "
+                f"{required:.1f} effective threshold."
+            )
+
+        planner_reason = str(plan.get("chip_reason") or "").strip()
+        reason = (
+            f"Chip {chip} approved for GW{next_gw} "
+            f"(est. {gain:+.1f} pts"
+            + (f", threshold {required:.1f}" if required is not None else "")
+            + ")."
+        )
+        if planner_reason:
+            reason += f" {planner_reason}"
+        return chip, reason
