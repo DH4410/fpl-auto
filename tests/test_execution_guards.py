@@ -7,6 +7,7 @@ from scripts.weekly_orchestrator_core import (
     _expected_live_squad,
     _guard_changed,
     _picks_readback_errors,
+    _chip_readback_error,
 )
 
 
@@ -52,6 +53,17 @@ class ExecutionGuardTests(unittest.TestCase):
             _expected_live_squad(decision, {"1->4"}),
             {2, 3, 4},
         )
+
+    def test_chip_readback_confirms_target_gameweek(self):
+        live = {
+            "chips": [
+                {"name": "3xc", "status_for_entry": "played", "event": 9},
+                {"name": "bboost", "status_for_entry": "available", "event": None},
+            ]
+        }
+        self.assertIsNone(_chip_readback_error("3xc", 9, live))
+        self.assertIsNotNone(_chip_readback_error("3xc", 10, live))
+        self.assertIsNotNone(_chip_readback_error("bboost", 9, live))
 
     def test_exact_picks_readback_checks_positions_captain_and_vice(self):
         expected = [
