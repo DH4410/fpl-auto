@@ -13,7 +13,7 @@ jobs:
         with:
           python-version: '3.11'
       - name: Install lightweight test dependencies
-        run: pip install requests pandas numpy pulp
+        run: pip install requests pandas numpy pulp python-dotenv
       - name: Run pure unit tests
         run: |
           python -m unittest discover -s tests -v
@@ -24,5 +24,6 @@ jobs:
             bot/live_gameweek.py \
             bot/top100_post_deadline.py \
             bot/top100_cohort_scout.py \
+            scripts/weekly_orchestrator_core.py \
             scripts/weekly_orchestrator.py \
             scripts/weekly_orchestrator_cohort.py
