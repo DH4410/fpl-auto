@@ -95,13 +95,19 @@ def build_current_state(
     squad_ids = [p["element"] for p in picks]
     selling_prices = {p["element"]: p["selling_price"] for p in picks}
 
-    # Bank from entry_info if available, else from my_team.
-    if entry_info:
+    # Authenticated /my-team is the live transfer-market authority. The
+    # public entry's last_deadline_bank is only a historical snapshot and may
+    # be stale after a transfer made during the current GW.
+    transfers = my_team.get("transfers") or {}
+    live_bank = transfers.get("bank")
+    if live_bank not in (None, ""):
+        bank_tenths = int(live_bank)
+    elif entry_info:
         bank_tenths = int(entry_info.get("last_deadline_bank") or 0)
     else:
-        bank_tenths = int(my_team.get("transfers", {}).get("bank", 0))
+        bank_tenths = 0
 
-    ft = int(my_team.get("transfers", {}).get("limit") or 1)
+    ft = int(transfers.get("limit") or 1)
 
     chips_status = my_team.get("chips", [])
     chips_used_this_half = {
