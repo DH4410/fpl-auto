@@ -464,12 +464,6 @@ def stage_transfer_window(bootstrap: dict, state: dict, dry_run: bool) -> list[d
                  s["ep_next"], s["worth_considering"], s["reason"])
 
     ideas = monitor.to_ideas(signings)
-    if not dry_run:
-        # Always persist and commit the baseline. check_new_signings() seeds it
-        # on the first run; if that seed never reaches the repo, every CI run
-        # would re-seed and no signing would ever be reported.
-        monitor.update_known_ids(bootstrap)
-        commit_state("auto: transfer window element baseline")
 
     if ideas:
         state.setdefault("signing_ideas", [])
@@ -477,8 +471,18 @@ def stage_transfer_window(bootstrap: dict, state: dict, dry_run: bool) -> list[d
         state["signing_ideas"] = state["signing_ideas"] + [
             i for i in ideas if i["element"] not in existing
         ]
-        if not dry_run:
+
+    if not dry_run:
+        # Persist the official element baseline and any new ideas in one state
+        # commit. The standalone transfer-window workflow has no later catch-all
+        # commit, so saving ideas after the baseline push would silently lose
+        # them when the Actions runner exits.
+        monitor.update_known_ids(bootstrap)
+        if ideas:
             save_state(state)
+        commit_state("auto: transfer window baseline and signing ideas")
+
+    if ideas:
         worthwhile = ", ".join(i["name"] for i in ideas)
         email_alerts.send_alert(
             "New signing(s) worth considering",
