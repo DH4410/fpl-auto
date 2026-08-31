@@ -158,6 +158,23 @@ class ChipExpiryPolicyTests(unittest.TestCase):
         self.assertEqual(chip, CHIP_TRIPLE_CAPTAIN)
         self.assertIn("threshold 5.0", reason)
 
+    def test_transfer_chips_fail_closed_without_dedicated_squad_plan(self):
+        for chip in (CHIP_WILDCARD, CHIP_FREE_HIT):
+            approved, reason = PreDeadlineSimulator._check_chip(
+                {
+                    "chip_plan": [{
+                        "chip": chip,
+                        "gw": 8,
+                        "expected_gain": 12.0,
+                        "required_gain": 4.0,
+                    }]
+                },
+                chip,
+                8,
+            )
+            self.assertIsNone(approved)
+            self.assertIn("dedicated chip-specific squad rebuild", reason)
+
     def test_expiry_context_tracks_calendar_capacity(self):
         planner = ChipPlanner()
         context = planner._expiry_context(
