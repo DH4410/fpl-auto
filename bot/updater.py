@@ -186,6 +186,7 @@ class SeasonUpdater:
         current_gw: int,
         my_team: dict | None = None,
         entry_info: dict | None = None,
+        forced_ids: list[int] | None = None,
     ) -> dict[str, Any]:
         """Execute the full update loop for ``current_gw``.
 
@@ -197,6 +198,10 @@ class SeasonUpdater:
             Live ``/my-team/{entry_id}/`` JSON, or None for pre-season.
         entry_info:
             Live ``/entry/{entry_id}/`` JSON, or None.
+        forced_ids:
+            Optional transfer/research watchlist element IDs that must enter
+            the candidate universe for evaluation. The optimizer remains free
+            to reject them.
 
         Returns
         -------
@@ -235,6 +240,7 @@ class SeasonUpdater:
             fixtures=fixtures,
             current_gw=current_gw,
             owned_ids=state["squad"],
+            forced_ids=forced_ids or [],
             ml_xpts=ml_xpts,
         )
         log.info("Forecast table: %d rows (%d players × %d GWs)",
