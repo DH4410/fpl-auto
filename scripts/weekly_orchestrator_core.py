@@ -939,8 +939,13 @@ def build_picks_payload(plan: dict) -> list[dict]:
 
     xi_sorted = sorted(starting_xi, key=lambda p: p["position"])
     bench_gkp = [p for p in bench if p["position"] == 1]
-    bench_out = sorted([p for p in bench if p["position"] != 1],
-                       key=lambda p: p.get("cost", 0), reverse=True)
+    # Outfield bench priority is an expected-points decision, not a price
+    # decision. Put the player most likely to help an auto-sub first.
+    bench_out = sorted(
+        [p for p in bench if p["position"] != 1],
+        key=lambda p: (float(p.get("xpts") or 0.0), float(p.get("cost") or 0.0)),
+        reverse=True,
+    )
 
     payload = []
     for i, p in enumerate(xi_sorted + bench_gkp + bench_out):
