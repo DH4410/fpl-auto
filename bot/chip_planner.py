@@ -280,7 +280,7 @@ class ChipPlanner:
                         + play[(CHIP_BENCH_BOOST, bb_gw)]
                         - 1
                     )
-                    gap_weight = 1.0 if gap == 1 else 0.6
+                    gap_weight = 1.0 if gap == 1 else 0.4
                     objective_terms.append(self.wc_bb_combo_bonus * gap_weight * var)
 
         prob += pulp.lpSum(objective_terms)
