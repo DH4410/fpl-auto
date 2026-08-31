@@ -12,7 +12,7 @@ Usage:
                  Submits even if hits are required.
 
 Credentials (read from environment / .env):
-    FPL_EMAIL     defaults to Dimahuang8@gmail.com
+    FPL_EMAIL     required for password-login fallback
     FPL_PASSWORD  required
 
 What it does:
@@ -38,7 +38,7 @@ import fpl_auth
 import fpl_api
 from bot.updater import SeasonUpdater
 
-DEFAULT_EMAIL = "dimahuang8@gmail.com"
+DEFAULT_EMAIL = ""
 REPORTS_DIR = Path(__file__).parent.parent / "reports"
 
 
@@ -92,8 +92,11 @@ def main() -> None:
             print(f"Refresh token failed ({e}), falling back to password login...")
 
     if token is None:
-        email = os.environ.get("FPL_EMAIL", DEFAULT_EMAIL)
+        email = os.environ.get("FPL_EMAIL", DEFAULT_EMAIL).strip()
         password = os.environ.get("FPL_PASSWORD") or input("FPL password: ").strip()
+        if not email:
+            print("ERROR: Set FPL_EMAIL when using password login.")
+            sys.exit(1)
         if not password:
             print("ERROR: Set FPL_REFRESH_TOKEN or FPL_PASSWORD.")
             sys.exit(1)
