@@ -1247,70 +1247,60 @@ def stage_execute(bootstrap: dict, state: dict, dry_run: bool) -> dict:
         log.warning("Resuming GW%d execution: %d/%d transfer(s) already submitted "
                     "by an earlier run — skipping them.", next_gw, len(done), len(transfers))
 
-    deadline = _parse_deadline(ev["deadline_time"])
-    # Pace within the job's own budget too, not just the deadline: the runner is
-    # killed at 30 min, and three 13-minute gaps would exceed that.
-    pace_until = min(deadline, datetime.now(timezone.utc)
-                     + timedelta(minutes=MAX_EXECUTE_MINUTES))
+    # Submit ordinary transfers as one atomic FPL batch. Coordinated moves can
+    # depend on simultaneous sale proceeds, and a mid-sequence network failure
+    # must not leave only half of the strategy applied. WC/FH are blocked above
+    # until a dedicated chip-specific squad planner exists.
     submitted: list[str] = []
-    try:
-        for idx, t in enumerate(pending):
-            if idx > 0:
-                gap = _transfer_gap_minutes(pace_until, len(pending) - idx)
-                log.info("Waiting %.1f min before transfer %d/%d...",
-                         gap, idx + 1, len(pending))
-                if gap > 0 and not dry_run:
-                    time.sleep(gap * 60)
+    payloads: list[dict] = []
+    labels: list[str] = []
+    pending_keys: list[str] = []
 
-            # Wildcard / Free Hit activate on the transfer call; TC and BB are
-            # set through the picks payload instead.
-            chip_this = chip if (idx == 0 and chip in TRANSFER_CHIPS) else None
-            label = f"OUT {t['name_out']} -> IN {t['name_in']}"
-            log.info("Transfer %d/%d: %s", idx + 1, len(pending), label)
+    for t in pending:
+        buy = live_prices.get(int(t["element_in"]), t["purchase_price"])
+        sell = selling_now.get(int(t["element_out"]), t["selling_price"])
+        if buy != t["purchase_price"] or sell != t["selling_price"]:
+            log.info(
+                "Price refresh: in %s->%s, out %s->%s (tenths)",
+                t["purchase_price"], buy, t["selling_price"], sell,
+            )
+        if int(t["element_out"]) not in selling_now:
+            raise RuntimeError(
+                f"Planned outgoing element {t['element_out']} is not in the "
+                "live squad; refusing a stale transfer payload."
+            )
+        payloads.append({
+            "element_in": t["element_in"],
+            "element_out": t["element_out"],
+            "purchase_price": buy,
+            "selling_price": sell,
+        })
+        labels.append(f"OUT {t['name_out']} -> IN {t['name_in']}")
+        pending_keys.append(_transfer_key(t))
 
-            # Resolved before the dry-run branch so --dry-run rehearses the
-            # exact payload the live path would send. Computing it afterwards
-            # left the only pre-flight tool blind to precisely the failures
-            # this block exists to prevent: a stale price, or an element_out
-            # missing from /my-team/ because the squad drifted from the plan.
-            buy = live_prices.get(int(t["element_in"]), t["purchase_price"])
-            sell = selling_now.get(int(t["element_out"]), t["selling_price"])
-            if buy != t["purchase_price"] or sell != t["selling_price"]:
-                log.info("Price refresh: in %s->%s, out %s->%s (tenths)",
-                         t["purchase_price"], buy, t["selling_price"], sell)
-            if int(t["element_out"]) not in selling_now:
-                raise RuntimeError(
-                    f"Planned outgoing element {t['element_out']} is not in the "
-                    "live squad; refusing a stale transfer payload."
-                )
-            payload = {
-                "element_in": t["element_in"],
-                "element_out": t["element_out"],
-                "purchase_price": buy,
-                "selling_price": sell,
-            }
-
-            if dry_run:
-                log.info("[DRY RUN] would POST /transfers/ %s (chip=%s)",
-                         payload, chip_this)
-                submitted.append(label)
-                continue
-
-            result = fpl_api.transfer(session, token, entry_id, event=next_gw,
-                                      transfers=[payload], chip=chip_this)
-            log.info("Result: %s", result)
-            submitted.append(label)
-            # Persist immediately. If the next transfer, the picks call or the
-            # runner itself dies, the following run must not resubmit this one.
-            _record_executed(state, next_gw, _transfer_key(t))
+    if payloads:
+        log.info("Submitting %d transfer(s) atomically.", len(payloads))
+        if dry_run:
+            log.info("[DRY RUN] would POST /transfers/ batch: %s", payloads)
+            submitted.extend(labels)
+        else:
+            result = fpl_api.transfer(
+                session,
+                token,
+                entry_id,
+                event=next_gw,
+                transfers=payloads,
+                chip=None,
+            )
+            log.info("Atomic transfer result: %s", result)
+            submitted.extend(labels)
+            for key in pending_keys:
+                _record_executed(state, next_gw, key)
             save_state(state)
-            commit_state(f"auto: GW{next_gw} transfer submitted ({label})")
-            time.sleep(random.uniform(3, 8))
-    except Exception:
-        if not dry_run:
-            save_state(state)
-            commit_state(f"auto: GW{next_gw} partial execution checkpoint")
-        raise
+            commit_state(
+                f"auto: GW{next_gw} atomic transfer batch submitted "
+                f"({len(payloads)} transfer(s))"
+            )
 
     if picks_payload:
         cap = next((p["element"] for p in picks_payload if p["is_captain"]), None)
