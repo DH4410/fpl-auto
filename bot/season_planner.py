@@ -356,7 +356,13 @@ class SeasonPlanner:
                     [_player(elements, names, costs, pos, i) for i in start_idx],
                     key=lambda p: (p["position"], -xpts[start_idx[0], t] if start_idx else 0),
                 ),
-                "bench": [_player(elements, names, costs, pos, i) for i in bench_idx],
+                "bench": [
+                    {
+                        **_player(elements, names, costs, pos, i),
+                        "xpts": round(float(xpts[i, t]), 2),
+                    }
+                    for i in bench_idx
+                ],
                 "captain": {"element": elements[capt_idx], "name": names[capt_idx],
                             "xpts": round(xpts[capt_idx, t], 2)},
                 "vice": {"element": elements[vice_idx], "name": names[vice_idx],
