@@ -1,5 +1,5 @@
 {
-  "last_analyzed_gw": 1,
+  "last_analyzed_gw": 2,
   "last_simulated_gw": 2,
   "last_executed_gw": 1,
   "approved_plan": {
@@ -116,8 +116,93 @@
     "execute_target_utc": "2026-08-28T14:49:39.879198+00:00"
   },
   "execute_target_utc": null,
-  "last_deep_research_gw": 0,
-  "research_ideas": [],
+  "last_deep_research_gw": 2,
+  "research_ideas": [
+    {
+      "action": "transfer_in",
+      "element": 165,
+      "name": "Jo\u00e3o Pedro",
+      "reason": "Top-100 smart money: 24/10 managers hold, ep_next 10.0",
+      "priority": 0.4
+    },
+    {
+      "action": "transfer_in",
+      "element": 154,
+      "name": "Palmer",
+      "reason": "Top-100 smart money: 19/10 managers hold, ep_next 10.0",
+      "priority": 0.4
+    },
+    {
+      "action": "transfer_in",
+      "element": 8,
+      "name": "Calafiori",
+      "reason": "Top-100 smart money: 19/10 managers hold, ep_next 10.0",
+      "priority": 0.4
+    },
+    {
+      "action": "transfer_in",
+      "element": 411,
+      "name": "Haaland",
+      "reason": "Top-100 smart money: 15/10 managers hold, ep_next 7.5",
+      "priority": 0.4
+    },
+    {
+      "action": "transfer_in",
+      "element": 10,
+      "name": "White",
+      "reason": "Top-100 smart money: 14/10 managers hold, ep_next 9.0",
+      "priority": 0.4
+    },
+    {
+      "action": "transfer_in",
+      "element": 115,
+      "name": "De Cuyper",
+      "reason": "Top-100 smart money: 14/10 managers hold, ep_next 8.5",
+      "priority": 0.4
+    },
+    {
+      "action": "transfer_in",
+      "element": 40,
+      "name": "Rogers",
+      "reason": "Top-100 smart money: 13/10 managers hold, ep_next 6.5",
+      "priority": 0.4
+    },
+    {
+      "action": "transfer_out",
+      "element": 142,
+      "name": "James",
+      "reason": "Top-100 avoid: ep_next only 0.5, 8.9% overall ownership \u2014 likely liability",
+      "priority": 0.3
+    },
+    {
+      "action": "transfer_out",
+      "element": 106,
+      "name": "Thiago",
+      "reason": "Top-100 avoid: ep_next only 1.0, 14.8% overall ownership \u2014 likely liability",
+      "priority": 0.3
+    },
+    {
+      "action": "transfer_out",
+      "element": 28,
+      "name": "Martinez",
+      "reason": "Top-100 avoid: ep_next only 1.0, 4.4% overall ownership \u2014 likely liability",
+      "priority": 0.3
+    },
+    {
+      "action": "transfer_out",
+      "element": 387,
+      "name": "O'Reilly",
+      "reason": "Top-100 avoid: ep_next only 2.0, 19.4% overall ownership \u2014 likely liability",
+      "priority": 0.3
+    },
+    {
+      "action": "transfer_out",
+      "element": 463,
+      "name": "Woltemade",
+      "reason": "Top-100 avoid: ep_next only 2.0, 1.4% overall ownership \u2014 likely liability",
+      "priority": 0.3
+    }
+  ],
   "signing_ideas": [
     {
       "action": "transfer_in",

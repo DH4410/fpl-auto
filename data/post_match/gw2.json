@@ -1,0 +1,1457 @@
+{
+  "gw": 2,
+  "overperformers": [
+    {
+      "element": 426,
+      "name": "B.Fernandes",
+      "actual": 23.0,
+      "expected": 3.6,
+      "delta": 19.4
+    },
+    {
+      "element": 399,
+      "name": "Cherki",
+      "actual": 14.0,
+      "expected": 2.34,
+      "delta": 11.66
+    },
+    {
+      "element": 124,
+      "name": "Gro\u00df",
+      "actual": 13.0,
+      "expected": 1.8,
+      "delta": 11.2
+    },
+    {
+      "element": 229,
+      "name": "Tarkowski",
+      "actual": 12.0,
+      "expected": 2.52,
+      "delta": 9.48
+    },
+    {
+      "element": 411,
+      "name": "Haaland",
+      "actual": 13.0,
+      "expected": 3.6,
+      "delta": 9.4
+    },
+    {
+      "element": 449,
+      "name": "Hall",
+      "actual": 11.0,
+      "expected": 1.98,
+      "delta": 9.02
+    },
+    {
+      "element": 8,
+      "name": "Calafiori",
+      "actual": 11.0,
+      "expected": 2.34,
+      "delta": 8.66
+    },
+    {
+      "element": 427,
+      "name": "Mbeumo",
+      "actual": 11.0,
+      "expected": 2.52,
+      "delta": 8.48
+    },
+    {
+      "element": 572,
+      "name": "Tzolakis",
+      "actual": 10.0,
+      "expected": 1.71,
+      "delta": 8.29
+    },
+    {
+      "element": 12,
+      "name": "Saka",
+      "actual": 11.0,
+      "expected": 2.88,
+      "delta": 8.12
+    },
+    {
+      "element": 94,
+      "name": "Schade",
+      "actual": 10.0,
+      "expected": 1.98,
+      "delta": 8.02
+    },
+    {
+      "element": 165,
+      "name": "Jo\u00e3o Pedro",
+      "actual": 9.0,
+      "expected": 2.16,
+      "delta": 6.84
+    },
+    {
+      "element": 398,
+      "name": "Foden",
+      "actual": 9.0,
+      "expected": 2.25,
+      "delta": 6.75
+    },
+    {
+      "element": 428,
+      "name": "Cunha",
+      "actual": 9.0,
+      "expected": 2.52,
+      "delta": 6.48
+    },
+    {
+      "element": 346,
+      "name": "Calvert-Lewin",
+      "actual": 8.0,
+      "expected": 1.8,
+      "delta": 6.2
+    },
+    {
+      "element": 464,
+      "name": "Wissa",
+      "actual": 8.0,
+      "expected": 1.8,
+      "delta": 6.2
+    },
+    {
+      "element": 454,
+      "name": "Elanga",
+      "actual": 8.0,
+      "expected": 1.98,
+      "delta": 6.02
+    },
+    {
+      "element": 379,
+      "name": "Isak",
+      "actual": 8.0,
+      "expected": 2.43,
+      "delta": 5.57
+    },
+    {
+      "element": 10,
+      "name": "White",
+      "actual": 7.0,
+      "expected": 2.25,
+      "delta": 4.75
+    },
+    {
+      "element": 567,
+      "name": "Horn\u00ed\u010dek",
+      "actual": 7.0,
+      "expected": 2.34,
+      "delta": 4.66
+    },
+    {
+      "element": 4,
+      "name": "Gabriel",
+      "actual": 8.0,
+      "expected": 3.6,
+      "delta": 4.4
+    },
+    {
+      "element": 86,
+      "name": "Lewis-Potter",
+      "actual": 6.0,
+      "expected": 1.8,
+      "delta": 4.2
+    },
+    {
+      "element": 544,
+      "name": "Xhaka",
+      "actual": 6.0,
+      "expected": 1.8,
+      "delta": 4.2
+    },
+    {
+      "element": 154,
+      "name": "Palmer",
+      "actual": 7.0,
+      "expected": 2.88,
+      "delta": 4.12
+    },
+    {
+      "element": 445,
+      "name": "Thiaw",
+      "actual": 6.0,
+      "expected": 1.98,
+      "delta": 4.02
+    }
+  ],
+  "underperformers": [],
+  "injured_after_gw": [
+    {
+      "element": 5,
+      "name": "J.Timber",
+      "status": "i",
+      "chance": 0,
+      "news": "Groin injury - Unknown return date",
+      "in_my_squad": false
+    },
+    {
+      "element": 6,
+      "name": "Saliba",
+      "status": "i",
+      "chance": 0,
+      "news": "Back injury - Unknown return date",
+      "in_my_squad": false
+    },
+    {
+      "element": 24,
+      "name": "Nelson",
+      "status": "u",
+      "chance": 0,
+      "news": "has departed the club as a free agent.",
+      "in_my_squad": false
+    },
+    {
+      "element": 30,
+      "name": "Digne",
+      "status": "u",
+      "chance": 0,
+      "news": "Has joined Paris Saint-Germain permanently",
+      "in_my_squad": false
+    },
+    {
+      "element": 39,
+      "name": "Nedeljkovic",
+      "status": "u",
+      "chance": 0,
+      "news": "Has joined Rangers on loan for the rest of the season",
+      "in_my_squad": false
+    },
+    {
+      "element": 48,
+      "name": "Onana",
+      "status": "i",
+      "chance": 0,
+      "news": "Knee injury - Unknown return date",
+      "in_my_squad": false
+    },
+    {
+      "element": 49,
+      "name": "Iling Jr",
+      "status": "u",
+      "chance": 0,
+      "news": "Has joined Bolton Wanderers on loan for the rest of the season",
+      "in_my_squad": false
+    },
+    {
+      "element": 53,
+      "name": "Manzambi",
+      "status": "i",
+      "chance": 0,
+      "news": "Knee injury - Unknown return date",
+      "in_my_squad": false
+    },
+    {
+      "element": 54,
+      "name": "Gomes",
+      "status": "s",
+      "chance": 0,
+      "news": "Suspended until 19 Sep",
+      "in_my_squad": false
+    },
+    {
+      "element": 55,
+      "name": "Watkins",
+      "status": "u",
+      "chance": 0,
+      "news": "Has joined Al Hilal permanently",
+      "in_my_squad": false
+    },
+    {
+      "element": 582,
+      "name": "Madjo",
+      "status": "i",
+      "chance": 0,
+      "news": "Unspecified injury - Unknown return date",
+      "in_my_squad": false
+    },
+    {
+      "element": 59,
+      "name": "Dennis",
+      "status": "u",
+      "chance": 0,
+      "news": "Has joined MK Dons permanently",
+      "in_my_squad": false
+    },
+    {
+      "element": 63,
+      "name": "Milosavljevi\u0107",
+      "status": "i",
+      "chance": 0,
+      "news": "Unspecified injury - Unknown return date",
+      "in_my_squad": false
+    },
+    {
+      "element": 65,
+      "name": "J.Araujo",
+      "status": "i",
+      "chance": 0,
+      "news": "Thigh injury - Unknown return date",
+      "in_my_squad": false
+    },
+    {
+      "element": 77,
+      "name": "Adli",
+      "status": "i",
+      "chance": 0,
+      "news": "Unspecified injury - Unknown return date",
+      "in_my_squad": false
+    },
+    {
+      "element": 78,
+      "name": "Kroupi.Jr",
+      "status": "i",
+      "chance": 0,
+      "news": "Foot injury - Unknown return date",
+      "in_my_squad": false
+    },
+    {
+      "element": 80,
+      "name": "Enes \u00dcnal",
+      "status": "u",
+      "chance": 0,
+      "news": "Has joined Getafe permanently",
+      "in_my_squad": false
+    },
+    {
+      "element": 85,
+      "name": "Van den Berg",
+      "status": "i",
+      "chance": 0,
+      "news": "Groin injury - Unknown return date",
+      "in_my_squad": false
+    },
+    {
+      "element": 99,
+      "name": "Milambo",
+      "status": "i",
+      "chance": 0,
+      "news": "Knee injury - Unknown return date",
+      "in_my_squad": false
+    },
+    {
+      "element": 121,
+      "name": "Mitoma",
+      "status": "i",
+      "chance": 0,
+      "news": "Hamstring injury - Unknown return date",
+      "in_my_squad": false
+    },
+    {
+      "element": 122,
+      "name": "Minteh",
+      "status": "i",
+      "chance": 0,
+      "news": "Leg injury - Expected back 28 Nov",
+      "in_my_squad": false
+    },
+    {
+      "element": 128,
+      "name": "Buonanotte",
+      "status": "u",
+      "chance": 0,
+      "news": "Has joined Elche on loan for the rest of the season",
+      "in_my_squad": false
+    },
+    {
+      "element": 132,
+      "name": "Howell",
+      "status": "u",
+      "chance": 0,
+      "news": "Has joined Leicester City on loan for the rest of the season",
+      "in_my_squad": false
+    },
+    {
+      "element": 133,
+      "name": "Watson",
+      "status": "u",
+      "chance": 0,
+      "news": "Has joined Leicester City on loan for the rest of the season",
+      "in_my_squad": false
+    },
+    {
+      "element": 137,
+      "name": "Tzimas",
+      "status": "i",
+      "chance": 0,
+      "news": "Knee injury - Unknown return date",
+      "in_my_squad": false
+    },
+    {
+      "element": 139,
+      "name": "Ferguson",
+      "status": "i",
+      "chance": 0,
+      "news": "Ankle injury - Expected back 10 Oct",
+      "in_my_squad": false
+    },
+    {
+      "element": 141,
+      "name": "J\u00f6rgensen",
+      "status": "u",
+      "chance": 0,
+      "news": "Has joined RC Strasbourg on loan for the rest of the season",
+      "in_my_squad": false
+    },
+    {
+      "element": 143,
+      "name": "Chalobah",
+      "status": "u",
+      "chance": 0,
+      "news": "Has joined Como permanently",
+      "in_my_squad": false
+    },
+    {
+      "element": 146,
+      "name": "B.Badiashile",
+      "status": "u",
+      "chance": 0,
+      "news": "Has joined Napoli on loan for the rest of the season",
+      "in_my_squad": false
+    },
+    {
+      "element": 150,
+      "name": "M.Sarr",
+      "status": "u",
+      "chance": 0,
+      "news": "Has joined Real Sociedad on loan for the rest of the season",
+      "in_my_squad": false
+    },
+    {
+      "element": 168,
+      "name": "Marc Guiu",
+      "status": "u",
+      "chance": 0,
+      "news": "Has joined RB Leipzig permanently",
+      "in_my_squad": false
+    },
+    {
+      "element": 177,
+      "name": "Kesler-Hayden",
+      "status": "i",
+      "chance": 0,
+      "news": "Hamstring injury - Unknown return date",
+      "in_my_squad": false
+    },
+    {
+      "element": 180,
+      "name": "Woolfenden",
+      "status": "i",
+      "chance": 0,
+      "news": "Knee injury - Unknown return date",
+      "in_my_squad": false
+    },
+    {
+      "element": 181,
+      "name": "Brau",
+      "status": "u",
+      "chance": 0,
+      "news": "Has joined Academico de Viseu on loan for the rest of the season",
+      "in_my_squad": false
+    },
+    {
+      "element": 192,
+      "name": "Andrews",
+      "status": "u",
+      "chance": 0,
+      "news": "Has joined Oxford United on loan for the rest of the season",
+      "in_my_squad": false
+    },
+    {
+      "element": 193,
+      "name": "Wright",
+      "status": "i",
+      "chance": 0,
+      "news": "Thigh injury - Unknown return date",
+      "in_my_squad": false
+    },
+    {
+      "element": 196,
+      "name": "Markelo",
+      "status": "u",
+      "chance": 0,
+      "news": "Has joined Shabab Al-Ahli Dubai permanently",
+      "in_my_squad": false
+    },
+    {
+      "element": 197,
+      "name": "Bassette",
+      "status": "u",
+      "chance": 0,
+      "news": "Has joined KVC Westerlo on loan for the rest of the season",
+      "in_my_squad": false
+    },
+    {
+      "element": 206,
+      "name": "Chadi Riad",
+      "status": "i",
+      "chance": 0,
+      "news": "Knee injury - Unknown return date",
+      "in_my_squad": false
+    },
+    {
+      "element": 208,
+      "name": "Sarr",
+      "status": "i",
+      "chance": 0,
+      "news": "Groin injury - Unknown return date",
+      "in_my_squad": false
+    },
+    {
+      "element": 220,
+      "name": "Cardines",
+      "status": "u",
+      "chance": 0,
+      "news": "Has joined Bristol City on loan for the rest of the season",
+      "in_my_squad": false
+    },
+    {
+      "element": 223,
+      "name": "Mateta",
+      "status": "i",
+      "chance": 0,
+      "news": "Hamstring injury - Expected back 11 Oct",
+      "in_my_squad": false
+    },
+    {
+      "element": 225,
+      "name": "Uche",
+      "status": "u",
+      "chance": 0,
+      "news": "has returned to Getafe CF",
+      "in_my_squad": false
+    },
+    {
+      "element": 21,
+      "name": "N\u00f8rgaard",
+      "status": "i",
+      "chance": 0,
+      "news": "Groin injury - Unknown return date",
+      "in_my_squad": false
+    },
+    {
+      "element": 235,
+      "name": "Aznou",
+      "status": "u",
+      "chance": 0,
+      "news": "Has joined Malaga on loan for the rest of the season",
+      "in_my_squad": false
+    },
+    {
+      "element": 252,
+      "name": "McNally",
+      "status": "u",
+      "chance": 0,
+      "news": "Has joined York City on loan for the rest of the season",
+      "in_my_squad": false
+    },
+    {
+      "element": 266,
+      "name": "Cairney",
+      "status": "i",
+      "chance": 0,
+      "news": "Knee injury - Expected back 10 Oct",
+      "in_my_squad": false
+    },
+    {
+      "element": 274,
+      "name": "Butland",
+      "status": "i",
+      "chance": 0,
+      "news": "Arm injury - Unknown return date",
+      "in_my_squad": false
+    },
+    {
+      "element": 275,
+      "name": "Cartwright",
+      "status": "u",
+      "chance": 0,
+      "news": "Has joined Grimsby Town on loan for the rest of the season",
+      "in_my_squad": false
+    },
+    {
+      "element": 276,
+      "name": "Lo-Tutala",
+      "status": "u",
+      "chance": 0,
+      "news": "Has joined Colchester United on loan for the rest of the season",
+      "in_my_squad": false
+    },
+    {
+      "element": 278,
+      "name": "Hughes",
+      "status": "i",
+      "chance": 0,
+      "news": "Groin injury - Unknown return date",
+      "in_my_squad": false
+    },
+    {
+      "element": 283,
+      "name": "Jacob",
+      "status": "i",
+      "chance": 0,
+      "news": "Hip injury - Expected back 5 Sep",
+      "in_my_squad": false
+    },
+    {
+      "element": 291,
+      "name": "Matazo",
+      "status": "i",
+      "chance": 0,
+      "news": "Knee injury - Unknown return date",
+      "in_my_squad": false
+    },
+    {
+      "element": 293,
+      "name": "Kamara",
+      "status": "u",
+      "chance": 0,
+      "news": "Has joined Portsmouth permanently",
+      "in_my_squad": false
+    },
+    {
+      "element": 294,
+      "name": "Zambrano",
+      "status": "i",
+      "chance": 0,
+      "news": "Thigh injury - Unknown return date",
+      "in_my_squad": false
+    },
+    {
+      "element": 297,
+      "name": "Gyabi",
+      "status": "i",
+      "chance": 0,
+      "news": "Thigh injury - Unknown return date",
+      "in_my_squad": false
+    },
+    {
+      "element": 298,
+      "name": "Destan",
+      "status": "u",
+      "chance": 0,
+      "news": "Has joined Konyaspor permanently",
+      "in_my_squad": false
+    },
+    {
+      "element": 299,
+      "name": "Burstow",
+      "status": "u",
+      "chance": 0,
+      "news": "Has joined Sheffield Wednesday on loan for the rest of the season",
+      "in_my_squad": false
+    },
+    {
+      "element": 340,
+      "name": "Gelhardt",
+      "status": "i",
+      "chance": 0,
+      "news": "Ankle injury - Expected back 5 Sep",
+      "in_my_squad": false
+    },
+    {
+      "element": 310,
+      "name": "Matusiwa",
+      "status": "i",
+      "chance": 0,
+      "news": "Muscular injury - Unknown return date",
+      "in_my_squad": false
+    },
+    {
+      "element": 311,
+      "name": "Burns",
+      "status": "u",
+      "chance": 0,
+      "news": "Has joined Leicester City permanently",
+      "in_my_squad": false
+    },
+    {
+      "element": 312,
+      "name": "Taylor",
+      "status": "i",
+      "chance": 0,
+      "news": "Knee injury - Unknown return date",
+      "in_my_squad": false
+    },
+    {
+      "element": 317,
+      "name": "Hirst",
+      "status": "u",
+      "chance": 0,
+      "news": "Has joined Stoke City permanently",
+      "in_my_squad": false
+    },
+    {
+      "element": 318,
+      "name": "Philogene",
+      "status": "i",
+      "chance": 0,
+      "news": "Ankle injury - Unknown return date",
+      "in_my_squad": false
+    },
+    {
+      "element": 319,
+      "name": "Szmodics",
+      "status": "u",
+      "chance": 0,
+      "news": "Has joined Derby County on loan for the rest of the season",
+      "in_my_squad": false
+    },
+    {
+      "element": 322,
+      "name": "Al-Hamadi",
+      "status": "u",
+      "chance": 0,
+      "news": "Has joined Sheffield Wednesday on loan for the rest of the season",
+      "in_my_squad": false
+    },
+    {
+      "element": 554,
+      "name": "Van Oevelen",
+      "status": "u",
+      "chance": 0,
+      "news": "Has joined Valencia on loan for the rest of the season",
+      "in_my_squad": false
+    },
+    {
+      "element": 326,
+      "name": "Perri",
+      "status": "u",
+      "chance": 0,
+      "news": "Has joined Torino on loan for the rest of the season",
+      "in_my_squad": false
+    },
+    {
+      "element": 333,
+      "name": "Bornauw",
+      "status": "u",
+      "chance": 0,
+      "news": "Has joined Hamburg SV on loan for the rest of the season",
+      "in_my_squad": false
+    },
+    {
+      "element": 342,
+      "name": "Harrison",
+      "status": "u",
+      "chance": 0,
+      "news": "Has joined New England Revolution permanently",
+      "in_my_squad": false
+    },
+    {
+      "element": 348,
+      "name": "Piroe",
+      "status": "u",
+      "chance": 0,
+      "news": "Has joined West Ham United on loan for the rest of the season",
+      "in_my_squad": false
+    },
+    {
+      "element": 349,
+      "name": "Mateo Joseph",
+      "status": "i",
+      "chance": 0,
+      "news": "Knee injury - Unknown return date",
+      "in_my_squad": false
+    },
+    {
+      "element": 353,
+      "name": "Pecsi",
+      "status": "u",
+      "chance": 0,
+      "news": "Has joined TSV Hartberg on loan for the rest of the season",
+      "in_my_squad": false
+    },
+    {
+      "element": 354,
+      "name": "Jaros",
+      "status": "i",
+      "chance": 0,
+      "news": "Knee injury - Unknown return date",
+      "in_my_squad": false
+    },
+    {
+      "element": 359,
+      "name": "Gomez",
+      "status": "i",
+      "chance": 0,
+      "news": "Muscular injury - Unknown return date",
+      "in_my_squad": false
+    },
+    {
+      "element": 360,
+      "name": "Bradley",
+      "status": "i",
+      "chance": 0,
+      "news": "Knee injury - Unknown return date",
+      "in_my_squad": false
+    },
+    {
+      "element": 363,
+      "name": "Leoni",
+      "status": "i",
+      "chance": 0,
+      "news": "Knee injury - Unknown return date",
+      "in_my_squad": false
+    },
+    {
+      "element": 365,
+      "name": "Ramsay",
+      "status": "u",
+      "chance": 0,
+      "news": "Has joined St Mirren on loan for the rest of the season",
+      "in_my_squad": false
+    },
+    {
+      "element": 370,
+      "name": "Chiesa",
+      "status": "i",
+      "chance": 0,
+      "news": "Back injury - Unknown return date",
+      "in_my_squad": false
+    },
+    {
+      "element": 373,
+      "name": "C.Jones",
+      "status": "u",
+      "chance": 0,
+      "news": "Has joined Internazionale permanently",
+      "in_my_squad": false
+    },
+    {
+      "element": 376,
+      "name": "Bajcetic",
+      "status": "u",
+      "chance": 0,
+      "news": "Has joined Celta Vigo permanently",
+      "in_my_squad": false
+    },
+    {
+      "element": 380,
+      "name": "Ekitik\u00e9",
+      "status": "i",
+      "chance": 0,
+      "news": "Achilles injury - Unknown return date",
+      "in_my_squad": false
+    },
+    {
+      "element": 382,
+      "name": "Danns",
+      "status": "i",
+      "chance": 0,
+      "news": "Unspecified injury - Unknown return date",
+      "in_my_squad": false
+    },
+    {
+      "element": 394,
+      "name": "Alleyne",
+      "status": "u",
+      "chance": 0,
+      "news": "Has joined Burnley on loan for the rest of the season",
+      "in_my_squad": false
+    },
+    {
+      "element": 400,
+      "name": "Doku",
+      "status": "i",
+      "chance": 0,
+      "news": "Calf injury - Expected back 5 Sep",
+      "in_my_squad": false
+    },
+    {
+      "element": 402,
+      "name": "Rodrigo",
+      "status": "u",
+      "chance": 0,
+      "news": "Has joined Barcelona permanently",
+      "in_my_squad": false
+    },
+    {
+      "element": 404,
+      "name": "Reijnders",
+      "status": "u",
+      "chance": 0,
+      "news": "Has joined Al Qadsiah permanently",
+      "in_my_squad": false
+    },
+    {
+      "element": 408,
+      "name": "Phillips",
+      "status": "u",
+      "chance": 0,
+      "news": "Has joined Sheffield United on loan for the rest of the season",
+      "in_my_squad": false
+    },
+    {
+      "element": 131,
+      "name": "Baleba",
+      "status": "i",
+      "chance": 0,
+      "news": "Ankle injury - Expected back 19 Sep",
+      "in_my_squad": false
+    },
+    {
+      "element": 413,
+      "name": "Bayindir",
+      "status": "u",
+      "chance": 0,
+      "news": "Has joined Celta Vigo on loan for the rest of the season",
+      "in_my_squad": false
+    },
+    {
+      "element": 414,
+      "name": "Heaton",
+      "status": "i",
+      "chance": 0,
+      "news": "Hamstring injury - Unknown return date",
+      "in_my_squad": false
+    },
+    {
+      "element": 416,
+      "name": "De Ligt",
+      "status": "i",
+      "chance": 0,
+      "news": "Back injury - Unknown return date",
+      "in_my_squad": false
+    },
+    {
+      "element": 425,
+      "name": "Fredricson",
+      "status": "u",
+      "chance": 0,
+      "news": "Has joined Lausanne-Sport permanently",
+      "in_my_squad": false
+    },
+    {
+      "element": 431,
+      "name": "Amad",
+      "status": "i",
+      "chance": 0,
+      "news": "Unspecified injury - Unknown return date",
+      "in_my_squad": false
+    },
+    {
+      "element": 433,
+      "name": "Ugarte",
+      "status": "i",
+      "chance": 0,
+      "news": "Knee injury - Unknown return date",
+      "in_my_squad": false
+    },
+    {
+      "element": 436,
+      "name": "Collyer",
+      "status": "u",
+      "chance": 0,
+      "news": "Has joined West Brom permanently",
+      "in_my_squad": false
+    },
+    {
+      "element": 448,
+      "name": "Burn",
+      "status": "i",
+      "chance": 0,
+      "news": "Ankle injury - Expected back 14 Sep",
+      "in_my_squad": false
+    },
+    {
+      "element": 450,
+      "name": "Livramento",
+      "status": "i",
+      "chance": 0,
+      "news": "Calf injury - Unknown return date",
+      "in_my_squad": false
+    },
+    {
+      "element": 451,
+      "name": "A.Murphy",
+      "status": "u",
+      "chance": 0,
+      "news": "Has joined FC Kaiserslautern on loan for the rest of the season",
+      "in_my_squad": false
+    },
+    {
+      "element": 458,
+      "name": "Joelinton",
+      "status": "i",
+      "chance": 0,
+      "news": "Unspecified injury - Unknown return date",
+      "in_my_squad": false
+    },
+    {
+      "element": 465,
+      "name": "Osula",
+      "status": "i",
+      "chance": 0,
+      "news": "Foot injury - Unknown return date",
+      "in_my_squad": false
+    },
+    {
+      "element": 475,
+      "name": "Savona",
+      "status": "i",
+      "chance": 0,
+      "news": "Knee injury - Unknown return date",
+      "in_my_squad": false
+    },
+    {
+      "element": 479,
+      "name": "Bindon",
+      "status": "u",
+      "chance": 0,
+      "news": "Has joined Charlton Athletic on loan for the rest of the season",
+      "in_my_squad": false
+    },
+    {
+      "element": 484,
+      "name": "Hutchinson",
+      "status": "u",
+      "chance": 0,
+      "news": "Has joined AC Milan on loan for the rest of the season",
+      "in_my_squad": false
+    },
+    {
+      "element": 485,
+      "name": "Bakwa",
+      "status": "u",
+      "chance": 0,
+      "news": "Has joined Lille on loan for the rest of the season",
+      "in_my_squad": false
+    },
+    {
+      "element": 488,
+      "name": "I.Sangar\u00e9",
+      "status": "i",
+      "chance": 0,
+      "news": "Calf injury - Unknown return date",
+      "in_my_squad": false
+    },
+    {
+      "element": 494,
+      "name": "Vicario",
+      "status": "u",
+      "chance": 0,
+      "news": "Has joined Juventus on loan for the rest of the season",
+      "in_my_squad": false
+    },
+    {
+      "element": 500,
+      "name": "Romero",
+      "status": "u",
+      "chance": 0,
+      "news": "Has joined Atletico Madrid permanently",
+      "in_my_squad": false
+    },
+    {
+      "element": 505,
+      "name": "Spence",
+      "status": "u",
+      "chance": 0,
+      "news": "Has joined Internazionale permanently",
+      "in_my_squad": false
+    },
+    {
+      "element": 507,
+      "name": "Phillips",
+      "status": "u",
+      "chance": 0,
+      "news": "Has joined Middlesbrough permanently",
+      "in_my_squad": false
+    },
+    {
+      "element": 511,
+      "name": "Souza",
+      "status": "u",
+      "chance": 0,
+      "news": "Has joined FC Porto on loan for the rest of the season",
+      "in_my_squad": false
+    },
+    {
+      "element": 513,
+      "name": "Xavi",
+      "status": "i",
+      "chance": 0,
+      "news": "Knee injury - Unknown return date",
+      "in_my_squad": false
+    },
+    {
+      "element": 517,
+      "name": "Odobert",
+      "status": "i",
+      "chance": 0,
+      "news": "Knee injury - Unknown return date",
+      "in_my_squad": false
+    },
+    {
+      "element": 521,
+      "name": "Kulusevski",
+      "status": "i",
+      "chance": 0,
+      "news": "Knee injury - Unknown return date",
+      "in_my_squad": false
+    },
+    {
+      "element": 530,
+      "name": "Patterson",
+      "status": "u",
+      "chance": 0,
+      "news": "Has joined Wrexham permanently",
+      "in_my_squad": false
+    },
+    {
+      "element": 537,
+      "name": "Seelt",
+      "status": "u",
+      "chance": 0,
+      "news": "Has joined Swansea City on loan for the rest of the season",
+      "in_my_squad": false
+    },
+    {
+      "element": 538,
+      "name": "Hjelde",
+      "status": "u",
+      "chance": 0,
+      "news": "Has joined KV Mechelen on loan for the rest of the season",
+      "in_my_squad": false
+    },
+    {
+      "element": 540,
+      "name": "Masuaku",
+      "status": "u",
+      "chance": 0,
+      "news": "Has joined Konyaspor permanently",
+      "in_my_squad": false
+    },
+    {
+      "element": 546,
+      "name": "Adingra",
+      "status": "i",
+      "chance": 0,
+      "news": "Ankle injury - Unknown return date",
+      "in_my_squad": false
+    },
+    {
+      "element": 344,
+      "name": "Gruev",
+      "status": "d",
+      "chance": 25,
+      "news": "Knee injury - 25% chance of playing",
+      "in_my_squad": false
+    },
+    {
+      "element": 123,
+      "name": "Hinshelwood",
+      "status": "d",
+      "chance": 50,
+      "news": "Unspecified injury - 50% chance of playing",
+      "in_my_squad": false
+    },
+    {
+      "element": 329,
+      "name": "Rodon",
+      "status": "d",
+      "chance": 50,
+      "news": "Hamstring injury - 50% chance of playing",
+      "in_my_squad": false
+    },
+    {
+      "element": 97,
+      "name": "Jensen",
+      "status": "d",
+      "chance": 75,
+      "news": "Unspecified injury - 75% chance of playing",
+      "in_my_squad": false
+    },
+    {
+      "element": 125,
+      "name": "Georginio",
+      "status": "d",
+      "chance": 75,
+      "news": "Unspecified injury - 75% chance of playing",
+      "in_my_squad": false
+    },
+    {
+      "element": 129,
+      "name": "Ayari",
+      "status": "d",
+      "chance": 75,
+      "news": "Ankle injury - 75% chance of playing",
+      "in_my_squad": false
+    },
+    {
+      "element": 101,
+      "name": "Henderson",
+      "status": "d",
+      "chance": 75,
+      "news": "Wrist injury - 75% chance of playing",
+      "in_my_squad": false
+    },
+    {
+      "element": 152,
+      "name": "Palestra",
+      "status": "d",
+      "chance": 75,
+      "news": "Unspecified injury - 75% chance of playing",
+      "in_my_squad": false
+    },
+    {
+      "element": 159,
+      "name": "Caicedo",
+      "status": "d",
+      "chance": 75,
+      "news": "Unspecified injury - 75% chance of playing",
+      "in_my_squad": false
+    },
+    {
+      "element": 610,
+      "name": "De Fougerolles",
+      "status": "d",
+      "chance": 75,
+      "news": "Unspecified injury - 75% chance of playing",
+      "in_my_squad": false
+    },
+    {
+      "element": 280,
+      "name": "Coyle",
+      "status": "d",
+      "chance": 75,
+      "news": "Unspecified injury - 75% chance of playing",
+      "in_my_squad": false
+    },
+    {
+      "element": 289,
+      "name": "Crooks",
+      "status": "d",
+      "chance": 75,
+      "news": "Thigh injury - 75% chance of playing",
+      "in_my_squad": false
+    },
+    {
+      "element": 316,
+      "name": "Emersonn",
+      "status": "d",
+      "chance": 75,
+      "news": "Knee injury - 75% chance of playing",
+      "in_my_squad": false
+    },
+    {
+      "element": 571,
+      "name": "Florentino",
+      "status": "d",
+      "chance": 75,
+      "news": "Calf injury - 75% chance of playing",
+      "in_my_squad": false
+    },
+    {
+      "element": 389,
+      "name": "Matheus N.",
+      "status": "d",
+      "chance": 75,
+      "news": "Unspecified injury - 75% chance of playing",
+      "in_my_squad": false
+    },
+    {
+      "element": 430,
+      "name": "Mount",
+      "status": "d",
+      "chance": 75,
+      "news": "Foot injury - 75% chance of playing",
+      "in_my_squad": false
+    },
+    {
+      "element": 403,
+      "name": "S\u00e1vio",
+      "status": "d",
+      "chance": 75,
+      "news": "Muscular injury - 75% chance of playing",
+      "in_my_squad": false
+    },
+    {
+      "element": 515,
+      "name": "Maddison",
+      "status": "d",
+      "chance": 75,
+      "news": "Shoulder injury - 75% chance of playing",
+      "in_my_squad": false
+    },
+    {
+      "element": 543,
+      "name": "Diarra",
+      "status": "d",
+      "chance": 75,
+      "news": "Unspecified injury - 75% chance of playing",
+      "in_my_squad": false
+    }
+  ],
+  "suspensions": [],
+  "idea_list": [],
+  "notes": "GW2: 25 overperformer(s), 0 underperformer(s), 0 injury flag(s) in my squad, 0 suspension risk(s).",
+  "elite_strategy": {
+    "sample_size": 25,
+    "club_exposure": [
+      {
+        "team": 1,
+        "name": "Arsenal",
+        "avg_players_per_manager": 2.48,
+        "managers_with_player_pct": 100.0
+      },
+      {
+        "team": 6,
+        "name": "Chelsea",
+        "avg_players_per_manager": 2.36,
+        "managers_with_player_pct": 100.0
+      },
+      {
+        "team": 5,
+        "name": "Brighton",
+        "avg_players_per_manager": 1.88,
+        "managers_with_player_pct": 96.0
+      },
+      {
+        "team": 15,
+        "name": "Man City",
+        "avg_players_per_manager": 1.36,
+        "managers_with_player_pct": 84.0
+      },
+      {
+        "team": 4,
+        "name": "Brentford",
+        "avg_players_per_manager": 1.24,
+        "managers_with_player_pct": 80.0
+      },
+      {
+        "team": 13,
+        "name": "Leeds",
+        "avg_players_per_manager": 0.96,
+        "managers_with_player_pct": 56.0
+      },
+      {
+        "team": 14,
+        "name": "Liverpool",
+        "avg_players_per_manager": 0.92,
+        "managers_with_player_pct": 60.0
+      },
+      {
+        "team": 16,
+        "name": "Man Utd",
+        "avg_players_per_manager": 0.88,
+        "managers_with_player_pct": 64.0
+      },
+      {
+        "team": 9,
+        "name": "Everton",
+        "avg_players_per_manager": 0.8,
+        "managers_with_player_pct": 64.0
+      },
+      {
+        "team": 20,
+        "name": "Sunderland",
+        "avg_players_per_manager": 0.6,
+        "managers_with_player_pct": 40.0
+      }
+    ],
+    "captaincy": [
+      {
+        "element": 165,
+        "name": "Jo\u00e3o Pedro",
+        "count": 7,
+        "pct": 28.0
+      },
+      {
+        "element": 426,
+        "name": "B.Fernandes",
+        "count": 5,
+        "pct": 20.0
+      },
+      {
+        "element": 154,
+        "name": "Palmer",
+        "count": 4,
+        "pct": 16.0
+      },
+      {
+        "element": 411,
+        "name": "Haaland",
+        "count": 4,
+        "pct": 16.0
+      },
+      {
+        "element": 295,
+        "name": "McBurnie",
+        "count": 2,
+        "pct": 8.0
+      },
+      {
+        "element": 397,
+        "name": "Semenyo",
+        "count": 1,
+        "pct": 4.0
+      },
+      {
+        "element": 439,
+        "name": "\u0160e\u0161ko",
+        "count": 1,
+        "pct": 4.0
+      },
+      {
+        "element": 4,
+        "name": "Gabriel",
+        "count": 1,
+        "pct": 4.0
+      }
+    ],
+    "formations": [
+      {
+        "formation": "3-4-3",
+        "count": 11,
+        "pct": 44.0
+      },
+      {
+        "formation": "3-5-2",
+        "count": 7,
+        "pct": 28.0
+      },
+      {
+        "formation": "4-4-2",
+        "count": 3,
+        "pct": 12.0
+      },
+      {
+        "formation": "4-3-3",
+        "count": 2,
+        "pct": 8.0
+      },
+      {
+        "formation": "4-5-1",
+        "count": 1,
+        "pct": 4.0
+      },
+      {
+        "formation": "5-2-3",
+        "count": 1,
+        "pct": 4.0
+      }
+    ],
+    "transfer_style": {
+      "avg_transfers": 1.12,
+      "hit_pct": 4.0,
+      "chips": {
+        "wildcard": 1
+      }
+    },
+    "observations": [
+      "Highest squad exposure: Arsenal at 2.48 players per sampled manager (100% own at least one).",
+      "Most common captain: Jo\u00e3o Pedro (28% of sample).",
+      "Most common starting formation: 3-4-3 (44% of sample).",
+      "Transfer style: 1.12 transfers per sampled manager; 4% took a points hit.",
+      "Chips in sample: wildcard=1."
+    ]
+  },
+  "reflection_messages": [
+    "Elite structure check: the post-deadline sample averaged 2.48 Arsenal players while I had 1. I was materially lighter on Arsenal; I should review whether my fixture/model assumptions justified that gap. This is a learning signal for future GWs, not a reason to copy other managers blindly.",
+    "Bench call hurt: Calvert-Lewin scored 8 on my bench while James scored 1 in the XI \u2014 a 7-point selection swing. I should review the start/bench weighting.",
+    "I underweighted Newcastle: I had only 1 player, their five best FPL scores averaged 9.0 points in GW2, and their next 3 fixture(s) average FDR 2.7. I should give Newcastle more weight in GW3 planning instead of treating this as a one-week fluke.",
+    "I underweighted Liverpool: I had only 1 player, their five best FPL scores averaged 5.4 points in GW2, and their next 3 fixture(s) average FDR 2.3. I should give Liverpool more weight in GW3 planning instead of treating this as a one-week fluke."
+  ]
+}
