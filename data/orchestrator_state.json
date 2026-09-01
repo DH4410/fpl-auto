@@ -153,6 +153,20 @@
       "name": "Goretzka",
       "reason": "New signing: Signed by Aston Villa, one of the strongest clubs \u2014 worth watching even at ep_next 2.2.",
       "priority": 0.4
+    },
+    {
+      "action": "transfer_in",
+      "element": 627,
+      "name": "Barcola",
+      "reason": "New signing: Signed by Liverpool, one of the strongest clubs \u2014 worth watching even at ep_next 2.8.",
+      "priority": 0.4
+    },
+    {
+      "action": "transfer_in",
+      "element": 628,
+      "name": "Allan",
+      "reason": "New signing: Signed by Man City, one of the strongest clubs \u2014 worth watching even at ep_next 2.2.",
+      "priority": 0.4
     }
   ],
   "executed_transfers": {},
