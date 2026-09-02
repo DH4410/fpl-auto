@@ -255,5 +255,13 @@
     }
   ],
   "executed_transfers": {},
-  "idea_list": []
+  "idea_list": [
+    {
+      "action": "transfer_out",
+      "element": 463,
+      "name": "Woltemade",
+      "reason": "Has joined Juventus on loan for the rest of the season",
+      "priority": 1.0
+    }
+  ]
 }
