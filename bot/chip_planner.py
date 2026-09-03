@@ -74,7 +74,9 @@ class ChipPlanner:
     min_tc_gain: float = 6.0
     min_bb_gain: float = 11.0
     min_fh_gain: float = float(HIT_COST)
-    min_wc_gain: float = float(HIT_COST)
+    # A Wildcard is a scarce half-season structural chip, not a four-point
+    # coupon. Require a meaningful six-GW edge before spending it.
+    min_wc_gain: float = 12.0
     # Soft expiry policy: thresholds may ease as a half closes, but never by
     # more than 30% and never below a sensible per-chip floor. This prevents
     # "panic chip" behaviour while still avoiding pointless hoarding.
@@ -105,7 +107,11 @@ class ChipPlanner:
             return max(5.0, self.min_tc_gain * 0.75)
         if chip == CHIP_BENCH_BOOST:
             return max(9.0, self.min_bb_gain * 0.75)
-        # WC/FH should still need to beat roughly one paid transfer's value.
+        if chip == CHIP_WILDCARD:
+            # Even at expiry, do not burn a Wildcard for a one-transfer edge.
+            return max(8.0, self.min_wc_gain * 0.67)
+        # Free Hit live execution is disabled until a legal temporary-squad
+        # builder exists; keep the historical floor for backtests/advisory use.
         return float(HIT_COST)
 
     def _effective_min_gain(
