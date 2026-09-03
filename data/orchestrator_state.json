@@ -1,58 +1,123 @@
 {
   "last_analyzed_gw": 2,
-  "last_simulated_gw": 2,
+  "last_simulated_gw": 3,
   "last_executed_gw": 1,
   "approved_plan": {
-    "gw": 2,
-    "approved_transfers": [],
+    "gw": 3,
+    "approved_transfers": [
+      {
+        "element_in": 8,
+        "name_in": "Calafiori",
+        "purchase_price": 56,
+        "element_out": 4,
+        "name_out": "Gabriel",
+        "selling_price": 80
+      },
+      {
+        "element_in": 10,
+        "name_in": "White",
+        "purchase_price": 55,
+        "element_out": 28,
+        "name_out": "Martinez",
+        "selling_price": 50
+      },
+      {
+        "element_in": 12,
+        "name_in": "Saka",
+        "purchase_price": 95,
+        "element_out": 86,
+        "name_out": "Lewis-Potter",
+        "selling_price": 55
+      },
+      {
+        "element_in": 154,
+        "name_in": "Palmer",
+        "purchase_price": 96,
+        "element_out": 106,
+        "name_out": "Thiago",
+        "selling_price": 80
+      },
+      {
+        "element_in": 165,
+        "name_in": "Jo\u00e3o Pedro",
+        "purchase_price": 77,
+        "element_out": 142,
+        "name_out": "James",
+        "selling_price": 55
+      },
+      {
+        "element_in": 277,
+        "name_in": "Egan",
+        "purchase_price": 40,
+        "element_out": 200,
+        "name_out": "Lacroix",
+        "selling_price": 60
+      },
+      {
+        "element_in": 279,
+        "name_in": "Ajayi",
+        "purchase_price": 41,
+        "element_out": 368,
+        "name_out": "Szoboszlai",
+        "selling_price": 70
+      },
+      {
+        "element_in": 572,
+        "name_in": "Tzolakis",
+        "purchase_price": 46,
+        "element_out": 387,
+        "name_out": "O'Reilly",
+        "selling_price": 65
+      }
+    ],
     "approved_chip": null,
-    "expected_net_gain": 0.0,
-    "expected_gross_gain": 0.0,
-    "hit_count": 0,
+    "expected_net_gain": 173.88,
+    "expected_gross_gain": 197.88,
+    "hit_count": 6,
     "captain": {
       "element": 426,
       "name": "B.Fernandes",
-      "xpts": 4.31
+      "xpts": 11.96
     },
     "vice": {
-      "element": 4,
-      "name": "Gabriel",
-      "xpts": 3.6
+      "element": 399,
+      "name": "Cherki",
+      "xpts": 10.32
     },
-    "reasoning": "Planner recommends no transfer this GW (rolling the free transfer).",
+    "reasoning": "Planner proposes 8 transfer(s) worth +197.88 xPts gross over 6 GWs (+173.88 net of 6 hit(s)). Hit approved: 197.88 gross >= 26.0 required. REJECTED chip wildcard: the current plan is an ordinary transfer plan, not a dedicated chip-specific squad rebuild. Preserving the chip is safer than executing the wrong squad. NOTE: Woltemade is flagged urgent (Has joined Juventus on loan for the rest of the season) but the optimiser kept them \u2014 benched or judged still worth holding.",
     "picks_payload": [
       {
-        "element": 226,
+        "element": 572,
         "position": 1,
         "is_captain": false,
         "is_vice_captain": false
       },
       {
-        "element": 4,
+        "element": 8,
         "position": 2,
         "is_captain": false,
-        "is_vice_captain": true
+        "is_vice_captain": false
       },
       {
-        "element": 142,
+        "element": 10,
         "position": 3,
         "is_captain": false,
         "is_vice_captain": false
       },
       {
-        "element": 200,
+        "element": 277,
         "position": 4,
         "is_captain": false,
         "is_vice_captain": false
       },
       {
-        "element": 387,
+        "element": 279,
         "position": 5,
         "is_captain": false,
         "is_vice_captain": false
       },
       {
-        "element": 388,
+        "element": 12,
         "position": 6,
         "is_captain": false,
         "is_vice_captain": false
@@ -64,7 +129,7 @@
         "is_vice_captain": false
       },
       {
-        "element": 368,
+        "element": 154,
         "position": 8,
         "is_captain": false,
         "is_vice_captain": false
@@ -73,7 +138,7 @@
         "element": 399,
         "position": 9,
         "is_captain": false,
-        "is_vice_captain": false
+        "is_vice_captain": true
       },
       {
         "element": 426,
@@ -82,38 +147,212 @@
         "is_vice_captain": false
       },
       {
-        "element": 106,
+        "element": 165,
         "position": 11,
         "is_captain": false,
         "is_vice_captain": false
       },
       {
-        "element": 28,
+        "element": 226,
         "position": 12,
         "is_captain": false,
         "is_vice_captain": false
       },
       {
-        "element": 346,
+        "element": 388,
         "position": 13,
         "is_captain": false,
         "is_vice_captain": false
       },
       {
-        "element": 463,
+        "element": 346,
         "position": 14,
         "is_captain": false,
         "is_vice_captain": false
       },
       {
-        "element": 86,
+        "element": 463,
         "position": 15,
         "is_captain": false,
         "is_vice_captain": false
       }
     ],
     "entry_id": 2330027,
-    "execute_target_utc": "2026-08-28T14:49:39.879198+00:00"
+    "source_squad_signature": [
+      4,
+      28,
+      86,
+      106,
+      124,
+      142,
+      200,
+      226,
+      346,
+      368,
+      387,
+      388,
+      399,
+      426,
+      463
+    ],
+    "target_squad_signature": [
+      8,
+      10,
+      12,
+      124,
+      154,
+      165,
+      226,
+      277,
+      279,
+      346,
+      388,
+      399,
+      426,
+      463,
+      572
+    ],
+    "planning_news_guard": [
+      {
+        "element": 4,
+        "status": "a",
+        "chance_next_round": null,
+        "news": ""
+      },
+      {
+        "element": 8,
+        "status": "a",
+        "chance_next_round": null,
+        "news": ""
+      },
+      {
+        "element": 10,
+        "status": "a",
+        "chance_next_round": 100,
+        "news": ""
+      },
+      {
+        "element": 12,
+        "status": "a",
+        "chance_next_round": null,
+        "news": ""
+      },
+      {
+        "element": 28,
+        "status": "a",
+        "chance_next_round": null,
+        "news": ""
+      },
+      {
+        "element": 86,
+        "status": "a",
+        "chance_next_round": null,
+        "news": ""
+      },
+      {
+        "element": 106,
+        "status": "a",
+        "chance_next_round": null,
+        "news": ""
+      },
+      {
+        "element": 124,
+        "status": "a",
+        "chance_next_round": null,
+        "news": ""
+      },
+      {
+        "element": 142,
+        "status": "a",
+        "chance_next_round": null,
+        "news": ""
+      },
+      {
+        "element": 154,
+        "status": "a",
+        "chance_next_round": 100,
+        "news": ""
+      },
+      {
+        "element": 165,
+        "status": "a",
+        "chance_next_round": null,
+        "news": ""
+      },
+      {
+        "element": 200,
+        "status": "a",
+        "chance_next_round": null,
+        "news": ""
+      },
+      {
+        "element": 226,
+        "status": "a",
+        "chance_next_round": null,
+        "news": ""
+      },
+      {
+        "element": 277,
+        "status": "a",
+        "chance_next_round": null,
+        "news": ""
+      },
+      {
+        "element": 279,
+        "status": "a",
+        "chance_next_round": 100,
+        "news": ""
+      },
+      {
+        "element": 346,
+        "status": "a",
+        "chance_next_round": null,
+        "news": ""
+      },
+      {
+        "element": 368,
+        "status": "a",
+        "chance_next_round": null,
+        "news": ""
+      },
+      {
+        "element": 387,
+        "status": "a",
+        "chance_next_round": null,
+        "news": ""
+      },
+      {
+        "element": 388,
+        "status": "a",
+        "chance_next_round": null,
+        "news": ""
+      },
+      {
+        "element": 399,
+        "status": "a",
+        "chance_next_round": null,
+        "news": ""
+      },
+      {
+        "element": 426,
+        "status": "a",
+        "chance_next_round": null,
+        "news": ""
+      },
+      {
+        "element": 463,
+        "status": "u",
+        "chance_next_round": 0,
+        "news": "Has joined Juventus on loan for the rest of the season"
+      },
+      {
+        "element": 572,
+        "status": "a",
+        "chance_next_round": null,
+        "news": ""
+      }
+    ],
+    "execute_target_utc": "2026-09-04T05:50:35.201302+00:00"
   },
   "execute_target_utc": null,
   "last_deep_research_gw": 2,
