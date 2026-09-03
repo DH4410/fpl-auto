@@ -856,6 +856,7 @@ def stage_pre_deadline_plan(bootstrap: dict, state: dict, dry_run: bool) -> dict
         my_team=my_team,
         entry_info=entry_info,
         forced_ids=candidate_watch_ids,
+        write_reports=False,
     )
     model_health = dict(plan.get("model_health") or {})
     if not (
@@ -998,6 +999,22 @@ def stage_pre_deadline_plan(bootstrap: dict, state: dict, dry_run: bool) -> dict
                 "Fresh no-hit fallback was rejected; refusing to freeze an "
                 "internally inconsistent execution plan"
             )
+
+    # Only now is the human-readable report written. This exact plan has passed
+    # model-health, projection, hit/Wildcard and veto gates, so the report can
+    # no longer disagree with the frozen execution decision.
+    try:
+        final_report_paths = updater._write_reports(
+            plan,
+            next_gw,
+            forecasts,
+            planning_bootstrap,
+            updater._last_report_gw,
+            updater._last_report_gw_data,
+        )
+        plan["report_paths"] = final_report_paths
+    except Exception as exc:  # noqa: BLE001
+        log.warning("Final deadline report refresh failed (%s).", exc)
 
     decision["picks_payload"] = build_picks_payload(plan)
     decision["entry_id"] = entry_id
