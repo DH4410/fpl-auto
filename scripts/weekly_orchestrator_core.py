@@ -837,6 +837,7 @@ def stage_pre_deadline_plan(bootstrap: dict, state: dict, dry_run: bool) -> dict
     # Imported here rather than at module scope: the planner pulls in pulp and
     # scipy, which the light single-stage workflows do not install.
     from bot.pre_deadline_simulator import HIT_MARGIN, PreDeadlineSimulator
+    from bot.season_forecaster import projection_warnings
     from bot.updater import (
         SeasonUpdater,
         _discounted_plan_value,
@@ -942,6 +943,21 @@ def stage_pre_deadline_plan(bootstrap: dict, state: dict, dry_run: bool) -> dict
             "required_edge": round(required_edge, 2),
         }
         plan["model_health"] = model_health
+
+    # Recompute projection sanity after any paid-hit counterfactual re-solve.
+    # These warnings used to be email-only; autonomous writes now fail closed
+    # because a visibly corrupt horizon should never freeze an execution plan.
+    plan["projection_warnings"] = projection_warnings(plan.get("gw_plan", []))
+    if plan["projection_warnings"]:
+        detail = " | ".join(plan["projection_warnings"])
+        email_alerts.send_alert(
+            f"GW{next_gw} autonomous plan BLOCKED — projection sanity",
+            "The forward model produced a projection sanity warning. "
+            "No transfer or chip plan was frozen.\n\n" + detail,
+        )
+        raise RuntimeError(
+            f"projection sanity warning; refusing to freeze GW{next_gw}: {detail}"
+        )
 
     idea_list = (list(state.get("idea_list") or [])
                  + list(state.get("signing_ideas") or [])
