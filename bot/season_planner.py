@@ -112,6 +112,10 @@ class SeasonPlanner:
         self,
         forecasts: pd.DataFrame,
         current_state: dict[str, Any],
+        *,
+        unlimited_transfers_current_gw: bool = False,
+        max_current_gw_hits: int | None = None,
+        forbidden_current_ids: set[int] | None = None,
     ) -> dict[str, Any]:
         """Solve the multi-GW MILP and return a full season plan.
 
@@ -147,6 +151,9 @@ class SeasonPlanner:
         }
         bank0 = int(current_state.get("bank", 0))
         ft0 = min(MAX_BANKED_FT, max(1, int(current_state.get("ft", 1))))
+        forbidden_current_ids = {
+            int(element) for element in (forbidden_current_ids or set())
+        }
 
         # Initial squad selection: unlimited free transfers at GW1 (no hits).
         initial_squad = len(squad_ids) == 0
@@ -279,20 +286,29 @@ class SeasonPlanner:
                 prob += sq[i][t] == prev + buy[i][t] - sell[i][t]
                 # Cannot buy and sell the same player in the same GW.
                 prob += buy[i][t] + sell[i][t] <= 1
+                if elements[i] in forbidden_current_ids:
+                    prob += sq[i][t] == 0
 
             # --- Free transfers and hits ---
             # hit_var[t] counts transfers beyond the FT allowance.
             # Initial squad selection is free (unlimited FTs for GW1).
-            if t == 0 and initial_squad:
+            if t == 0 and (initial_squad or unlimited_transfers_current_gw):
                 prob += hit_var[t] == 0
             else:
                 prob += hit_var[t] >= n_trans - ft_var[t]
+                if t == 0 and max_current_gw_hits is not None:
+                    prob += hit_var[t] <= max(0, int(max_current_gw_hits))
 
             # --- FT rolling: ft_var[t+1] = min(5, ft_var[t] - n_trans + hit_var[t] + 1)
             # For the initial squad GW (no existing squad), all 15 buys are free;
             # FT carryover into GW2 is simply 1 (fresh start).
             if t == 0 and initial_squad:
                 prob += ft_var[t + 1] == 1
+            elif t == 0 and unlimited_transfers_current_gw:
+                # Current FPL chip rules preserve banked free transfers when a
+                # Wildcard is played; the unlimited rebuild does not spend or
+                # add one.
+                prob += ft_var[t + 1] == ft_var[t]
             else:
                 prob += ft_var[t + 1] <= ft_var[t] - n_trans + hit_var[t] + 1
                 prob += ft_var[t + 1] >= 1  # redundant with variable bound, explicit for clarity
@@ -313,11 +329,16 @@ class SeasonPlanner:
         # ---------------------------------------------------------------
         # Extract results.
         # ---------------------------------------------------------------
-        return self._extract(
+        result = self._extract(
             prob, elements, names, pos, club, costs, sell_price_arr,
             xpts, sq, st, cp, buy, sell, ft_var, hit_var, bank_var,
             gws, owned,
         )
+        result["transfer_plan_kind"] = (
+            "wildcard_rebuild" if unlimited_transfers_current_gw else "ordinary"
+        )
+        result["max_current_gw_hits"] = max_current_gw_hits
+        return result
 
     # ------------------------------------------------------------------
     # Result extraction
@@ -336,8 +357,17 @@ class SeasonPlanner:
             squad_idx = [i for i in range(n) if _val(sq[i][t]) > 0.5]
             start_idx = [i for i in range(n) if _val(st[i][t]) > 0.5]
             capt_idx = next(i for i in range(n) if _val(cp[i][t]) > 0.5)
-            buy_idx = [i for i in range(n) if _val(buy[i][t]) > 0.5]
-            sell_idx = [i for i in range(n) if _val(sell[i][t]) > 0.5]
+            # Stable position-first ordering makes each displayed/API transfer
+            # pair like-for-like instead of zipping unrelated GK/DEF/MID/FWD
+            # changes that merely balance at whole-squad level.
+            buy_idx = sorted(
+                [i for i in range(n) if _val(buy[i][t]) > 0.5],
+                key=lambda i: (pos[i], elements[i]),
+            )
+            sell_idx = sorted(
+                [i for i in range(n) if _val(sell[i][t]) > 0.5],
+                key=lambda i: (pos[i], elements[i]),
+            )
             bench_idx = [i for i in squad_idx if i not in start_idx]
 
             vice_candidates = [i for i in start_idx if i != capt_idx and pos[i] != GKP]
@@ -368,9 +398,11 @@ class SeasonPlanner:
                 "vice": {"element": elements[vice_idx], "name": names[vice_idx],
                          "xpts": round(xpts[vice_idx, t], 2)},
                 "transfers_in": [{"element": elements[i], "name": names[i],
-                                   "cost": to_millions(costs[i])} for i in buy_idx],
+                                   "cost": to_millions(costs[i]),
+                                   "position": int(pos[i])} for i in buy_idx],
                 "transfers_out": [{"element": elements[i], "name": names[i],
-                                    "selling_price": to_millions(sell_price_arr[i])}
+                                    "selling_price": to_millions(sell_price_arr[i]),
+                                    "position": int(pos[i])}
                                    for i in sell_idx],
                 "n_transfers": len(buy_idx),
                 "hits": int(round(_val(hit_var[t]))),

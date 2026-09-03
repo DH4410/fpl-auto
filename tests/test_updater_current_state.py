@@ -3,10 +3,26 @@ from __future__ import annotations
 import unittest
 
 from bot import data_collector
-from bot.updater import build_current_state
+from bot.updater import _blend_ml_xpts, build_current_state, unavailable_for_rebuild
 
 
 class UpdaterCurrentStateTests(unittest.TestCase):
+    def test_ml_outlier_is_capped_before_official_estimate_blend(self):
+        # 100 raw xPts used to overwhelm ep_next and produced the implausible
+        # GW3 8-11 xPts cluster. The model channel is now capped at 12.
+        self.assertAlmostEqual(_blend_ml_xpts(100.0, 4.0, 3), 7.2)
+        self.assertAlmostEqual(_blend_ml_xpts(100.0, 0.0, 3), 6.0)
+
+    def test_woltemade_style_unavailable_player_is_blocked_from_rebuild(self):
+        blocked = unavailable_for_rebuild({
+            "elements": [
+                {"id": 99, "status": "u", "web_name": "Woltemade"},
+                {"id": 100, "status": "a", "web_name": "Available"},
+                {"id": 101, "status": "a", "can_select": False},
+            ]
+        })
+        self.assertEqual(blocked, {99, 101})
+
     def test_live_my_team_bank_overrides_last_deadline_snapshot(self):
         my_team = {
             "picks": [

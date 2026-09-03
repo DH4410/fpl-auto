@@ -134,6 +134,8 @@ class PreDeadlineSimulator:
 
         approved_transfers = self._pair_transfers(transfers_in, transfers_out)
         approved_chip = chip
+        requires_replan = False
+        vetoed_element_ids: list[int] = []
 
         if not approved_transfers:
             reasons.append("Planner recommends no transfer this GW (rolling the free transfer).")
@@ -148,6 +150,7 @@ class PreDeadlineSimulator:
         blocked = self._blocked_elements(idea_list)
         vetoed = [t for t in approved_transfers if t["element_in"] in blocked]
         if vetoed:
+            vetoed_element_ids = sorted({int(t["element_in"]) for t in vetoed})
             names = ", ".join(f"{t['name_in']} ({blocked[t['element_in']]})" for t in vetoed)
             reasons.append(
                 f"REJECTED: plan buys player(s) flagged unavailable by post-match "
@@ -157,6 +160,7 @@ class PreDeadlineSimulator:
             hit_count = 0
             net_gain = 0.0
             gross_gain = 0.0
+            requires_replan = True
 
         # 4. Hit margin gate.
         if approved_transfers and hit_count > 0:
@@ -171,6 +175,7 @@ class PreDeadlineSimulator:
                 hit_count = 0
                 net_gain = 0.0
                 gross_gain = 0.0
+                requires_replan = True
             else:
                 reasons.append(
                     f"Hit approved: {gross_gain:.2f} gross >= {required_gross:.1f} required."
@@ -180,6 +185,22 @@ class PreDeadlineSimulator:
         approved_chip, chip_reason = self._check_chip(plan, approved_chip, next_gw)
         if chip_reason:
             reasons.append(chip_reason)
+        if chip in (CHIP_WILDCARD, CHIP_FREE_HIT) and (
+            approved_chip is None or requires_replan
+        ):
+            # A rejected transfer chip changes the meaning and cost of the
+            # entire squad plan. Never keep its transfers and silently execute
+            # them as ordinary hits; the orchestrator must build a fresh plan.
+            approved_transfers = []
+            approved_chip = None
+            hit_count = 0
+            net_gain = 0.0
+            gross_gain = 0.0
+            requires_replan = True
+            reasons.append(
+                "REPLAN REQUIRED: rejected transfer-chip plan was cleared; "
+                "no transfer from it may execute as an ordinary hit."
+            )
 
         # 6. Unactioned urgent flags — recorded, not forced.
         squad = set(current_state.get("squad") or [])
@@ -205,6 +226,14 @@ class PreDeadlineSimulator:
             "captain": plan.get("captain"),
             "vice": plan.get("vice"),
             "reasoning": " ".join(reasons),
+            "transfer_plan_kind": plan.get("transfer_plan_kind", "legacy"),
+            "execution_plan_version": 2,
+            "requires_replan": requires_replan,
+            "wildcard_validation_errors": list(
+                plan.get("wildcard_validation_errors") or []
+            ),
+            "wildcard_validated": plan.get("wildcard_validated") is True,
+            "vetoed_element_ids": vetoed_element_ids,
         }
 
         _write_json(self.pre_deadline_dir / f"gw{next_gw}.json", result)
@@ -216,17 +245,44 @@ class PreDeadlineSimulator:
 
     @staticmethod
     def _pair_transfers(transfers_in: list[dict], transfers_out: list[dict]) -> list[dict]:
-        """Zip the planner's in/out lists into executable transfer records."""
+        """Pair same-position incoming/outgoing players for the FPL API."""
+        if len(transfers_in) != len(transfers_out):
+            raise ValueError("transfer-in/out counts differ")
+
+        missing_position = [
+            t for t in [*transfers_in, *transfers_out]
+            if t.get("position") is None
+        ]
+        if missing_position:
+            raise ValueError("transfer plan is missing player position metadata")
+
+        incoming_by_position: dict[int, list[dict]] = {}
+        outgoing_by_position: dict[int, list[dict]] = {}
+        for transfer in transfers_in:
+            incoming_by_position.setdefault(int(transfer["position"]), []).append(transfer)
+        for transfer in transfers_out:
+            outgoing_by_position.setdefault(int(transfer["position"]), []).append(transfer)
+        if {
+            position: len(rows) for position, rows in incoming_by_position.items()
+        } != {
+            position: len(rows) for position, rows in outgoing_by_position.items()
+        }:
+            raise ValueError("transfer-in/out position counts differ")
+
         paired: list[dict] = []
-        for t_in, t_out in zip(transfers_in, transfers_out):
-            paired.append({
-                "element_in": int(t_in["element"]),
-                "name_in": t_in.get("name", ""),
-                "purchase_price": int(round(float(t_in.get("cost", 0)) * 10)),
-                "element_out": int(t_out["element"]),
-                "name_out": t_out.get("name", ""),
-                "selling_price": int(round(float(t_out.get("selling_price", 0)) * 10)),
-            })
+        for position in sorted(incoming_by_position):
+            incoming = sorted(incoming_by_position[position], key=lambda t: int(t["element"]))
+            outgoing = sorted(outgoing_by_position[position], key=lambda t: int(t["element"]))
+            for t_in, t_out in zip(incoming, outgoing):
+                paired.append({
+                    "element_in": int(t_in["element"]),
+                    "name_in": t_in.get("name", ""),
+                    "purchase_price": int(round(float(t_in.get("cost", 0)) * 10)),
+                    "element_out": int(t_out["element"]),
+                    "name_out": t_out.get("name", ""),
+                    "selling_price": int(round(float(t_out.get("selling_price", 0)) * 10)),
+                    "position": position,
+                })
         return paired
 
     @staticmethod
@@ -281,12 +337,29 @@ class PreDeadlineSimulator:
         if not chip:
             return None, ""
 
-        # WC/FH change the transfer-state semantics. The current single-account
-        # season planner optimises ordinary permanent transfers; it does not yet
-        # build a dedicated unlimited Wildcard rebuild or a temporary Free Hit
-        # squad that reverts next GW while preserving banked FTs. Never attach
-        # those chips to an ordinary transfer plan and pretend it is equivalent.
-        if chip in (CHIP_WILDCARD, CHIP_FREE_HIT):
+        if chip == CHIP_WILDCARD:
+            if plan.get("transfer_plan_kind") != "wildcard_rebuild":
+                return None, (
+                    "REJECTED chip wildcard: a dedicated validated Wildcard "
+                    "rebuild was not supplied."
+                )
+            errors = list(plan.get("wildcard_validation_errors") or [])
+            if plan.get("wildcard_validated") is not True:
+                errors.append("Wildcard rebuild lacks an explicit validation marker")
+            if int(plan.get("hits") or 0) != 0:
+                errors.append("Wildcard rebuild contains paid hits")
+            if not plan.get("transfers_in") or not plan.get("transfers_out"):
+                errors.append("Wildcard rebuild makes no squad changes")
+            if errors:
+                return None, "REJECTED chip wildcard: " + "; ".join(errors)
+            return CHIP_WILDCARD, (
+                f"Chip wildcard approved for GW{next_gw}: dedicated rebuild "
+                "validated with unlimited transfers and no hits."
+            )
+
+        # Free Hit needs a temporary squad that reverts next GW. It remains
+        # fail-closed until that separate planner exists.
+        if chip == CHIP_FREE_HIT:
             return None, (
                 f"REJECTED chip {chip}: the current plan is an ordinary transfer "
                 "plan, not a dedicated chip-specific squad rebuild. Preserving "

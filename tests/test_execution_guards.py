@@ -11,6 +11,7 @@ from scripts.weekly_orchestrator_core import (
     _picks_readback_errors,
     _chip_readback_error,
     _candidate_watch_ids,
+    _frozen_plan_errors,
     build_picks_payload,
 )
 
@@ -159,6 +160,8 @@ class ExecutionGuardTests(unittest.TestCase):
         }
         decision = {
             "gw": 3,
+            "execution_plan_version": 2,
+            "transfer_plan_kind": "ordinary",
             "approved_transfers": [
                 {
                     "element_out": 1,
@@ -217,6 +220,129 @@ class ExecutionGuardTests(unittest.TestCase):
             {(1, 16), (2, 17)},
         )
         self.assertEqual(picks_mock.call_count, 1)
+        self.assertEqual(state["last_executed_gw"], 3)
+
+    def test_legacy_frozen_plan_is_rejected(self):
+        self.assertTrue(_frozen_plan_errors({"approved_chip": None}))
+
+    def test_legacy_plan_replans_before_authentication(self):
+        bootstrap = {
+            "events": [{
+                "id": 3,
+                "deadline_time": "2099-09-05T11:00:00Z",
+                "finished": False,
+            }]
+        }
+        state = {"approved_plan": {"gw": 3, "approved_chip": None}}
+        with (
+            patch.object(
+                core, "_replan_stale_execution", return_value={"replanned": True}
+            ) as replan,
+            patch.object(core, "authenticate") as authenticate,
+        ):
+            result = core.stage_execute(bootstrap, state, dry_run=False)
+
+        self.assertEqual(result, {"replanned": True})
+        replan.assert_called_once()
+        authenticate.assert_not_called()
+
+    def test_valid_wildcard_frozen_plan_is_accepted(self):
+        self.assertEqual(_frozen_plan_errors({
+            "execution_plan_version": 2,
+            "approved_chip": "wildcard",
+            "transfer_plan_kind": "wildcard_rebuild",
+            "hit_count": 0,
+            "wildcard_validation_errors": [],
+            "wildcard_validated": True,
+            "approved_transfers": [{"element_out": 1, "element_in": 16}],
+            "source_squad_signature": list(range(1, 16)),
+            "target_squad_signature": list(range(2, 17)),
+        }), [])
+
+    def test_frozen_plan_rejects_target_not_produced_by_transfers(self):
+        errors = _frozen_plan_errors({
+            "execution_plan_version": 2,
+            "approved_chip": None,
+            "approved_transfers": [],
+            "source_squad_signature": list(range(1, 16)),
+            "target_squad_signature": list(range(2, 17)),
+        })
+        self.assertIn("transfer batch does not produce the target squad", errors)
+
+    def test_valid_wildcard_is_attached_to_atomic_transfer_call(self):
+        source_ids = list(range(1, 16))
+        target_ids = list(range(2, 17))
+        bootstrap = {
+            "events": [{
+                "id": 3,
+                "deadline_time": "2099-09-05T11:00:00Z",
+                "finished": False,
+            }],
+            "elements": [
+                {
+                    "id": element, "now_cost": 50, "status": "a",
+                    "chance_of_playing_next_round": 100, "news": "",
+                }
+                for element in range(1, 17)
+            ],
+        }
+        picks = [
+            {
+                "element": element, "position": position,
+                "is_captain": position == 1,
+                "is_vice_captain": position == 2,
+            }
+            for position, element in enumerate(target_ids, 1)
+        ]
+        before = {
+            "picks": [
+                {"element": element, "selling_price": 50}
+                for element in source_ids
+            ],
+            "chips": [{"name": "wildcard", "status_for_entry": "available"}],
+        }
+        after = {
+            "picks": [dict(row, selling_price=50) for row in picks],
+            "chips": [{
+                "name": "wildcard", "status_for_entry": "played", "event": 3,
+            }],
+        }
+        decision = {
+            "gw": 3,
+            "execution_plan_version": 2,
+            "transfer_plan_kind": "wildcard_rebuild",
+            "approved_chip": "wildcard",
+            "hit_count": 0,
+            "wildcard_validation_errors": [],
+            "wildcard_validated": True,
+            "approved_transfers": [{
+                "element_out": 1, "name_out": "P1", "selling_price": 50,
+                "element_in": 16, "name_in": "P16", "purchase_price": 50,
+            }],
+            "picks_payload": picks,
+            "source_squad_signature": source_ids,
+            "target_squad_signature": target_ids,
+            "planning_news_guard": _build_planning_news_guard(
+                bootstrap, list(range(1, 17))
+            ),
+        }
+        state = {"approved_plan": decision}
+        transfer_mock = Mock(return_value={"status": "ok"})
+        with (
+            patch.object(core, "authenticate", return_value=("token", object())),
+            patch.object(core.fpl_api, "me", return_value={"player": {"entry": 42}}),
+            patch.object(core.fpl_api, "my_team", side_effect=[before, after]),
+            patch.object(core.fpl_api, "transfer", transfer_mock),
+            patch.object(core.fpl_api, "update_picks", return_value={"status": "ok"}),
+            patch.object(core, "save_state"),
+            patch.object(core, "commit_state"),
+            patch.object(core.email_alerts, "send_alert"),
+            patch.object(core.time, "sleep"),
+        ):
+            core.stage_execute(bootstrap, state, dry_run=False)
+
+        self.assertEqual(transfer_mock.call_count, 1)
+        self.assertEqual(transfer_mock.call_args.kwargs["chip"], "wildcard")
         self.assertEqual(state["last_executed_gw"], 3)
 
     def test_exact_picks_readback_checks_positions_captain_and_vice(self):

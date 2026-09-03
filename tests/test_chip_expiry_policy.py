@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import unittest
+from tempfile import TemporaryDirectory
 
 import pandas as pd
 
@@ -173,7 +174,81 @@ class ChipExpiryPolicyTests(unittest.TestCase):
                 8,
             )
             self.assertIsNone(approved)
-            self.assertIn("dedicated chip-specific squad rebuild", reason)
+            self.assertIn("dedicated", reason)
+
+    def test_validated_wildcard_rebuild_is_approved(self):
+        approved, reason = PreDeadlineSimulator._check_chip(
+            {
+                "transfer_plan_kind": "wildcard_rebuild",
+                "wildcard_validation_errors": [],
+                "wildcard_validated": True,
+                "hits": 0,
+                "transfers_in": [{"element": 2}],
+                "transfers_out": [{"element": 1}],
+            },
+            CHIP_WILDCARD,
+            3,
+        )
+        self.assertEqual(approved, CHIP_WILDCARD)
+        self.assertIn("dedicated rebuild validated", reason)
+
+    def test_rejected_wildcard_transfer_batch_clears_chip_and_requires_replan(self):
+        plan = {
+            "chip": CHIP_WILDCARD,
+            "transfer_plan_kind": "wildcard_rebuild",
+            "wildcard_validation_errors": [],
+            "wildcard_validated": True,
+            "hits": 0,
+            "transfers_in": [
+                {"element": 2, "name": "Blocked", "cost": 5.0, "position": 3}
+            ],
+            "transfers_out": [
+                {"element": 1, "name": "Owned", "selling_price": 5.0, "position": 3}
+            ],
+        }
+        with TemporaryDirectory() as tmp:
+            decision = PreDeadlineSimulator(data_dir=tmp).simulate(
+                idea_list=[{
+                    "action": "transfer_out", "element": 2,
+                    "priority": 1.0, "reason": "unavailable",
+                }],
+                forecasts=pd.DataFrame([
+                    {"element": 1, "gw": 3, "xpts": 1.0},
+                    {"element": 2, "gw": 3, "xpts": 5.0},
+                ]),
+                current_state={"squad": [1]},
+                next_gw=3,
+                plan=plan,
+            )
+        self.assertIsNone(decision["approved_chip"])
+        self.assertEqual(decision["approved_transfers"], [])
+        self.assertTrue(decision["requires_replan"])
+        self.assertEqual(decision["vetoed_element_ids"], [2])
+
+    def test_rejected_paid_transfer_requires_fresh_no_hit_plan(self):
+        plan = {
+            "chip": None,
+            "hits": 1,
+            "transfers_in": [
+                {"element": 2, "name": "In", "cost": 5.0, "position": 3}
+            ],
+            "transfers_out": [
+                {"element": 1, "name": "Out", "selling_price": 5.0, "position": 3}
+            ],
+        }
+        with TemporaryDirectory() as tmp:
+            decision = PreDeadlineSimulator(data_dir=tmp).simulate(
+                idea_list=[],
+                forecasts=pd.DataFrame([
+                    {"element": 1, "gw": 3, "xpts": 3.0},
+                    {"element": 2, "gw": 3, "xpts": 3.0},
+                ]),
+                current_state={"squad": [1]},
+                next_gw=3,
+                plan=plan,
+            )
+        self.assertEqual(decision["approved_transfers"], [])
+        self.assertTrue(decision["requires_replan"])
 
     def test_expiry_context_tracks_calendar_capacity(self):
         planner = ChipPlanner()

@@ -30,7 +30,11 @@ import pandas as pd
 import requests
 
 from . import data_collector, reporter
-from .season_forecaster import SeasonForecaster, projection_warnings
+from .season_forecaster import (
+    SANITY_MAX_SINGLE_XPTS,
+    SeasonForecaster,
+    projection_warnings,
+)
 from .season_planner import SeasonPlanner
 from .chip_planner import ChipPlanner
 from .fpl_rules import chip_half, CHIP_WILDCARD, CHIP_FREE_HIT, CHIP_TRIPLE_CAPTAIN, CHIP_BENCH_BOOST, CHIP_LABELS
@@ -51,6 +55,18 @@ MODELS_DIR = Path(__file__).resolve().parent / "models"
 # Pool ρ (all rows) consistently improves with higher w, but the 70 % of rows
 # with minutes=0 dominate pool ρ; played rows are the relevant decision set.
 ML_BLEND = 0.40
+
+# Conservative anchors when FPL has not published ep_next. Kept at module
+# scope so the ML blend can be tested independently from network/model loading.
+EP_ZERO_PRIOR: dict[int, float] = {1: 2.5, 2: 2.0, 3: 2.0, 4: 2.0}
+
+
+def _blend_ml_xpts(raw_prediction: float, ep_next: float, position: int) -> float:
+    """Blend one ML estimate without letting an outlier dominate live plans."""
+    raw = min(max(0.0, float(raw_prediction)), SANITY_MAX_SINGLE_XPTS)
+    ep = max(0.0, float(ep_next))
+    anchor = ep if ep > 0 else EP_ZERO_PRIOR.get(int(position), 2.0)
+    return ML_BLEND * raw + (1.0 - ML_BLEND) * anchor
 
 
 # ---------------------------------------------------------------------------
@@ -127,6 +143,24 @@ def build_current_state(
         "chips_available": chips_available,
         "current_half": chip_half(current_gw),
     }
+
+
+def unavailable_for_rebuild(bootstrap: dict) -> set[int]:
+    """Players a permanent unlimited-transfer rebuild must not retain/buy."""
+    blocked: set[int] = set()
+    for player in bootstrap.get("elements", []):
+        try:
+            element = int(player["id"])
+        except (KeyError, TypeError, ValueError):
+            continue
+        if (
+            str(player.get("status") or "a") == "u"
+            or player.get("can_select") is False
+            or player.get("can_transact") is False
+            or bool(player.get("removed"))
+        ):
+            blocked.add(element)
+    return blocked
 
 
 # ---------------------------------------------------------------------------
@@ -295,15 +329,6 @@ class SeasonUpdater:
             plan["captain"]["name"],
         )
 
-        # Projection sanity guard — warn, don't clamp. A healthy single-fixture
-        # plan sits near the immediate GW's XI total; a future GW running far
-        # above it means the forecast fed the MILP corrupt base rates (the
-        # early-season raw-PPG failure mode). Surface it so a bad Wildcard /
-        # Triple-Captain plan is questioned rather than trusted.
-        plan["projection_warnings"] = projection_warnings(plan.get("gw_plan", []))
-        for w in plan["projection_warnings"]:
-            log.warning("projection sanity: %s", w)
-
         # 6. Chips.
         chip_result = self.chip_planner.evaluate(
             forecasts=forecasts,
@@ -312,6 +337,87 @@ class SeasonUpdater:
             current_gw=current_gw,
             current_half=state["current_half"],
         )
+
+        # A Wildcard recommendation must produce a genuine second-pass rebuild.
+        # The ordinary plan above prices every transfer beyond the FT allowance
+        # as a hit, so merely attaching the chip to it creates inconsistent FT,
+        # hit and squad semantics. Re-solve with unlimited current-GW transfers,
+        # preserve banked FTs, and force permanently unavailable players out.
+        if chip_result.get("recommendation") == CHIP_WILDCARD:
+            blocked = unavailable_for_rebuild(bootstrap)
+            log.info(
+                "Wildcard recommended — solving a dedicated rebuild (%d unavailable excluded).",
+                len(blocked),
+            )
+            validation_errors: list[str] = []
+            wildcard_plan: dict = {}
+            target_ids: set[int] = set()
+            try:
+                wildcard_plan = self.planner.plan(
+                    forecasts=forecasts,
+                    current_state=state,
+                    unlimited_transfers_current_gw=True,
+                    forbidden_current_ids=blocked,
+                )
+                target_ids = {
+                    int(player["element"])
+                    for player in (wildcard_plan.get("gw_plan") or [{}])[0].get("squad", [])
+                }
+                retained_blocked = sorted(target_ids & blocked)
+                if int(wildcard_plan.get("hits") or 0) != 0:
+                    validation_errors.append("dedicated Wildcard rebuild contains hits")
+                if retained_blocked:
+                    validation_errors.append(
+                        "unavailable player(s) retained: "
+                        + ", ".join(str(element) for element in retained_blocked)
+                    )
+            except Exception as exc:  # noqa: BLE001
+                log.exception("Dedicated Wildcard rebuild failed")
+                validation_errors.append(f"dedicated Wildcard rebuild failed: {exc}")
+            if len(target_ids) != 15:
+                validation_errors.append(
+                    f"target squad has {len(target_ids)} players instead of 15"
+                )
+
+            if wildcard_plan:
+                wildcard_plan["wildcard_validation_errors"] = validation_errors
+                wildcard_plan["wildcard_validated"] = not validation_errors
+            if validation_errors:
+                # Emergency fail-closed fallback: no Wildcard and no paid
+                # transfers. This is deliberately re-optimised rather than
+                # clearing only the chip from a Wildcard-sized batch.
+                log.error(
+                    "Wildcard rebuild rejected (%s) — regenerating a no-hit plan.",
+                    "; ".join(validation_errors),
+                )
+                plan = self.planner.plan(
+                    forecasts=forecasts,
+                    current_state=state,
+                    max_current_gw_hits=0,
+                )
+                plan["transfer_plan_kind"] = "ordinary_no_hit_fallback"
+                chip_result["recommendation"] = None
+                chip_result["reason"] = (
+                    "Wildcard rebuild failed validation; using a freshly "
+                    "optimised no-hit/free-transfer plan."
+                )
+                chip_result["chip_plan"] = [
+                    row for row in chip_result.get("chip_plan", [])
+                    if not (
+                        row.get("chip") == CHIP_WILDCARD
+                        and int(row.get("gw") or 0) == int(current_gw)
+                    )
+                ]
+            else:
+                plan = wildcard_plan
+
+        # Projection sanity guard — warn, don't clamp. A healthy single-fixture
+        # plan sits near the immediate GW's XI total; a future GW running far
+        # above it means the forecast fed the MILP corrupt base rates.
+        plan["projection_warnings"] = projection_warnings(plan.get("gw_plan", []))
+        for w in plan["projection_warnings"]:
+            log.warning("projection sanity: %s", w)
+
         # Merge chip recommendations into GW plan.
         chip_map = {c["gw"]: c["chip"] for c in chip_result.get("chip_plan", [])}
         for g in plan["gw_plan"]:
@@ -572,19 +678,25 @@ class SeasonUpdater:
             # players whose per-90 history is limited. The prior is set below the
             # average starter so genuinely good players still rank above it via the
             # ML channel, while unknowns don't crowd out ep_next players.
-            _EP_ZERO_PRIOR: dict[int, float] = {1: 2.5, 2: 2.0, 3: 2.0, 4: 2.0}
-
             et_map: dict[int, int] = dict(zip(element_ids, element_types))
             ml_xpts: dict[int, float] = {}
+            capped_predictions = 0
             for el_id, xpts_val in zip(element_ids, preds["expected_points"]):
                 if pd.notna(xpts_val) and xpts_val > 0:
                     ep_val = ep_by_id.get(el_id, 0.0)
-                    if ep_val > 0:
-                        blended = ML_BLEND * float(xpts_val) + (1 - ML_BLEND) * ep_val
-                    else:
-                        prior = _EP_ZERO_PRIOR.get(et_map.get(el_id, 3), 2.0)
-                        blended = ML_BLEND * float(xpts_val) + (1 - ML_BLEND) * prior
-                    ml_xpts[el_id] = blended
+                    if float(xpts_val) > SANITY_MAX_SINGLE_XPTS:
+                        capped_predictions += 1
+                    ml_xpts[el_id] = _blend_ml_xpts(
+                        float(xpts_val), ep_val, et_map.get(el_id, 3)
+                    )
+
+            if capped_predictions:
+                log.warning(
+                    "ML inference: capped %d single-GW prediction(s) at %.1f xPts "
+                    "before blending",
+                    capped_predictions,
+                    SANITY_MAX_SINGLE_XPTS,
+                )
 
             log.info("ML inference: %d/%d players predicted (%.0f%% ML + %.0f%% ep_next)",
                      len(ml_xpts), len(pool), ML_BLEND * 100, (1 - ML_BLEND) * 100)

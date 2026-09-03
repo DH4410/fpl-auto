@@ -114,6 +114,8 @@ EXECUTE_LAST_CHANCE_H = 2.5
 #: Chips consumed by the /transfers/ call. Every other chip is activated
 #: through the /my-team/ picks payload instead.
 TRANSFER_CHIPS = ("wildcard", "freehit")
+CHIP_WILDCARD = "wildcard"
+CHIP_FREE_HIT = "freehit"
 
 DEFAULT_EMAIL = ""
 
@@ -687,6 +689,8 @@ def _send_deadline_digest(next_gw: int, decision: dict, plan: dict, state: dict,
                                  f"  →  IN {t.get('name_in','?')} "
                                  f"({_fmt_price(t.get('purchase_price'))})")
             lines.append(f"Expected net gain: {net_gain:+.2f} pts")
+            paid = int(decision.get("hit_count") or 0)
+            lines.append(f"Paid transfers: {paid} (points deduction: -{paid * 4})")
 
         # --- Captain ---
         cap = plan.get("captain") or decision.get("captain") or {}
@@ -856,6 +860,35 @@ def stage_pre_deadline_plan(bootstrap: dict, state: dict, dry_run: bool) -> dict
         next_gw=next_gw,
         plan=plan,
     )
+
+    if decision.get("requires_replan"):
+        log.warning("Rejected transfer plan — rebuilding with zero paid hits.")
+        external_vetoes = (
+            set(PreDeadlineSimulator._blocked_elements(idea_list))
+            - set(current_state.get("squad") or [])
+        )
+        plan = updater.planner.plan(
+            forecasts=forecasts,
+            current_state=current_state,
+            max_current_gw_hits=0,
+            forbidden_current_ids=external_vetoes,
+        )
+        plan["transfer_plan_kind"] = "ordinary_no_hit_fallback"
+        plan["chip"] = None
+        plan["chip_plan"] = []
+        plan["chip_recommendation"] = None
+        decision = PreDeadlineSimulator(horizon=6).simulate(
+            idea_list=idea_list,
+            forecasts=forecasts,
+            current_state=current_state,
+            next_gw=next_gw,
+            plan=plan,
+        )
+        if decision.get("requires_replan"):
+            raise RuntimeError(
+                "Fresh no-hit fallback was rejected; refusing to freeze an "
+                "internally inconsistent execution plan"
+            )
 
     decision["picks_payload"] = build_picks_payload(plan)
     decision["entry_id"] = entry_id
@@ -1155,8 +1188,54 @@ def _replan_stale_execution(
     return fresh
 
 
+def _frozen_plan_errors(decision: dict) -> list[str]:
+    """Reject legacy or internally inconsistent plans before any FPL write."""
+    errors: list[str] = []
+    if int(decision.get("execution_plan_version") or 0) != 2:
+        errors.append("legacy frozen plan predates transfer-chip safety validation")
+    chip = decision.get("approved_chip")
+    transfers = list(decision.get("approved_transfers") or [])
+    source = [int(value) for value in decision.get("source_squad_signature") or []]
+    target = [int(value) for value in decision.get("target_squad_signature") or []]
+    if len(source) != 15 or len(set(source)) != 15:
+        errors.append("source squad signature is not 15 unique players")
+    if len(target) != 15 or len(set(target)) != 15:
+        errors.append("target squad signature is not 15 unique players")
+    if len(source) == 15 and len(target) == 15:
+        derived = set(source)
+        for transfer in transfers:
+            try:
+                outgoing = int(transfer["element_out"])
+                incoming = int(transfer["element_in"])
+            except (KeyError, TypeError, ValueError):
+                errors.append("transfer record has invalid player IDs")
+                continue
+            if outgoing not in derived or incoming in derived:
+                errors.append("transfer batch is inconsistent with its source squad")
+                continue
+            derived.remove(outgoing)
+            derived.add(incoming)
+        if derived != set(target):
+            errors.append("transfer batch does not produce the target squad")
+    if chip == CHIP_FREE_HIT:
+        errors.append("Free Hit execution is not supported")
+    if chip == CHIP_WILDCARD:
+        if not transfers:
+            errors.append("Wildcard plan contains no transfers")
+        if decision.get("wildcard_validated") is not True:
+            errors.append("Wildcard lacks an explicit validation marker")
+        if decision.get("transfer_plan_kind") != "wildcard_rebuild":
+            errors.append("Wildcard lacks a dedicated rebuild")
+        if int(decision.get("hit_count") or 0) != 0:
+            errors.append("Wildcard plan contains paid hits")
+        errors.extend(str(e) for e in decision.get("wildcard_validation_errors") or [])
+    if decision.get("requires_replan"):
+        errors.append("plan is explicitly marked for replanning")
+    return errors
+
+
 def stage_execute(bootstrap: dict, state: dict, dry_run: bool) -> dict:
-    """Submit the approved plan: transfers one by one, then picks and chip."""
+    """Submit the approved plan: atomic transfer batch, then picks and chip."""
     ev = next_event(bootstrap)
     if not ev:
         return {}
@@ -1166,6 +1245,12 @@ def stage_execute(bootstrap: dict, state: dict, dry_run: bool) -> dict:
     if not decision or int(decision.get("gw", 0)) != next_gw:
         log.info("No approved plan for GW%d — skipping execution.", next_gw)
         return {}
+
+    frozen_errors = _frozen_plan_errors(decision)
+    if frozen_errors:
+        return _replan_stale_execution(
+            bootstrap, state, dry_run, "; ".join(frozen_errors)
+        )
 
     transfers = decision.get("approved_transfers") or []
     chip = decision.get("approved_chip")
@@ -1183,13 +1268,12 @@ def stage_execute(bootstrap: dict, state: dict, dry_run: bool) -> dict:
             "Official FPL availability/news changed since planning: " + change_detail,
         )
 
-    if chip in TRANSFER_CHIPS:
+    if chip == CHIP_FREE_HIT:
         return _replan_stale_execution(
             bootstrap,
             state,
             dry_run,
-            f"Approved plan contains unsupported transfer chip {chip}; "
-            "a dedicated Wildcard/Free Hit squad plan is required.",
+            "Approved plan contains unsupported Free Hit execution.",
         )
 
     if not transfers and not chip and not picks_payload:
@@ -1264,10 +1348,10 @@ def stage_execute(bootstrap: dict, state: dict, dry_run: bool) -> dict:
         log.warning("Resuming GW%d execution: %d/%d transfer(s) already submitted "
                     "by an earlier run — skipping them.", next_gw, len(done), len(transfers))
 
-    # Submit ordinary transfers as one atomic FPL batch. Coordinated moves can
+    # Submit transfers as one atomic FPL batch. Coordinated moves can
     # depend on simultaneous sale proceeds, and a mid-sequence network failure
-    # must not leave only half of the strategy applied. WC/FH are blocked above
-    # until a dedicated chip-specific squad planner exists.
+    # must not leave only half of the strategy applied. A validated Wildcard is
+    # attached here; Free Hit remains blocked above.
     submitted: list[str] = []
     payloads: list[dict] = []
     labels: list[str] = []
@@ -1307,7 +1391,7 @@ def stage_execute(bootstrap: dict, state: dict, dry_run: bool) -> dict:
                 entry_id,
                 event=next_gw,
                 transfers=payloads,
-                chip=None,
+                chip=CHIP_WILDCARD if chip == CHIP_WILDCARD else None,
             )
             log.info("Atomic transfer result: %s", result)
             submitted.extend(labels)
