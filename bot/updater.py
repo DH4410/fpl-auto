@@ -602,17 +602,28 @@ class SeasonUpdater:
                     max_current_gw_hits=0,
                 )
                 plan["transfer_plan_kind"] = "ordinary_no_hit_fallback"
+                # Recalculate future TC/BB from the actual no-hit fallback
+                # trajectory. Do not immediately re-offer the same Wildcard
+                # that just failed its explicit counterfactual validation.
+                fallback_chip_result = self.chip_planner.evaluate(
+                    forecasts=forecasts,
+                    gw_plan=plan["gw_plan"],
+                    chips_available=[
+                        chip for chip in live_chip_pool
+                        if chip != CHIP_WILDCARD
+                    ],
+                    current_gw=current_gw,
+                    current_half=state["current_half"],
+                )
                 chip_result["recommendation"] = None
                 chip_result["reason"] = (
                     "Wildcard rebuild failed validation; using a freshly "
-                    "optimised no-hit/free-transfer plan."
+                    "optimised no-hit/free-transfer plan. Future chips were "
+                    "recalculated from that fallback squad."
                 )
                 chip_result["chip_plan"] = [
-                    row for row in chip_result.get("chip_plan", [])
-                    if not (
-                        row.get("chip") == CHIP_WILDCARD
-                        and int(row.get("gw") or 0) == int(current_gw)
-                    )
+                    row for row in fallback_chip_result.get("chip_plan", [])
+                    if int(row.get("gw") or 0) > int(current_gw)
                 ]
             else:
                 plan = wildcard_plan
