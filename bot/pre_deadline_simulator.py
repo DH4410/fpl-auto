@@ -60,6 +60,8 @@ PRE_DEADLINE_DIR = DATA_DIR / "pre_deadline"
 HIT_MARGIN = 2.0
 #: idea_list priority at or above which a flagged player is treated as unusable.
 VETO_PRIORITY = 0.8
+#: Frozen-plan schema. Bump whenever a change must invalidate already-approved actions.
+EXECUTION_PLAN_VERSION = 4
 
 
 def _write_json(path: Path, payload: Any) -> None:
@@ -247,7 +249,7 @@ class PreDeadlineSimulator:
             "vice": plan.get("vice"),
             "reasoning": " ".join(reasons),
             "transfer_plan_kind": plan.get("transfer_plan_kind", "legacy"),
-            "execution_plan_version": 3,
+            "execution_plan_version": EXECUTION_PLAN_VERSION,
             "model_health": model_health,
             "requires_replan": requires_replan,
             "wildcard_validation_errors": list(
