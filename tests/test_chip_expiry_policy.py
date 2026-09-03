@@ -46,6 +46,15 @@ class ChipExpiryPolicyTests(unittest.TestCase):
             planner.min_bb_gain,
         )
 
+    def test_wildcard_requires_structural_edge_early_in_half(self):
+        planner = ChipPlanner()
+        self.assertEqual(
+            planner._effective_min_gain(
+                CHIP_WILDCARD, gw=3, current_half=1, chips_remaining=4
+            ),
+            12.0,
+        )
+
     def test_expiry_softens_but_never_panics(self):
         planner = ChipPlanner()
         self.assertEqual(
@@ -64,7 +73,7 @@ class ChipExpiryPolicyTests(unittest.TestCase):
             planner._effective_min_gain(
                 CHIP_WILDCARD, gw=19, current_half=1, chips_remaining=4
             ),
-            4.0,
+            8.4,
         )
 
     def test_bad_final_week_can_still_hold_and_let_chips_expire(self):
@@ -94,9 +103,9 @@ class ChipExpiryPolicyTests(unittest.TestCase):
 
     def test_close_call_can_prefer_wildcard_then_bench_boost_combo(self):
         fixed = {
-            (CHIP_WILDCARD, 16): 10.0,
-            (CHIP_WILDCARD, 17): 9.4,
-            (CHIP_WILDCARD, 18): 5.0,
+            (CHIP_WILDCARD, 16): 13.0,
+            (CHIP_WILDCARD, 17): 12.4,
+            (CHIP_WILDCARD, 18): 8.0,
             (CHIP_BENCH_BOOST, 16): 11.5,
             (CHIP_BENCH_BOOST, 17): 12.0,
             (CHIP_BENCH_BOOST, 18): 14.0,

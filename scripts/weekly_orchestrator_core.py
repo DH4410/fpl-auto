@@ -119,6 +119,10 @@ CHIP_FREE_HIT = "freehit"
 
 DEFAULT_EMAIL = ""
 
+#: Must match bot.pre_deadline_simulator.EXECUTION_PLAN_VERSION without importing
+#: the heavier planner stack at module import time.
+CURRENT_EXECUTION_PLAN_VERSION = 4
+
 
 # ---------------------------------------------------------------------------
 # State
@@ -299,7 +303,7 @@ def determine_stage(bootstrap: dict, state_file: dict) -> str:
         approved_health = dict(approved.get("model_health") or {})
         approved_is_current = int(approved.get("gw") or 0) == next_gw
         approved_is_safe = (
-            int(approved.get("execution_plan_version") or 0) == 3
+            int(approved.get("execution_plan_version") or 0) == CURRENT_EXECUTION_PLAN_VERSION
             and approved_health.get("loaded") is True
             and approved_health.get("inference_ok") is True
         )
@@ -1329,7 +1333,7 @@ def _replan_stale_execution(
 def _frozen_plan_errors(decision: dict) -> list[str]:
     """Reject legacy or internally inconsistent plans before any FPL write."""
     errors: list[str] = []
-    if int(decision.get("execution_plan_version") or 0) != 3:
+    if int(decision.get("execution_plan_version") or 0) != CURRENT_EXECUTION_PLAN_VERSION:
         errors.append("legacy frozen plan predates model-health/counterfactual safety validation")
     model_health = dict(decision.get("model_health") or {})
     if not (
