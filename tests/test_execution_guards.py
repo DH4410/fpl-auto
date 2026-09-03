@@ -189,7 +189,7 @@ class ExecutionGuardTests(unittest.TestCase):
         }
         decision = {
             "gw": 3,
-            "execution_plan_version": 3,
+            "execution_plan_version": 4,
             "model_health": {"loaded": True, "inference_ok": True, "error": None},
             "transfer_plan_kind": "ordinary",
             "approved_transfers": [
@@ -300,7 +300,7 @@ class ExecutionGuardTests(unittest.TestCase):
 
     def test_valid_wildcard_frozen_plan_is_accepted(self):
         self.assertEqual(_frozen_plan_errors({
-            "execution_plan_version": 3,
+            "execution_plan_version": 4,
             "model_health": {"loaded": True, "inference_ok": True, "error": None},
             "approved_chip": "wildcard",
             "transfer_plan_kind": "wildcard_rebuild",
@@ -314,7 +314,7 @@ class ExecutionGuardTests(unittest.TestCase):
 
     def test_frozen_plan_rejects_target_not_produced_by_transfers(self):
         errors = _frozen_plan_errors({
-            "execution_plan_version": 3,
+            "execution_plan_version": 4,
             "model_health": {"loaded": True, "inference_ok": True, "error": None},
             "approved_chip": None,
             "approved_transfers": [],
@@ -363,7 +363,7 @@ class ExecutionGuardTests(unittest.TestCase):
         }
         decision = {
             "gw": 3,
-            "execution_plan_version": 3,
+            "execution_plan_version": 4,
             "model_health": {"loaded": True, "inference_ok": True, "error": None},
             "transfer_plan_kind": "wildcard_rebuild",
             "approved_chip": "wildcard",
