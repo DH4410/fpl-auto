@@ -272,13 +272,11 @@ class SeasonPlanner:
                     continue
                 prob += pulp.lpSum(st[i][t] for i in range(n) if pos[i] == et) >= minimum
 
-            # --- Captain: exactly 1 outfield starter (GKPs never captain) ---
+            # --- Captain: exactly 1 starter. FPL permits goalkeepers too. ---
             prob += pulp.lpSum(cp[i][t] for i in range(n)) == 1
             for i in range(n):
                 prob += st[i][t] <= sq[i][t]
                 prob += cp[i][t] <= st[i][t]
-                if pos[i] == GKP:
-                    prob += cp[i][t] == 0
 
             # --- Transfer continuity ---
             for i in range(n):
