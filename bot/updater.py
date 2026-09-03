@@ -332,6 +332,8 @@ class SeasonUpdater:
         # pre-deadline simulator must reuse this exact frame instead of
         # rebuilding a subtly different valuation snapshot.
         self._last_forecasts: pd.DataFrame = pd.DataFrame()
+        self._last_report_gw: int | None = None
+        self._last_report_gw_data: dict = {}
         # Autonomous writes fail closed when the production model did not load
         # and run successfully.  A fallback forecast is still useful for
         # reports, but it is not allowed to approve transfers/chips.
@@ -374,6 +376,7 @@ class SeasonUpdater:
         my_team: dict | None = None,
         entry_info: dict | None = None,
         forced_ids: list[int] | None = None,
+        write_reports: bool = True,
     ) -> dict[str, Any]:
         """Execute the full update loop for ``current_gw``.
 
@@ -691,10 +694,17 @@ class SeasonUpdater:
             except Exception as exc:
                 log.warning("Could not fetch GW%d live data: %s", last_gw, exc)
 
-        # 8. Write reports.
-        report_paths = self._write_reports(
-            plan, current_gw, forecasts, bootstrap, last_gw, last_gw_data
-        )
+        self._last_report_gw = int(last_gw) if last_gw is not None else None
+        self._last_report_gw_data = dict(last_gw_data)
+
+        # 8. Write reports. Deadline orchestration can defer this until after
+        # final simulator/counterfactual gates, ensuring the Markdown/CSV and
+        # the frozen execution plan describe the exact same decision.
+        report_paths = {}
+        if write_reports:
+            report_paths = self._write_reports(
+                plan, current_gw, forecasts, bootstrap, last_gw, last_gw_data
+            )
 
         result = {**plan, "report_paths": report_paths, "run_at": _now_iso()}
         log.info("Done. Reports written to %s", REPORTS_DIR)
