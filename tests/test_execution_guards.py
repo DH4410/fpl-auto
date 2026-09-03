@@ -46,6 +46,34 @@ class ExecutionGuardTests(unittest.TestCase):
         self.assertTrue(changed)
         self.assertIn("status a→d", detail)
 
+    def test_news_guard_detects_selectability_change_without_news_text(self):
+        bootstrap = {
+            "elements": [{
+                "id": 10,
+                "status": "a",
+                "chance_of_playing_next_round": 100,
+                "news": "",
+                "can_select": True,
+                "can_transact": True,
+                "removed": False,
+            }]
+        }
+        frozen = _build_planning_news_guard(bootstrap, [10])
+        updated = {
+            "elements": [{
+                "id": 10,
+                "status": "a",
+                "chance_of_playing_next_round": 100,
+                "news": "",
+                "can_select": False,
+                "can_transact": True,
+                "removed": False,
+            }]
+        }
+        changed, detail = _guard_changed(frozen, updated)
+        self.assertTrue(changed)
+        self.assertIn("select True→False", detail)
+
     def test_expected_squad_accounts_for_checkpointed_transfer(self):
         decision = {
             "source_squad_signature": [1, 2, 3],
@@ -160,7 +188,8 @@ class ExecutionGuardTests(unittest.TestCase):
         }
         decision = {
             "gw": 3,
-            "execution_plan_version": 2,
+            "execution_plan_version": 3,
+            "model_health": {"loaded": True, "inference_ok": True, "error": None},
             "transfer_plan_kind": "ordinary",
             "approved_transfers": [
                 {
@@ -248,7 +277,8 @@ class ExecutionGuardTests(unittest.TestCase):
 
     def test_valid_wildcard_frozen_plan_is_accepted(self):
         self.assertEqual(_frozen_plan_errors({
-            "execution_plan_version": 2,
+            "execution_plan_version": 3,
+            "model_health": {"loaded": True, "inference_ok": True, "error": None},
             "approved_chip": "wildcard",
             "transfer_plan_kind": "wildcard_rebuild",
             "hit_count": 0,
@@ -261,7 +291,8 @@ class ExecutionGuardTests(unittest.TestCase):
 
     def test_frozen_plan_rejects_target_not_produced_by_transfers(self):
         errors = _frozen_plan_errors({
-            "execution_plan_version": 2,
+            "execution_plan_version": 3,
+            "model_health": {"loaded": True, "inference_ok": True, "error": None},
             "approved_chip": None,
             "approved_transfers": [],
             "source_squad_signature": list(range(1, 16)),
@@ -309,7 +340,8 @@ class ExecutionGuardTests(unittest.TestCase):
         }
         decision = {
             "gw": 3,
-            "execution_plan_version": 2,
+            "execution_plan_version": 3,
+            "model_health": {"loaded": True, "inference_ok": True, "error": None},
             "transfer_plan_kind": "wildcard_rebuild",
             "approved_chip": "wildcard",
             "hit_count": 0,
