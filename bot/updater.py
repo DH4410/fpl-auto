@@ -69,6 +69,143 @@ def _blend_ml_xpts(raw_prediction: float, ep_next: float, position: int) -> floa
     return ML_BLEND * raw + (1.0 - ML_BLEND) * anchor
 
 
+CURRENT_FORM_ALPHA = 0.25
+
+# Current-season FPL element-summary fields that live on the same per-GW scale
+# as the lagged training EWMA columns. history_past gives a stable preseason
+# prior; completed current-season GWs update that prior before inference.
+_CURRENT_HISTORY_TO_EWMA: dict[str, str] = {
+    "minutes": "ewma_minutes",
+    "goals_scored": "ewma_goals_scored",
+    "assists": "ewma_assists",
+    "bonus": "ewma_bonus",
+    "bps": "ewma_bps",
+    "clean_sheets": "ewma_clean_sheets",
+    "expected_goals": "ewma_expected_goals",
+    "expected_assists": "ewma_expected_assists",
+    "expected_goal_involvements": "ewma_expected_goal_involvements",
+    "expected_goals_conceded": "ewma_expected_goals_conceded",
+    "saves": "ewma_saves",
+    "goals_conceded": "ewma_goals_conceded",
+    "total_points": "ewma_total_points",
+    "influence": "ewma_influence",
+    "creativity": "ewma_creativity",
+    "threat": "ewma_threat",
+    "ict_index": "ewma_ict_index",
+    "clearances_blocks_interceptions": "ewma_clearances_blocks_interceptions",
+    "recoveries": "ewma_recoveries",
+    "tackles": "ewma_tackles",
+    "defensive_contribution": "ewma_defensive_contribution",
+    "yellow_cards": "ewma_yellow_cards",
+    "red_cards": "ewma_red_cards",
+}
+
+_ROLLING_CURRENT_STATS = (
+    "minutes",
+    "total_points",
+    "expected_goals",
+    "expected_assists",
+)
+
+
+def _history_float(row: dict, key: str) -> float:
+    try:
+        return float(row.get(key) or 0.0)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def _overlay_current_season_features(
+    pred_df: pd.DataFrame,
+    summaries: dict,
+    current_gw: int,
+    *,
+    alpha: float = CURRENT_FORM_ALPHA,
+) -> pd.DataFrame:
+    """Fold completed current-season GWs into inference-time form features.
+
+    element_summaries_to_features builds a stable prior from history_past.
+    Before this helper, GW3 inference still used those preseason/past-season
+    values for EWMA and rolling features, so the model could not react to
+    GW1/GW2 form except through FPL's ep_next anchor.
+
+    Training features are lagged by one GW. Therefore only rows with
+    round < current_gw are consumed here, preserving the no-leakage contract.
+    """
+    out = pred_df.copy()
+    if out.empty:
+        return out
+
+    for element in out.index:
+        summary = summaries.get(int(element), {}) or {}
+        history = []
+        for row in summary.get("history") or []:
+            try:
+                round_id = int(row.get("round") or 0)
+            except (TypeError, ValueError):
+                continue
+            if 0 < round_id < int(current_gw):
+                history.append(row)
+        history.sort(key=lambda row: int(row.get("round") or 0))
+
+        out.at[element, "games_played"] = float(len(history))
+        if not history:
+            continue
+
+        historical_minutes = 0.0
+        if "ewma_minutes" in out.columns:
+            try:
+                historical_minutes = float(out.at[element, "ewma_minutes"])
+                if pd.isna(historical_minutes):
+                    historical_minutes = 0.0
+            except (TypeError, ValueError):
+                historical_minutes = 0.0
+
+        for raw_col, ewma_col in _CURRENT_HISTORY_TO_EWMA.items():
+            if ewma_col not in out.columns:
+                continue
+            try:
+                value = float(out.at[element, ewma_col])
+                if pd.isna(value):
+                    value = 0.0
+            except (TypeError, ValueError):
+                value = 0.0
+            for row in history:
+                value = (1.0 - alpha) * value + alpha * _history_float(row, raw_col)
+            out.at[element, ewma_col] = value
+
+        prior_rate = min(1.0, max(0.0, historical_minutes / 90.0))
+        flag_observations = {
+            "ewma_start_rate": lambda row: (
+                1.0 if _history_float(row, "starts") > 0
+                else (1.0 if _history_float(row, "minutes") >= 45 else 0.0)
+            ),
+            "ewma_p60_rate": lambda row: (
+                1.0 if _history_float(row, "minutes") >= 60 else 0.0
+            ),
+            "ewma_played_any": lambda row: (
+                1.0 if _history_float(row, "minutes") > 0 else 0.0
+            ),
+        }
+        for col, observe in flag_observations.items():
+            if col in out.columns and pd.notna(out.at[element, col]):
+                value = float(out.at[element, col])
+            else:
+                value = prior_rate
+            for row in history:
+                value = (1.0 - alpha) * value + alpha * observe(row)
+            out.at[element, col] = value
+
+        for window in (1, 3, 6, 10):
+            recent = history[-window:]
+            for stat in _ROLLING_CURRENT_STATS:
+                col = f"roll{window}_{stat}"
+                values = [_history_float(row, stat) for row in recent]
+                out.at[element, col] = sum(values) / len(values)
+
+    return out
+
+
 # ---------------------------------------------------------------------------
 # Current state helpers
 # ---------------------------------------------------------------------------
@@ -729,24 +866,15 @@ class SeasonUpdater:
             pred_df["ewma_start_rate"] = _min_share
             pred_df["ewma_p60_rate"] = _min_share
             pred_df["ewma_played_any"] = _min_share
-            # Training defines games_played as the number of prior GW rows
-            # (grouped.cumcount()).  Do the same at inference time.  The old
-            # ewma_minutes/90*38 proxy made a GW3 regular starter look as if
-            # they already had ~30-38 prior games and materially shifted the
-            # minutes model out of distribution.
-            pred_df["games_played"] = pd.Series(
-                {
-                    int(el_id): float(sum(
-                        1 for row in (summaries.get(int(el_id), {}).get("history") or [])
-                        if int(row.get("round") or 0) < int(current_gw)
-                    ))
-                    for el_id in pred_df.index
-                }
-            ).reindex(pred_df.index).fillna(0.0)
-            # Rolling windows are empty at GW1.  Fill with EWMA values rather
-            # than population medians — this keeps the model in the "active
-            # regular starter" regime that matches the player's history rather
-            # than the "missing/injured" regime that median-filling would imply.
+            pred_df["games_played"] = 0.0
+            pred_df = _overlay_current_season_features(
+                pred_df,
+                summaries,
+                current_gw,
+            )
+            # At GW1 there is no current-season history, so rolling windows
+            # still need a sensible historical prior. At GW2+ the overlay above
+            # has already populated them from actual completed current GWs.
             for prefix in ("roll1", "roll3", "roll6", "roll10"):
                 for stat, ewma_col in (
                     ("minutes", "ewma_minutes"),
