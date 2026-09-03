@@ -191,6 +191,18 @@ class SeasonUpdater:
         self.chip_planner = ChipPlanner()
         self._last_bootstrap: dict = {}
         self._last_fixtures: list[dict] = []
+        # Canonical, fully-adjusted forecast table used by the planner.  The
+        # pre-deadline simulator must reuse this exact frame instead of
+        # rebuilding a subtly different valuation snapshot.
+        self._last_forecasts: pd.DataFrame = pd.DataFrame()
+        # Autonomous writes fail closed when the production model did not load
+        # and run successfully.  A fallback forecast is still useful for
+        # reports, but it is not allowed to approve transfers/chips.
+        self._ml_health: dict[str, Any] = {
+            "loaded": False,
+            "inference_ok": False,
+            "error": None,
+        }
         if verbose:
             logging.basicConfig(level=logging.DEBUG)
         else:
@@ -205,9 +217,11 @@ class SeasonUpdater:
             sidecar = MODELS_DIR / "minutes.pkl.json"
             self._model_features = json.loads(sidecar.read_text())["features"]
             self._predictor = FPLPointsPredictor.load(MODELS_DIR)
+            self._ml_health["loaded"] = True
             log.info("ML predictor loaded from %s (%d features)", MODELS_DIR, len(self._model_features))
         except Exception as exc:
-            log.warning("ML predictor unavailable (%s) — forecaster will use ep_next + PPG only", exc)
+            self._ml_health["error"] = f"model load failed: {exc}"
+            log.exception("ML predictor unavailable — fallback forecasts are advisory only")
         try:
             mkt_path = MODELS_DIR / "mkt_medians.json"
             if mkt_path.exists():
@@ -307,16 +321,32 @@ class SeasonUpdater:
             log.warning("News enrichment skipped (%s)", exc)
 
         # Apply set-piece duty bonuses (penalty takers, corner takers, FK specialists).
-        # When ML is active, FPLPointsPredictor already trained on set-piece order features,
-        # so applying the full boost on top of 40% ML output would double-count that signal.
-        # Scale by (1 - ML_BLEND) when ML is on to credit only the ep_next portion.
+        # Only discount the explicit boost when the *actual persisted model
+        # feature list* contains set-piece rank fields.  The current 60-feature
+        # models do not, so reducing this boost merely because ML is on would
+        # under-credit genuine set-piece takers.
         try:
             from .prediction_adjustments import apply_setpiece_boosts
             bootstrap_df = pd.DataFrame(bootstrap["elements"])
-            sp_scale = (1.0 - ML_BLEND) if ml_xpts is not None else 1.0
+            setpiece_features = {
+                "penalties_order", "penalties_order_rank",
+                "corners_and_indirect_freekicks_order",
+                "corners_and_indirect_freekicks_order_rank",
+                "direct_freekicks_order", "direct_freekicks_order_rank",
+            }
+            model_has_setpieces = bool(set(self._model_features) & setpiece_features)
+            sp_scale = (
+                (1.0 - ML_BLEND)
+                if ml_xpts is not None and model_has_setpieces
+                else 1.0
+            )
             forecasts = apply_setpiece_boosts(forecasts, bootstrap_df, scale=sp_scale)
         except Exception as exc:
             log.warning("Set-piece boost skipped (%s)", exc)
+
+        # This is the single source of truth for downstream transfer valuation,
+        # report snapshots and the final safety simulator.
+        self._last_forecasts = forecasts.copy()
 
         # 5. Plan.
         log.info("Running MILP planner…")
@@ -330,10 +360,17 @@ class SeasonUpdater:
         )
 
         # 6. Chips.
+        # Free Hit does not yet have a legal temporary-squad builder (budget,
+        # positions and club limits).  Exclude it from live scheduling rather
+        # than letting its intentionally-loose upper bound displace a real chip.
+        live_chip_pool = [
+            chip for chip in state["chips_available"]
+            if chip != CHIP_FREE_HIT
+        ]
         chip_result = self.chip_planner.evaluate(
             forecasts=forecasts,
             gw_plan=plan["gw_plan"],
-            chips_available=state["chips_available"],
+            chips_available=live_chip_pool,
             current_gw=current_gw,
             current_half=state["current_half"],
         )
@@ -344,6 +381,7 @@ class SeasonUpdater:
         # hit and squad semantics. Re-solve with unlimited current-GW transfers,
         # preserve banked FTs, and force permanently unavailable players out.
         if chip_result.get("recommendation") == CHIP_WILDCARD:
+            ordinary_plan = plan
             blocked = unavailable_for_rebuild(bootstrap)
             log.info(
                 "Wildcard recommended — solving a dedicated rebuild (%d unavailable excluded).",
@@ -380,6 +418,34 @@ class SeasonUpdater:
                 )
 
             if wildcard_plan:
+                # Validate the Wildcard against the best ordinary plan, not
+                # against a heuristic based on how many hits that ordinary
+                # optimiser happened to request.  This prevents an over-
+                # aggressive hit plan from manufacturing its own WC signal.
+                wc_entry = next(
+                    (
+                        row for row in chip_result.get("chip_plan", [])
+                        if row.get("chip") == CHIP_WILDCARD
+                        and int(row.get("gw") or 0) == int(current_gw)
+                    ),
+                    {},
+                )
+                wc_required = float(
+                    wc_entry.get("required_gain", self.chip_planner.min_wc_gain)
+                )
+                wc_counterfactual_gain = (
+                    _discounted_plan_value(wildcard_plan)
+                    - _discounted_plan_value(ordinary_plan)
+                )
+                if wc_counterfactual_gain < wc_required:
+                    validation_errors.append(
+                        f"Wildcard counterfactual gain {wc_counterfactual_gain:.2f} "
+                        f"is below required {wc_required:.2f}"
+                    )
+                wildcard_plan["wildcard_counterfactual_gain"] = round(
+                    wc_counterfactual_gain, 2
+                )
+                wildcard_plan["wildcard_required_gain"] = round(wc_required, 2)
                 wildcard_plan["wildcard_validation_errors"] = validation_errors
                 wildcard_plan["wildcard_validated"] = not validation_errors
             if validation_errors:
@@ -410,6 +476,41 @@ class SeasonUpdater:
                 ]
             else:
                 plan = wildcard_plan
+                # Recompute TC/BB timing from the rebuilt Wildcard squad.  The
+                # old schedule was evaluated on the pre-WC trajectory and could
+                # recommend a Bench Boost using players no longer in the squad.
+                remaining_chips = [
+                    chip for chip in live_chip_pool
+                    if chip != CHIP_WILDCARD
+                ]
+                future_chip_result = self.chip_planner.evaluate(
+                    forecasts=forecasts,
+                    gw_plan=plan["gw_plan"],
+                    chips_available=remaining_chips,
+                    current_gw=current_gw,
+                    current_half=state["current_half"],
+                )
+                future_rows = [
+                    row for row in future_chip_result.get("chip_plan", [])
+                    if int(row.get("gw") or 0) > int(current_gw)
+                ]
+                wc_gain = float(plan.get("wildcard_counterfactual_gain") or 0.0)
+                wc_required = float(plan.get("wildcard_required_gain") or 0.0)
+                chip_result["chip_plan"] = [{
+                    "chip": CHIP_WILDCARD,
+                    "gw": int(current_gw),
+                    "chip_label": CHIP_LABELS.get(CHIP_WILDCARD, CHIP_WILDCARD),
+                    "expected_gain": round(wc_gain, 2),
+                    "required_gain": round(wc_required, 2),
+                    "base_required_gain": round(self.chip_planner.min_wc_gain, 2),
+                }, *future_rows]
+                chip_result["recommendation"] = CHIP_WILDCARD
+                chip_result["reason"] = (
+                    f"Play Wildcard this GW: dedicated legal rebuild beats the "
+                    f"best ordinary plan by {wc_gain:+.2f} discounted xPts "
+                    f"(needs {wc_required:.2f}). Future chips were recalculated "
+                    f"from the rebuilt squad."
+                )
 
         # Projection sanity guard — warn, don't clamp. A healthy single-fixture
         # plan sits near the immediate GW's XI total; a future GW running far
@@ -425,6 +526,7 @@ class SeasonUpdater:
         plan["chip"] = chip_result.get("recommendation")
         plan["chip_plan"] = chip_result.get("chip_plan", [])
         plan["chip_reason"] = chip_result.get("reason", "")
+        plan["model_health"] = dict(self._ml_health)
         # Rebuild the Chip column in the report_table so it reflects the
         # chip_planner output (report_table is built in season_planner.plan()
         # before chips are merged, so it would otherwise always show "—").
@@ -627,7 +729,20 @@ class SeasonUpdater:
             pred_df["ewma_start_rate"] = _min_share
             pred_df["ewma_p60_rate"] = _min_share
             pred_df["ewma_played_any"] = _min_share
-            pred_df["games_played"] = (pred_df["ewma_minutes"] / 90.0 * 38).clip(0, 38)
+            # Training defines games_played as the number of prior GW rows
+            # (grouped.cumcount()).  Do the same at inference time.  The old
+            # ewma_minutes/90*38 proxy made a GW3 regular starter look as if
+            # they already had ~30-38 prior games and materially shifted the
+            # minutes model out of distribution.
+            pred_df["games_played"] = pd.Series(
+                {
+                    int(el_id): float(sum(
+                        1 for row in (summaries.get(int(el_id), {}).get("history") or [])
+                        if int(row.get("round") or 0) < int(current_gw)
+                    ))
+                    for el_id in pred_df.index
+                }
+            ).reindex(pred_df.index).fillna(0.0)
             # Rolling windows are empty at GW1.  Fill with EWMA values rather
             # than population medians — this keeps the model in the "active
             # regular starter" regime that matches the player's history rather
@@ -698,12 +813,19 @@ class SeasonUpdater:
                     SANITY_MAX_SINGLE_XPTS,
                 )
 
+            self._ml_health["inference_ok"] = True
+            self._ml_health["error"] = None
             log.info("ML inference: %d/%d players predicted (%.0f%% ML + %.0f%% ep_next)",
                      len(ml_xpts), len(pool), ML_BLEND * 100, (1 - ML_BLEND) * 100)
             return ml_xpts
 
         except Exception as exc:
-            log.warning("ML inference failed (%s) — using ep_next + PPG only", exc)
+            self._ml_health["inference_ok"] = False
+            self._ml_health["error"] = f"inference failed: {exc}"
+            log.exception(
+                "ML inference failed — fallback forecasts are advisory only; "
+                "autonomous transfers/chips must fail closed"
+            )
             return {}
 
     # ------------------------------------------------------------------
@@ -734,3 +856,19 @@ class SeasonUpdater:
 
 def _now_iso() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def _discounted_plan_value(plan: dict, decay: float = 0.85) -> float:
+    """Comparable six-GW value for ordinary vs Wildcard counterfactuals.
+
+    Uses the same captain-inclusive XI value exposed by SeasonPlanner and
+    subtracts paid hit cost exactly once.  This is deliberately a comparison
+    metric, not a claim about realised FPL points.
+    """
+    total = 0.0
+    for offset, gw in enumerate(plan.get("gw_plan") or []):
+        total += (
+            float(gw.get("xi_xpts") or 0.0)
+            - float(gw.get("hit_cost") or 0.0)
+        ) * (float(decay) ** offset)
+    return float(total)
