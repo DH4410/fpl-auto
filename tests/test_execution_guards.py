@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import unittest
+from datetime import datetime, timedelta, timezone
 from unittest.mock import Mock, patch
 
 from scripts import weekly_orchestrator_core as core
@@ -250,6 +251,28 @@ class ExecutionGuardTests(unittest.TestCase):
         )
         self.assertEqual(picks_mock.call_count, 1)
         self.assertEqual(state["last_executed_gw"], 3)
+
+    def test_legacy_current_plan_is_proactively_replanned_before_execute_window(self):
+        deadline = datetime.now(timezone.utc) + timedelta(hours=24)
+        bootstrap = {
+            "events": [{
+                "id": 3,
+                "deadline_time": deadline.isoformat().replace("+00:00", "Z"),
+                "finished": False,
+            }]
+        }
+        state = {
+            "last_simulated_gw": 3,
+            "last_executed_gw": 1,
+            "approved_plan": {
+                "gw": 3,
+                "execution_plan_version": 2,
+            },
+        }
+        self.assertEqual(
+            core.determine_stage(bootstrap, state),
+            core.PRE_DEADLINE_PLAN,
+        )
 
     def test_legacy_frozen_plan_is_rejected(self):
         self.assertTrue(_frozen_plan_errors({"approved_chip": None}))
