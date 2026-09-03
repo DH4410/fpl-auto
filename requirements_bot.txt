@@ -10,7 +10,7 @@
 pandas>=2.0.0
 numpy>=1.24.0
 scipy>=1.11.0          # Dixon-Coles MLE, Shin de-vigging, Poisson grids
-scikit-learn>=1.3.0
+scikit-learn==1.8.0
 
 # --- gradient boosting (models.py) -------------------------------------------
 xgboost==3.1.3         # minutes (custom asymmetric objective), defense, bonus
