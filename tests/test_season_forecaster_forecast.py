@@ -150,6 +150,13 @@ class ForecastTests(unittest.TestCase):
         future = df[(df["element"].isin([1, 2])) & (df["gw"] >= 2)]
         self.assertTrue((future["xpts"] < 10.0).all())
 
+    def test_immediate_ml_value_does_not_leak_into_future_gameweeks(self):
+        low = self._run(ml={2: 2.0})
+        high = self._run(ml={2: 11.0})
+        low_gw2 = low[(low["element"] == 2) & (low["gw"] == 2)]["xpts"].iloc[0]
+        high_gw2 = high[(high["element"] == 2) & (high["gw"] == 2)]["xpts"].iloc[0]
+        self.assertAlmostEqual(low_gw2, high_gw2, places=6)
+
 
 if __name__ == "__main__":
     unittest.main()
