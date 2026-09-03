@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import json
 import logging
+import math
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -269,6 +270,7 @@ def _top100_insights(elements: dict, my_ids: set, gw: int) -> dict:
     return {
         "available": True,
         "snap_gw": snap.get("gw"),
+        "n_sampled": int(snap.get("n_picks_sampled") or 0),
         "top100_not_mine": not_in_squad[:8],
         "unique_to_me": unique_to_me[:5],
     }
@@ -346,10 +348,13 @@ def _build_report(
         lines.append("")
         if top100["top100_not_mine"]:
             lines.append("**Smart money holds but I don't:**")
+            denom = max(1, int(top100.get("n_sampled") or 0))
             for r in top100["top100_not_mine"]:
+                pct = 100.0 * float(r["top100_count"]) / denom
                 lines.append(
-                    f"- {r['name']} — {r['top100_count']}/10 managers, "
-                    f"ep_next {r['ep_next']}, {r['selected_pct']}% owned"
+                    f"- {r['name']} — {r['top100_count']}/{denom} managers "
+                    f"({pct:.0f}%), ep_next {r['ep_next']}, "
+                    f"{r['selected_pct']}% owned"
                 )
         if top100["unique_to_me"]:
             lines += ["", "**I hold but top-100 don't (differential risk):**"]
@@ -389,15 +394,22 @@ def _generate_ideas(top100: dict, differentials: list[dict]) -> list[dict]:
     ideas = []
 
     if top100.get("available"):
-        # Smart money holds but I don't — suggest transfer_in if ≥7/10 managers hold
+        # Smart-money threshold is a proportion of the actual locked sample,
+        # not a hard-coded denominator. GW2 sampled 25 managers, so the old
+        # "/10" text produced impossible values such as 24/10.
+        denom = max(1, int(top100.get("n_sampled") or 0))
+        min_holders = max(1, math.ceil(0.70 * denom))
         for r in top100.get("top100_not_mine") or []:
-            if r.get("top100_count", 0) >= 7 and r.get("ep_next", 0) >= 5.0:
+            if r.get("top100_count", 0) >= min_holders and r.get("ep_next", 0) >= 5.0:
+                pct = 100.0 * float(r["top100_count"]) / denom
                 ideas.append({
                     "action": "transfer_in",
                     "element": r["element"],
                     "name": r["name"],
-                    "reason": (f"Top-100 smart money: {r['top100_count']}/10 managers hold, "
-                               f"ep_next {r['ep_next']}"),
+                    "reason": (
+                        f"Top-100 smart money: {r['top100_count']}/{denom} "
+                        f"managers hold ({pct:.0f}%), ep_next {r['ep_next']}"
+                    ),
                     "priority": 0.4,
                 })
 
@@ -504,9 +516,10 @@ def _email_body(gw, captaincy, differentials, chip_windows, top100,
         )
     if top100.get("available") and top100.get("top100_not_mine"):
         r = top100["top100_not_mine"][0]
+        denom = max(1, int(top100.get("n_sampled") or 0))
         lines.append(
             f"Top-100 hold but you don't: {r['name']} — "
-            f"{r['top100_count']}/10 smart managers, ep_next {r['ep_next']}"
+            f"{r['top100_count']}/{denom} smart managers, ep_next {r['ep_next']}"
         )
     if web_report and web_report.get("available") and web_report.get("players"):
         buzzed = [r for r in web_report["players"] if abs(r["net"]) >= 2][:3]

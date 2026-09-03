@@ -194,6 +194,7 @@ class ChipExpiryPolicyTests(unittest.TestCase):
 
     def test_rejected_wildcard_transfer_batch_clears_chip_and_requires_replan(self):
         plan = {
+            "model_health": {"loaded": True, "inference_ok": True, "error": None},
             "chip": CHIP_WILDCARD,
             "transfer_plan_kind": "wildcard_rebuild",
             "wildcard_validation_errors": [],
@@ -227,6 +228,7 @@ class ChipExpiryPolicyTests(unittest.TestCase):
 
     def test_rejected_paid_transfer_requires_fresh_no_hit_plan(self):
         plan = {
+            "model_health": {"loaded": True, "inference_ok": True, "error": None},
             "chip": None,
             "hits": 1,
             "transfers_in": [

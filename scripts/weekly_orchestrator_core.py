@@ -291,6 +291,28 @@ def determine_stage(bootstrap: dict, state_file: dict) -> str:
         simulated = int(state_file.get("last_simulated_gw", 0)) >= next_gw
         executed = int(state_file.get("last_executed_gw", 0)) >= next_gw
 
+        # A plan frozen under an older safety schema (or without a confirmed
+        # healthy ML runtime) is not "simulated" for deadline purposes.  Replan
+        # proactively on the next cron tick instead of waiting until its old
+        # execution target to discover that it is invalid.
+        approved = state_file.get("approved_plan") or {}
+        approved_health = dict(approved.get("model_health") or {})
+        approved_is_current = int(approved.get("gw") or 0) == next_gw
+        approved_is_safe = (
+            int(approved.get("execution_plan_version") or 0) == 3
+            and approved_health.get("loaded") is True
+            and approved_health.get("inference_ok") is True
+        )
+        if (
+            simulated
+            and approved_is_current
+            and not approved_is_safe
+            and not executed
+            and hours <= PLAN_WINDOW[1]
+            and hours >= EXECUTE_WINDOW[0]
+        ):
+            return PRE_DEADLINE_PLAN
+
         if PLAN_WINDOW[0] <= hours <= PLAN_WINDOW[1] and not simulated:
             return PRE_DEADLINE_PLAN
 
@@ -814,8 +836,13 @@ def stage_pre_deadline_plan(bootstrap: dict, state: dict, dry_run: bool) -> dict
 
     # Imported here rather than at module scope: the planner pulls in pulp and
     # scipy, which the light single-stage workflows do not install.
-    from bot.pre_deadline_simulator import PreDeadlineSimulator
-    from bot.updater import SeasonUpdater, build_current_state
+    from bot.pre_deadline_simulator import HIT_MARGIN, PreDeadlineSimulator
+    from bot.season_forecaster import projection_warnings
+    from bot.updater import (
+        SeasonUpdater,
+        _discounted_plan_value,
+        build_current_state,
+    )
 
     candidate_watch_ids = _candidate_watch_ids(state)
     if candidate_watch_ids:
@@ -829,7 +856,23 @@ def stage_pre_deadline_plan(bootstrap: dict, state: dict, dry_run: bool) -> dict
         my_team=my_team,
         entry_info=entry_info,
         forced_ids=candidate_watch_ids,
+        write_reports=False,
     )
+    model_health = dict(plan.get("model_health") or {})
+    if not (
+        model_health.get("loaded") is True
+        and model_health.get("inference_ok") is True
+    ):
+        detail = model_health.get("error") or "unknown model runtime failure"
+        email_alerts.send_alert(
+            f"GW{next_gw} autonomous plan BLOCKED — ML unhealthy",
+            "The production model did not load/infer successfully. "
+            "No transfer or chip plan will be frozen from fallback forecasts.\n\n"
+            f"Model detail: {detail}",
+        )
+        raise RuntimeError(
+            f"production ML unhealthy; refusing to freeze GW{next_gw} plan: {detail}"
+        )
     planning_bootstrap = updater._last_bootstrap or bootstrap
     current_state = build_current_state(
         planning_bootstrap,
@@ -849,6 +892,73 @@ def stage_pre_deadline_plan(bootstrap: dict, state: dict, dry_run: bool) -> dict
         forced_ids=candidate_watch_ids,
     )
     save_forecast_snapshot(forecasts, next_gw)
+
+    # Autonomous paid hits are compared against an explicit zero-hit
+    # counterfactual and capped at two.  The optimiser already subtracts the
+    # four-point hit cost; this gate demands an additional uncertainty margin
+    # per paid transfer before accepting the risk.
+    if (
+        plan.get("chip") not in (CHIP_WILDCARD, CHIP_FREE_HIT)
+        and int(plan.get("hits") or 0) > 0
+    ):
+        no_hit_plan = updater.planner.plan(
+            forecasts=forecasts,
+            current_state=current_state,
+            max_current_gw_hits=0,
+        )
+        candidate_plan = plan
+        if int(plan.get("hits") or 0) > 2:
+            log.warning(
+                "Planner requested %d paid hits; capping autonomous candidate at 2.",
+                int(plan.get("hits") or 0),
+            )
+            candidate_plan = updater.planner.plan(
+                forecasts=forecasts,
+                current_state=current_state,
+                max_current_gw_hits=2,
+            )
+
+        candidate_hits = int(candidate_plan.get("hits") or 0)
+        counterfactual_edge = (
+            _discounted_plan_value(candidate_plan)
+            - _discounted_plan_value(no_hit_plan)
+        )
+        required_edge = HIT_MARGIN * candidate_hits
+        if candidate_hits > 0 and counterfactual_edge < required_edge:
+            log.warning(
+                "Paid-hit plan rejected by counterfactual gate: edge %.2f < %.2f required.",
+                counterfactual_edge,
+                required_edge,
+            )
+            plan = no_hit_plan
+            plan["transfer_plan_kind"] = "ordinary_no_hit_counterfactual"
+            plan["chip"] = None
+            plan["chip_plan"] = []
+            for gw_row in plan.get("gw_plan") or []:
+                gw_row["chip"] = None
+        else:
+            plan = candidate_plan
+        plan["hit_counterfactual"] = {
+            "candidate_hits": candidate_hits,
+            "discounted_edge_vs_zero_hit": round(counterfactual_edge, 2),
+            "required_edge": round(required_edge, 2),
+        }
+        plan["model_health"] = model_health
+
+    # Recompute projection sanity after any paid-hit counterfactual re-solve.
+    # These warnings used to be email-only; autonomous writes now fail closed
+    # because a visibly corrupt horizon should never freeze an execution plan.
+    plan["projection_warnings"] = projection_warnings(plan.get("gw_plan", []))
+    if plan["projection_warnings"]:
+        detail = " | ".join(plan["projection_warnings"])
+        email_alerts.send_alert(
+            f"GW{next_gw} autonomous plan BLOCKED — projection sanity",
+            "The forward model produced a projection sanity warning. "
+            "No transfer or chip plan was frozen.\n\n" + detail,
+        )
+        raise RuntimeError(
+            f"projection sanity warning; refusing to freeze GW{next_gw}: {detail}"
+        )
 
     idea_list = (list(state.get("idea_list") or [])
                  + list(state.get("signing_ideas") or [])
@@ -889,6 +999,22 @@ def stage_pre_deadline_plan(bootstrap: dict, state: dict, dry_run: bool) -> dict
                 "Fresh no-hit fallback was rejected; refusing to freeze an "
                 "internally inconsistent execution plan"
             )
+
+    # Only now is the human-readable report written. This exact plan has passed
+    # model-health, projection, hit/Wildcard and veto gates, so the report can
+    # no longer disagree with the frozen execution decision.
+    try:
+        final_report_paths = updater._write_reports(
+            plan,
+            next_gw,
+            forecasts,
+            planning_bootstrap,
+            updater._last_report_gw,
+            updater._last_report_gw_data,
+        )
+        plan["report_paths"] = final_report_paths
+    except Exception as exc:  # noqa: BLE001
+        log.warning("Final deadline report refresh failed (%s).", exc)
 
     decision["picks_payload"] = build_picks_payload(plan)
     decision["entry_id"] = entry_id
@@ -953,8 +1079,14 @@ def _rebuild_forecasts(
     current_state: dict,
     forced_ids: list[int] | None = None,
 ) -> pd.DataFrame:
-    """Reproduce the exact candidate universe used for valuation/snapshots."""
+    """Return the exact fully-adjusted forecast frame used by the planner."""
     try:
+        canonical = getattr(updater, "_last_forecasts", None)
+        if isinstance(canonical, pd.DataFrame) and not canonical.empty:
+            return canonical.copy()
+
+        # Backwards-compatible fallback for callers that did not run the full
+        # updater first.  Live pre-deadline planning should never need this.
         fixtures = list(updater._last_fixtures or [])
         if not fixtures:
             from bot import data_collector
@@ -1067,6 +1199,9 @@ def _build_planning_news_guard(bootstrap: dict, element_ids: list[int]) -> list[
             "status": str(row.get("status") or "missing"),
             "chance_next_round": chance,
             "news": news,
+            "can_select": row.get("can_select"),
+            "can_transact": row.get("can_transact"),
+            "removed": bool(row.get("removed")),
         })
     return guard
 
@@ -1089,6 +1224,9 @@ def _guard_changed(frozen: list[dict] | None, bootstrap: dict) -> tuple[bool, st
             changed.append(
                 f"{element}: status {old.get('status')}→{new.get('status')}, "
                 f"chance {old.get('chance_next_round')}→{new.get('chance_next_round')}, "
+                f"select {old.get('can_select')}→{new.get('can_select')}, "
+                f"transact {old.get('can_transact')}→{new.get('can_transact')}, "
+                f"removed {old.get('removed')}→{new.get('removed')}, "
                 f"news changed={old.get('news') != new.get('news')}"
             )
     return True, "; ".join(changed[:8])
@@ -1191,8 +1329,14 @@ def _replan_stale_execution(
 def _frozen_plan_errors(decision: dict) -> list[str]:
     """Reject legacy or internally inconsistent plans before any FPL write."""
     errors: list[str] = []
-    if int(decision.get("execution_plan_version") or 0) != 2:
-        errors.append("legacy frozen plan predates transfer-chip safety validation")
+    if int(decision.get("execution_plan_version") or 0) != 3:
+        errors.append("legacy frozen plan predates model-health/counterfactual safety validation")
+    model_health = dict(decision.get("model_health") or {})
+    if not (
+        model_health.get("loaded") is True
+        and model_health.get("inference_ok") is True
+    ):
+        errors.append("frozen plan was not produced by a healthy production ML runtime")
     chip = decision.get("approved_chip")
     transfers = list(decision.get("approved_transfers") or [])
     source = [int(value) for value in decision.get("source_squad_signature") or []]

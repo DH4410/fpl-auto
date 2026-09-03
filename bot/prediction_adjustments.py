@@ -8,12 +8,12 @@ returning-from-injury filter, a free-transfer sidegrade check and bench
 ordering. Each function is pure and advisory: inputs are copied, nothing is
 written anywhere and no recommendation is ever executed.
 
-These adjustments are deliberately *not* applied to
-:class:`models.FPLPointsPredictor`. That model already trains on
-``penalties_order``, ``corners_and_indirect_freekicks_order`` and availability
-features, so layering these boosts on top of its output would double-count the
-same signal. The forecaster is the light-weight path that lacks those features,
-which is exactly why it needs them added back here.
+These adjustments operate on the lightweight forecast table. Whether the
+explicit set-piece boost should be discounted depends on the *persisted model
+feature list*: the current production models do not contain set-piece-order
+features, while a future model may. The updater therefore chooses the scale
+from the actual model sidecar instead of assuming ML always contains this
+signal.
 
 Integration
 -----------
@@ -266,9 +266,9 @@ def apply_setpiece_boosts(
     a missing, zero or secondary order contributes nothing. Boosts are scaled by
     expected minutes so a rotation risk on pens is not credited a full 90.
 
-    ``scale`` should be set to ``1 - ml_blend`` when the forecaster xpts already
-    contain a partial ML signal (FPLPointsPredictor trains on set-piece features
-    and would double-count the full boost). Set to 1.0 when xpts is ep_next only.
+    ``scale`` should be below 1 only when the active persisted ML feature set
+    actually includes set-piece-order features. Set to 1.0 otherwise (including
+    the current production models).
     """
     out = forecasts_df.copy()
     if out.empty:

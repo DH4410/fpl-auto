@@ -137,6 +137,26 @@ class PreDeadlineSimulator:
         requires_replan = False
         vetoed_element_ids: list[int] = []
 
+        # Model health is part of the execution contract from schema v3 onward.
+        # A fallback ep_next/PPG report may still be useful to a human, but an
+        # autonomous transfer/chip is not allowed when the persisted production
+        # model failed to load or infer.
+        model_health = dict(plan.get("model_health") or {})
+        if not (
+            model_health.get("loaded") is True
+            and model_health.get("inference_ok") is True
+        ):
+            reasons.append(
+                "REJECTED: production ML model is unhealthy; fallback forecasts "
+                "are advisory only and cannot authorize FPL writes."
+            )
+            approved_transfers = []
+            approved_chip = None
+            hit_count = 0
+            net_gain = 0.0
+            gross_gain = 0.0
+            requires_replan = True
+
         if not approved_transfers:
             reasons.append("Planner recommends no transfer this GW (rolling the free transfer).")
         else:
@@ -227,7 +247,8 @@ class PreDeadlineSimulator:
             "vice": plan.get("vice"),
             "reasoning": " ".join(reasons),
             "transfer_plan_kind": plan.get("transfer_plan_kind", "legacy"),
-            "execution_plan_version": 2,
+            "execution_plan_version": 3,
+            "model_health": model_health,
             "requires_replan": requires_replan,
             "wildcard_validation_errors": list(
                 plan.get("wildcard_validation_errors") or []

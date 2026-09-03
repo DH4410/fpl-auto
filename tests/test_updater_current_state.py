@@ -2,8 +2,15 @@ from __future__ import annotations
 
 import unittest
 
+import pandas as pd
+
 from bot import data_collector
-from bot.updater import _blend_ml_xpts, build_current_state, unavailable_for_rebuild
+from bot.updater import (
+    _blend_ml_xpts,
+    _overlay_current_season_features,
+    build_current_state,
+    unavailable_for_rebuild,
+)
 
 
 class UpdaterCurrentStateTests(unittest.TestCase):
@@ -12,6 +19,47 @@ class UpdaterCurrentStateTests(unittest.TestCase):
         # GW3 8-11 xPts cluster. The model channel is now capped at 12.
         self.assertAlmostEqual(_blend_ml_xpts(100.0, 4.0, 3), 7.2)
         self.assertAlmostEqual(_blend_ml_xpts(100.0, 0.0, 3), 6.0)
+
+    def test_gw3_ml_features_include_completed_current_season_form(self):
+        pred = pd.DataFrame([{
+            "ewma_minutes": 70.0,
+            "ewma_total_points": 3.0,
+            "ewma_expected_goals": 0.20,
+            "ewma_expected_assists": 0.10,
+            "ewma_start_rate": 70.0 / 90.0,
+            "ewma_p60_rate": 70.0 / 90.0,
+            "ewma_played_any": 70.0 / 90.0,
+            "games_played": 0.0,
+        }], index=[10])
+        summaries = {
+            10: {
+                "history": [
+                    {
+                        "round": 1, "minutes": 90, "starts": 1,
+                        "total_points": 4, "expected_goals": "0.30",
+                        "expected_assists": "0.20",
+                    },
+                    {
+                        "round": 2, "minutes": 80, "starts": 1,
+                        "total_points": 10, "expected_goals": "0.80",
+                        "expected_assists": "0.40",
+                    },
+                    # Future/current GW must not leak into GW3 features.
+                    {
+                        "round": 3, "minutes": 90, "starts": 1,
+                        "total_points": 20, "expected_goals": "2.00",
+                        "expected_assists": "1.00",
+                    },
+                ]
+            }
+        }
+        out = _overlay_current_season_features(pred, summaries, current_gw=3)
+        self.assertEqual(out.loc[10, "games_played"], 2.0)
+        self.assertEqual(out.loc[10, "roll1_total_points"], 10.0)
+        self.assertEqual(out.loc[10, "roll3_total_points"], 7.0)
+        self.assertAlmostEqual(out.loc[10, "roll1_expected_goals"], 0.8)
+        self.assertGreater(out.loc[10, "ewma_total_points"], 3.0)
+        self.assertLess(out.loc[10, "ewma_total_points"], 10.0)
 
     def test_woltemade_style_unavailable_player_is_blocked_from_rebuild(self):
         blocked = unavailable_for_rebuild({

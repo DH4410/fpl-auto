@@ -147,8 +147,8 @@ class SeasonForecaster:
         ml_xpts:
             Optional mapping of ``element_id → predicted xPts for GW1``.
             When provided, the ML value replaces the rule-based base for the
-            immediate GW; for subsequent GWs it is scaled by the FDR/PPG
-            branch multipliers (treating it as a per-game base rate).
+            immediate GW only. Subsequent GWs use the stabilized PPG branch so
+            next-fixture information cannot leak across the planning horizon.
 
         Returns
         -------
@@ -193,18 +193,18 @@ class SeasonForecaster:
                     ml_val = (ml_xpts or {}).get(el_id)
 
                     if ml_val is not None and gw_offset == 0:
-                        # ML prediction is a single-GW value, already fixture-aware.
+                        # ML/ep_next blend is a single-GW, fixture-aware value.
+                        # Never recycle it into later GWs: ep_next describes the
+                        # immediate fixture, so doing so leaks GW1 conditions
+                        # into GW+1...GW+5 and then applies future FDR on top.
                         xpts = ml_val * p_start
-                    elif ml_val is not None:
-                        # Scale ML value as a per-game base rate for future GWs.
-                        xpts = ml_val * fdr_mult * p_start * n_fixtures
                     else:
-                        # Immediate GW: use FPL's ep_next, which already accounts
-                        # for the fixture (including DGW scaling). Further GWs use
-                        # the reliability-adjusted PPG × FDR × n_fixtures so a
-                        # one-game sample cannot drive the projection.
+                        # Future GWs always use a fixture-neutral, reliability-
+                        # adjusted PPG base × that GW's own FDR. Immediate GW
+                        # falls back to FPL ep_next only when ML is unavailable.
                         using_ep_next = (
                             gw_offset == 0
+                            and ml_val is None
                             and p["ep_next"] is not None
                             and float(p["ep_next"]) > 0
                         )
