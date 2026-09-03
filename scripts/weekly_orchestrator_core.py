@@ -291,6 +291,28 @@ def determine_stage(bootstrap: dict, state_file: dict) -> str:
         simulated = int(state_file.get("last_simulated_gw", 0)) >= next_gw
         executed = int(state_file.get("last_executed_gw", 0)) >= next_gw
 
+        # A plan frozen under an older safety schema (or without a confirmed
+        # healthy ML runtime) is not "simulated" for deadline purposes.  Replan
+        # proactively on the next cron tick instead of waiting until its old
+        # execution target to discover that it is invalid.
+        approved = state_file.get("approved_plan") or {}
+        approved_health = dict(approved.get("model_health") or {})
+        approved_is_current = int(approved.get("gw") or 0) == next_gw
+        approved_is_safe = (
+            int(approved.get("execution_plan_version") or 0) == 3
+            and approved_health.get("loaded") is True
+            and approved_health.get("inference_ok") is True
+        )
+        if (
+            simulated
+            and approved_is_current
+            and not approved_is_safe
+            and not executed
+            and hours <= PLAN_WINDOW[1]
+            and hours >= EXECUTE_WINDOW[0]
+        ):
+            return PRE_DEADLINE_PLAN
+
         if PLAN_WINDOW[0] <= hours <= PLAN_WINDOW[1] and not simulated:
             return PRE_DEADLINE_PLAN
 
