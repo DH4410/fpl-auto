@@ -13,8 +13,8 @@ scipy>=1.11.0          # Dixon-Coles MLE, Shin de-vigging, Poisson grids
 scikit-learn>=1.3.0
 
 # --- gradient boosting (models.py) -------------------------------------------
-xgboost>=2.0.0         # minutes (custom asymmetric objective), defense, bonus
-lightgbm>=4.0.0        # attack model (xG/90, xA/90)
+xgboost==3.1.3         # minutes (custom asymmetric objective), defense, bonus
+lightgbm==4.6.0        # attack model (xG/90, xA/90)
 
 # --- optimisation (optimizer.py) ---------------------------------------------
 # PuLP ships with the CBC solver. highspy adds HiGHS, which is markedly faster
