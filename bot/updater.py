@@ -649,17 +649,18 @@ class SeasonUpdater:
                     f"from the rebuilt squad."
                 )
 
-        # Projection sanity guard — warn, don't clamp. A healthy single-fixture
-        # plan sits near the immediate GW's XI total; a future GW running far
-        # above it means the forecast fed the MILP corrupt base rates.
-        plan["projection_warnings"] = projection_warnings(plan.get("gw_plan", []))
-        for w in plan["projection_warnings"]:
-            log.warning("projection sanity: %s", w)
-
-        # Merge chip recommendations into GW plan.
+        # Merge chip recommendations before projection checks so the sanity
+        # guard can correctly exempt genuine TC/BB chip weeks.
         chip_map = {c["gw"]: c["chip"] for c in chip_result.get("chip_plan", [])}
         for g in plan["gw_plan"]:
             g["chip"] = chip_map.get(g["gw"])
+
+        # Projection sanity guard — surfaced to the orchestrator. A healthy
+        # single-fixture plan stays near the immediate GW's XI total; a later
+        # non-chip GW towering above it indicates corrupt forecast inputs.
+        plan["projection_warnings"] = projection_warnings(plan.get("gw_plan", []))
+        for w in plan["projection_warnings"]:
+            log.warning("projection sanity: %s", w)
         plan["chip"] = chip_result.get("recommendation")
         plan["chip_plan"] = chip_result.get("chip_plan", [])
         plan["chip_reason"] = chip_result.get("reason", "")
