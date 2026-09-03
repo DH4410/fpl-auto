@@ -2,20 +2,67 @@
   "gw": 3,
   "approved_transfers": [
     {
+      "element_in": 385,
+      "name_in": "Trafford",
+      "purchase_price": 50,
+      "element_out": 28,
+      "name_out": "Martinez",
+      "selling_price": 50,
+      "position": 1
+    },
+    {
+      "element_in": 572,
+      "name_in": "Tzolakis",
+      "purchase_price": 46,
+      "element_out": 226,
+      "name_out": "Pickford",
+      "selling_price": 55,
+      "position": 1
+    },
+    {
       "element_in": 8,
       "name_in": "Calafiori",
       "purchase_price": 56,
       "element_out": 4,
       "name_out": "Gabriel",
-      "selling_price": 80
+      "selling_price": 80,
+      "position": 2
     },
     {
       "element_in": 10,
       "name_in": "White",
       "purchase_price": 55,
-      "element_out": 28,
-      "name_out": "Martinez",
-      "selling_price": 50
+      "element_out": 142,
+      "name_out": "James",
+      "selling_price": 55,
+      "position": 2
+    },
+    {
+      "element_in": 115,
+      "name_in": "De Cuyper",
+      "purchase_price": 47,
+      "element_out": 200,
+      "name_out": "Lacroix",
+      "selling_price": 60,
+      "position": 2
+    },
+    {
+      "element_in": 229,
+      "name_in": "Tarkowski",
+      "purchase_price": 60,
+      "element_out": 387,
+      "name_out": "O'Reilly",
+      "selling_price": 65,
+      "position": 2
+    },
+    {
+      "element_in": 279,
+      "name_in": "Ajayi",
+      "purchase_price": 41,
+      "element_out": 388,
+      "name_out": "Gu\u00e9hi",
+      "selling_price": 60,
+      "position": 2
     },
     {
       "element_in": 12,
@@ -23,53 +70,59 @@
       "purchase_price": 95,
       "element_out": 86,
       "name_out": "Lewis-Potter",
-      "selling_price": 55
+      "selling_price": 55,
+      "position": 3
     },
     {
       "element_in": 154,
       "name_in": "Palmer",
       "purchase_price": 96,
-      "element_out": 106,
-      "name_out": "Thiago",
-      "selling_price": 80
+      "element_out": 124,
+      "name_out": "Gro\u00df",
+      "selling_price": 55,
+      "position": 3
+    },
+    {
+      "element_in": 335,
+      "name_in": "Stach",
+      "purchase_price": 60,
+      "element_out": 368,
+      "name_out": "Szoboszlai",
+      "selling_price": 70,
+      "position": 3
     },
     {
       "element_in": 165,
       "name_in": "Jo\u00e3o Pedro",
       "purchase_price": 77,
-      "element_out": 142,
-      "name_out": "James",
-      "selling_price": 55
+      "element_out": 106,
+      "name_out": "Thiago",
+      "selling_price": 80,
+      "position": 4
     },
     {
-      "element_in": 277,
-      "name_in": "Egan",
-      "purchase_price": 40,
-      "element_out": 200,
-      "name_out": "Lacroix",
-      "selling_price": 60
+      "element_in": 249,
+      "name_in": "Barry",
+      "purchase_price": 55,
+      "element_out": 346,
+      "name_out": "Calvert-Lewin",
+      "selling_price": 60,
+      "position": 4
     },
     {
-      "element_in": 279,
-      "name_in": "Ajayi",
-      "purchase_price": 41,
-      "element_out": 368,
-      "name_out": "Szoboszlai",
-      "selling_price": 70
-    },
-    {
-      "element_in": 572,
-      "name_in": "Tzolakis",
-      "purchase_price": 46,
-      "element_out": 387,
-      "name_out": "O'Reilly",
-      "selling_price": 65
+      "element_in": 464,
+      "name_in": "Wissa",
+      "purchase_price": 61,
+      "element_out": 463,
+      "name_out": "Woltemade",
+      "selling_price": 59,
+      "position": 4
     }
   ],
-  "approved_chip": null,
-  "expected_net_gain": 173.88,
-  "expected_gross_gain": 197.88,
-  "hit_count": 6,
+  "approved_chip": "wildcard",
+  "expected_net_gain": 248.41,
+  "expected_gross_gain": 248.41,
+  "hit_count": 0,
   "captain": {
     "element": 426,
     "name": "B.Fernandes",
@@ -80,5 +133,11 @@
     "name": "Cherki",
     "xpts": 10.32
   },
-  "reasoning": "Planner proposes 8 transfer(s) worth +197.88 xPts gross over 6 GWs (+173.88 net of 6 hit(s)). Hit approved: 197.88 gross >= 26.0 required. REJECTED chip wildcard: the current plan is an ordinary transfer plan, not a dedicated chip-specific squad rebuild. Preserving the chip is safer than executing the wrong squad. NOTE: Woltemade is flagged urgent (Has joined Juventus on loan for the rest of the season) but the optimiser kept them \u2014 benched or judged still worth holding."
+  "reasoning": "Planner proposes 13 transfer(s) worth +248.41 xPts gross over 6 GWs (+248.41 net of 0 hit(s)). Chip wildcard approved for GW3: dedicated rebuild validated with unlimited transfers and no hits.",
+  "transfer_plan_kind": "wildcard_rebuild",
+  "execution_plan_version": 2,
+  "requires_replan": false,
+  "wildcard_validation_errors": [],
+  "wildcard_validated": true,
+  "vetoed_element_ids": []
 }
