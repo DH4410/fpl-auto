@@ -38,27 +38,27 @@
       "position": 2
     },
     {
-      "element_in": 115,
-      "name_in": "De Cuyper",
-      "purchase_price": 47,
+      "element_in": 229,
+      "name_in": "Tarkowski",
+      "purchase_price": 60,
       "element_out": 200,
       "name_out": "Lacroix",
       "selling_price": 60,
       "position": 2
     },
     {
-      "element_in": 229,
-      "name_in": "Tarkowski",
-      "purchase_price": 60,
+      "element_in": 279,
+      "name_in": "Ajayi",
+      "purchase_price": 41,
       "element_out": 387,
       "name_out": "O'Reilly",
       "selling_price": 65,
       "position": 2
     },
     {
-      "element_in": 279,
-      "name_in": "Ajayi",
-      "purchase_price": 41,
+      "element_in": 586,
+      "name_in": "Mendy",
+      "purchase_price": 40,
       "element_out": 388,
       "name_out": "Gu\u00e9hi",
       "selling_price": 60,
@@ -83,9 +83,9 @@
       "position": 3
     },
     {
-      "element_in": 335,
-      "name_in": "Stach",
-      "purchase_price": 60,
+      "element_in": 565,
+      "name_in": "M.Sangar\u00e9",
+      "purchase_price": 57,
       "element_out": 368,
       "name_out": "Szoboszlai",
       "selling_price": 70,
@@ -101,8 +101,8 @@
       "position": 4
     },
     {
-      "element_in": 249,
-      "name_in": "Barry",
+      "element_in": 316,
+      "name_in": "Emersonn",
       "purchase_price": 55,
       "element_out": 346,
       "name_out": "Calvert-Lewin",
@@ -120,22 +120,27 @@
     }
   ],
   "approved_chip": "wildcard",
-  "expected_net_gain": 248.41,
-  "expected_gross_gain": 248.41,
+  "expected_net_gain": 225.1,
+  "expected_gross_gain": 225.1,
   "hit_count": 0,
   "captain": {
-    "element": 426,
-    "name": "B.Fernandes",
-    "xpts": 11.96
+    "element": 572,
+    "name": "Tzolakis",
+    "xpts": 9.0
   },
   "vice": {
-    "element": 399,
-    "name": "Cherki",
-    "xpts": 10.32
+    "element": 426,
+    "name": "B.Fernandes",
+    "xpts": 8.92
   },
-  "reasoning": "Planner proposes 13 transfer(s) worth +248.41 xPts gross over 6 GWs (+248.41 net of 0 hit(s)). Chip wildcard approved for GW3: dedicated rebuild validated with unlimited transfers and no hits.",
+  "reasoning": "Planner proposes 13 transfer(s) worth +225.10 xPts gross over 6 GWs (+225.10 net of 0 hit(s)). Chip wildcard approved for GW3: dedicated rebuild validated with unlimited transfers and no hits.",
   "transfer_plan_kind": "wildcard_rebuild",
-  "execution_plan_version": 2,
+  "execution_plan_version": 4,
+  "model_health": {
+    "loaded": true,
+    "inference_ok": true,
+    "error": null
+  },
   "requires_replan": false,
   "wildcard_validation_errors": [],
   "wildcard_validated": true,

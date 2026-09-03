@@ -42,27 +42,27 @@
         "position": 2
       },
       {
-        "element_in": 115,
-        "name_in": "De Cuyper",
-        "purchase_price": 47,
+        "element_in": 229,
+        "name_in": "Tarkowski",
+        "purchase_price": 60,
         "element_out": 200,
         "name_out": "Lacroix",
         "selling_price": 60,
         "position": 2
       },
       {
-        "element_in": 229,
-        "name_in": "Tarkowski",
-        "purchase_price": 60,
+        "element_in": 279,
+        "name_in": "Ajayi",
+        "purchase_price": 41,
         "element_out": 387,
         "name_out": "O'Reilly",
         "selling_price": 65,
         "position": 2
       },
       {
-        "element_in": 279,
-        "name_in": "Ajayi",
-        "purchase_price": 41,
+        "element_in": 586,
+        "name_in": "Mendy",
+        "purchase_price": 40,
         "element_out": 388,
         "name_out": "Gu\u00e9hi",
         "selling_price": 60,
@@ -87,9 +87,9 @@
         "position": 3
       },
       {
-        "element_in": 335,
-        "name_in": "Stach",
-        "purchase_price": 60,
+        "element_in": 565,
+        "name_in": "M.Sangar\u00e9",
+        "purchase_price": 57,
         "element_out": 368,
         "name_out": "Szoboszlai",
         "selling_price": 70,
@@ -105,8 +105,8 @@
         "position": 4
       },
       {
-        "element_in": 249,
-        "name_in": "Barry",
+        "element_in": 316,
+        "name_in": "Emersonn",
         "purchase_price": 55,
         "element_out": 346,
         "name_out": "Calvert-Lewin",
@@ -124,22 +124,27 @@
       }
     ],
     "approved_chip": "wildcard",
-    "expected_net_gain": 248.41,
-    "expected_gross_gain": 248.41,
+    "expected_net_gain": 225.1,
+    "expected_gross_gain": 225.1,
     "hit_count": 0,
     "captain": {
-      "element": 426,
-      "name": "B.Fernandes",
-      "xpts": 11.96
+      "element": 572,
+      "name": "Tzolakis",
+      "xpts": 9.0
     },
     "vice": {
-      "element": 399,
-      "name": "Cherki",
-      "xpts": 10.32
+      "element": 426,
+      "name": "B.Fernandes",
+      "xpts": 8.92
     },
-    "reasoning": "Planner proposes 13 transfer(s) worth +248.41 xPts gross over 6 GWs (+248.41 net of 0 hit(s)). Chip wildcard approved for GW3: dedicated rebuild validated with unlimited transfers and no hits.",
+    "reasoning": "Planner proposes 13 transfer(s) worth +225.10 xPts gross over 6 GWs (+225.10 net of 0 hit(s)). Chip wildcard approved for GW3: dedicated rebuild validated with unlimited transfers and no hits.",
     "transfer_plan_kind": "wildcard_rebuild",
-    "execution_plan_version": 2,
+    "execution_plan_version": 4,
+    "model_health": {
+      "loaded": true,
+      "inference_ok": true,
+      "error": null
+    },
     "requires_replan": false,
     "wildcard_validation_errors": [],
     "wildcard_validated": true,
@@ -148,7 +153,7 @@
       {
         "element": 572,
         "position": 1,
-        "is_captain": false,
+        "is_captain": true,
         "is_vice_captain": false
       },
       {
@@ -158,19 +163,19 @@
         "is_vice_captain": false
       },
       {
-        "element": 10,
+        "element": 229,
         "position": 3,
         "is_captain": false,
         "is_vice_captain": false
       },
       {
-        "element": 229,
+        "element": 279,
         "position": 4,
         "is_captain": false,
         "is_vice_captain": false
       },
       {
-        "element": 279,
+        "element": 586,
         "position": 5,
         "is_captain": false,
         "is_vice_captain": false
@@ -188,21 +193,21 @@
         "is_vice_captain": false
       },
       {
-        "element": 335,
+        "element": 399,
         "position": 8,
         "is_captain": false,
         "is_vice_captain": false
       },
       {
-        "element": 399,
+        "element": 426,
         "position": 9,
         "is_captain": false,
         "is_vice_captain": true
       },
       {
-        "element": 426,
+        "element": 565,
         "position": 10,
-        "is_captain": true,
+        "is_captain": false,
         "is_vice_captain": false
       },
       {
@@ -218,19 +223,19 @@
         "is_vice_captain": false
       },
       {
-        "element": 115,
+        "element": 10,
         "position": 13,
         "is_captain": false,
         "is_vice_captain": false
       },
       {
-        "element": 464,
+        "element": 316,
         "position": 14,
         "is_captain": false,
         "is_vice_captain": false
       },
       {
-        "element": 249,
+        "element": 464,
         "position": 15,
         "is_captain": false,
         "is_vice_captain": false
@@ -258,190 +263,274 @@
       8,
       10,
       12,
-      115,
       154,
       165,
       229,
-      249,
       279,
-      335,
+      316,
       385,
       399,
       426,
       464,
-      572
+      565,
+      572,
+      586
     ],
     "planning_news_guard": [
       {
         "element": 4,
         "status": "a",
         "chance_next_round": null,
-        "news": ""
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
       },
       {
         "element": 8,
         "status": "a",
         "chance_next_round": null,
-        "news": ""
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
       },
       {
         "element": 10,
         "status": "a",
         "chance_next_round": 100,
-        "news": ""
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
       },
       {
         "element": 12,
         "status": "a",
         "chance_next_round": null,
-        "news": ""
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
       },
       {
         "element": 28,
         "status": "a",
         "chance_next_round": null,
-        "news": ""
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
       },
       {
         "element": 86,
         "status": "a",
         "chance_next_round": null,
-        "news": ""
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
       },
       {
         "element": 106,
         "status": "a",
         "chance_next_round": null,
-        "news": ""
-      },
-      {
-        "element": 115,
-        "status": "a",
-        "chance_next_round": null,
-        "news": ""
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
       },
       {
         "element": 124,
         "status": "a",
         "chance_next_round": null,
-        "news": ""
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
       },
       {
         "element": 142,
         "status": "a",
         "chance_next_round": null,
-        "news": ""
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
       },
       {
         "element": 154,
         "status": "a",
         "chance_next_round": 100,
-        "news": ""
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
       },
       {
         "element": 165,
         "status": "a",
         "chance_next_round": null,
-        "news": ""
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
       },
       {
         "element": 200,
         "status": "a",
         "chance_next_round": null,
-        "news": ""
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
       },
       {
         "element": 226,
         "status": "a",
         "chance_next_round": null,
-        "news": ""
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
       },
       {
         "element": 229,
         "status": "a",
         "chance_next_round": null,
-        "news": ""
-      },
-      {
-        "element": 249,
-        "status": "a",
-        "chance_next_round": null,
-        "news": ""
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
       },
       {
         "element": 279,
         "status": "a",
         "chance_next_round": 100,
-        "news": ""
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
       },
       {
-        "element": 335,
+        "element": 316,
         "status": "a",
-        "chance_next_round": null,
-        "news": ""
+        "chance_next_round": 100,
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
       },
       {
         "element": 346,
         "status": "a",
         "chance_next_round": null,
-        "news": ""
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
       },
       {
         "element": 368,
         "status": "a",
         "chance_next_round": null,
-        "news": ""
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
       },
       {
         "element": 385,
         "status": "a",
         "chance_next_round": null,
-        "news": ""
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
       },
       {
         "element": 387,
         "status": "a",
         "chance_next_round": null,
-        "news": ""
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
       },
       {
         "element": 388,
         "status": "a",
         "chance_next_round": null,
-        "news": ""
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
       },
       {
         "element": 399,
         "status": "a",
         "chance_next_round": null,
-        "news": ""
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
       },
       {
         "element": 426,
         "status": "a",
         "chance_next_round": null,
-        "news": ""
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
       },
       {
         "element": 463,
         "status": "u",
         "chance_next_round": 0,
-        "news": "Has joined Juventus on loan for the rest of the season"
+        "news": "Has joined Juventus on loan for the rest of the season",
+        "can_select": false,
+        "can_transact": true,
+        "removed": false
       },
       {
         "element": 464,
         "status": "a",
         "chance_next_round": null,
-        "news": ""
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
+      },
+      {
+        "element": 565,
+        "status": "a",
+        "chance_next_round": null,
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
       },
       {
         "element": 572,
         "status": "a",
         "chance_next_round": null,
-        "news": ""
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
+      },
+      {
+        "element": 586,
+        "status": "a",
+        "chance_next_round": 100,
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
       }
     ],
-    "execute_target_utc": "2026-09-04T16:03:25.765747+00:00"
+    "execute_target_utc": "2026-09-04T10:41:30.314925+00:00"
   },
   "execute_target_utc": null,
   "last_deep_research_gw": 2,
