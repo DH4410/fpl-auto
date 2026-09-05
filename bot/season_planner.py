@@ -77,6 +77,14 @@ DEFAULT_BENCH_WEIGHT = 0.10
 DEFAULT_FT_VALUE = 1.5   # extra expected points credited per banked FT
 CAPTAIN_EXTRA = 1.0      # (cap multiplier - 1) = 1; captain earns xpts twice
 
+#: Position weighting applied to the *captain-extra* term of the objective only.
+#: A keeper's return is a save/clean-sheet floor with little ceiling, so the
+#: armband is worth far less on a GKP than on an attacker with the same
+#: projection. GKP is near-zero and DEF is halved (a defender needs ~2x an
+#: attacker's xPts to take the armband). This shapes the objective; captaincy
+#: stays legal for every position -- it is not a hard constraint.
+CAPTAIN_POSITION_WEIGHT = {GKP: 0.1, DEF: 0.5, MID: 1.0, FWD: 1.0}
+
 
 # ---------------------------------------------------------------------------
 # Planner
@@ -234,10 +242,11 @@ class SeasonPlanner:
         # Objective.
         # ---------------------------------------------------------------
         decay_weights = [self.decay ** t for t in range(T)]
+        capt_w = [CAPTAIN_POSITION_WEIGHT.get(int(pos[i]), 1.0) for i in range(n)]
         obj = pulp.lpSum(
             decay_weights[t] * (
                 pulp.lpSum(xpts[i, t] * st[i][t] for i in range(n))
-                + pulp.lpSum(xpts[i, t] * cp[i][t] for i in range(n))  # captain extra
+                + pulp.lpSum(capt_w[i] * xpts[i, t] * cp[i][t] for i in range(n))  # captain extra
                 + self.bench_weight * pulp.lpSum(
                     xpts[i, t] * (sq[i][t] - st[i][t]) for i in range(n))
                 - HIT_COST * hit_var[t]

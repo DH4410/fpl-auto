@@ -17,3 +17,6 @@ data/parquet/raw/
 data/staging/
 # Keep gitkeep and metadata
 !data/.gitkeep
+
+# Stray nested checkout (was an accidental gitlink); ignore the local copy
+/fpl-auto/
