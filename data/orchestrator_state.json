@@ -1,5 +1,5 @@
 {
-  "last_analyzed_gw": 2,
+  "last_analyzed_gw": 3,
   "last_simulated_gw": 3,
   "last_executed_gw": 1,
   "approved_plan": {
@@ -692,10 +692,255 @@
   "idea_list": [
     {
       "action": "transfer_out",
-      "element": 463,
-      "name": "Woltemade",
-      "reason": "Has joined Juventus on loan for the rest of the season",
-      "priority": 1.0
+      "element": 565,
+      "name": "M.Sangar\u00e9",
+      "reason": "Scored 0 vs 8.1 expected in GW3 (delta -8.1).",
+      "priority": 0.405
+    },
+    {
+      "action": "transfer_in",
+      "element": 367,
+      "name": "Gakpo",
+      "reason": "Replacement for M.Sangar\u00e9: MID \u00a37.2m, xPts 9.30, GW4 FDR 2.0.",
+      "priority": 0.365
+    },
+    {
+      "action": "transfer_in",
+      "element": 15,
+      "name": "\u00d8degaard",
+      "reason": "Replacement for M.Sangar\u00e9: MID \u00a36.6m, xPts 8.00, GW4 FDR 3.0.",
+      "priority": 0.365
+    },
+    {
+      "action": "transfer_in",
+      "element": 69,
+      "name": "Scott",
+      "reason": "Replacement for M.Sangar\u00e9: MID \u00a36.0m, xPts 8.00, GW4 FDR 3.0.",
+      "priority": 0.365
+    },
+    {
+      "action": "transfer_out",
+      "element": 426,
+      "name": "B.Fernandes",
+      "reason": "Scored 2 vs 8.9 expected in GW3 (delta -6.9).",
+      "priority": 0.346
+    },
+    {
+      "action": "transfer_in",
+      "element": 367,
+      "name": "Gakpo",
+      "reason": "Replacement for B.Fernandes: MID \u00a37.2m, xPts 9.30, GW4 FDR 2.0.",
+      "priority": 0.311
+    },
+    {
+      "action": "transfer_in",
+      "element": 15,
+      "name": "\u00d8degaard",
+      "reason": "Replacement for B.Fernandes: MID \u00a36.6m, xPts 8.00, GW4 FDR 3.0.",
+      "priority": 0.311
+    },
+    {
+      "action": "transfer_in",
+      "element": 69,
+      "name": "Scott",
+      "reason": "Replacement for B.Fernandes: MID \u00a36.0m, xPts 8.00, GW4 FDR 3.0.",
+      "priority": 0.311
+    },
+    {
+      "action": "transfer_out",
+      "element": 154,
+      "name": "Palmer",
+      "reason": "Scored 1 vs 6.7 expected in GW3 (delta -5.7).",
+      "priority": 0.283
+    },
+    {
+      "action": "transfer_out",
+      "element": 12,
+      "name": "Saka",
+      "reason": "Scored 2 vs 7.6 expected in GW3 (delta -5.6).",
+      "priority": 0.279
+    },
+    {
+      "action": "transfer_out",
+      "element": 165,
+      "name": "Jo\u00e3o Pedro",
+      "reason": "Scored 1 vs 6.4 expected in GW3 (delta -5.4).",
+      "priority": 0.271
+    },
+    {
+      "action": "transfer_in",
+      "element": 367,
+      "name": "Gakpo",
+      "reason": "Replacement for Palmer: MID \u00a37.2m, xPts 9.30, GW4 FDR 2.0.",
+      "priority": 0.255
+    },
+    {
+      "action": "transfer_in",
+      "element": 15,
+      "name": "\u00d8degaard",
+      "reason": "Replacement for Palmer: MID \u00a36.6m, xPts 8.00, GW4 FDR 3.0.",
+      "priority": 0.255
+    },
+    {
+      "action": "transfer_in",
+      "element": 69,
+      "name": "Scott",
+      "reason": "Replacement for Palmer: MID \u00a36.0m, xPts 8.00, GW4 FDR 3.0.",
+      "priority": 0.255
+    },
+    {
+      "action": "transfer_in",
+      "element": 367,
+      "name": "Gakpo",
+      "reason": "Replacement for Saka: MID \u00a37.2m, xPts 9.30, GW4 FDR 2.0.",
+      "priority": 0.251
+    },
+    {
+      "action": "transfer_in",
+      "element": 15,
+      "name": "\u00d8degaard",
+      "reason": "Replacement for Saka: MID \u00a36.6m, xPts 8.00, GW4 FDR 3.0.",
+      "priority": 0.251
+    },
+    {
+      "action": "transfer_in",
+      "element": 69,
+      "name": "Scott",
+      "reason": "Replacement for Saka: MID \u00a36.0m, xPts 8.00, GW4 FDR 3.0.",
+      "priority": 0.251
+    },
+    {
+      "action": "transfer_in",
+      "element": 379,
+      "name": "Isak",
+      "reason": "Replacement for Jo\u00e3o Pedro: FWD \u00a39.0m, xPts 7.70, GW4 FDR 2.0.",
+      "priority": 0.244
+    },
+    {
+      "action": "transfer_in",
+      "element": 26,
+      "name": "Havertz",
+      "reason": "Replacement for Jo\u00e3o Pedro: FWD \u00a37.5m, xPts 5.30, GW4 FDR 3.0.",
+      "priority": 0.244
+    },
+    {
+      "action": "transfer_in",
+      "element": 553,
+      "name": "Isidor",
+      "reason": "Replacement for Jo\u00e3o Pedro: FWD \u00a35.5m, xPts 4.30, GW4 FDR 4.0.",
+      "priority": 0.244
+    },
+    {
+      "action": "transfer_out",
+      "element": 399,
+      "name": "Cherki",
+      "reason": "Scored 3 vs 7.8 expected in GW3 (delta -4.8).",
+      "priority": 0.242
+    },
+    {
+      "action": "transfer_out",
+      "element": 8,
+      "name": "Calafiori",
+      "reason": "Scored 2 vs 6.5 expected in GW3 (delta -4.5).",
+      "priority": 0.224
+    },
+    {
+      "action": "transfer_in",
+      "element": 367,
+      "name": "Gakpo",
+      "reason": "Replacement for Cherki: MID \u00a37.2m, xPts 9.30, GW4 FDR 2.0.",
+      "priority": 0.218
+    },
+    {
+      "action": "transfer_in",
+      "element": 15,
+      "name": "\u00d8degaard",
+      "reason": "Replacement for Cherki: MID \u00a36.6m, xPts 8.00, GW4 FDR 3.0.",
+      "priority": 0.218
+    },
+    {
+      "action": "transfer_in",
+      "element": 69,
+      "name": "Scott",
+      "reason": "Replacement for Cherki: MID \u00a36.0m, xPts 8.00, GW4 FDR 3.0.",
+      "priority": 0.218
+    },
+    {
+      "action": "transfer_in",
+      "element": 277,
+      "name": "Egan",
+      "reason": "Replacement for Calafiori: DEF \u00a34.1m, xPts 7.70, GW4 FDR 4.0.",
+      "priority": 0.202
+    },
+    {
+      "action": "transfer_in",
+      "element": 330,
+      "name": "Bogle",
+      "reason": "Replacement for Calafiori: DEF \u00a34.5m, xPts 7.30, GW4 FDR 2.0.",
+      "priority": 0.202
+    },
+    {
+      "action": "transfer_in",
+      "element": 115,
+      "name": "De Cuyper",
+      "reason": "Replacement for Calafiori: DEF \u00a34.7m, xPts 7.00, GW4 FDR 2.0.",
+      "priority": 0.202
+    },
+    {
+      "action": "transfer_out",
+      "element": 10,
+      "name": "White",
+      "reason": "Scored 2 vs 5.9 expected in GW3 (delta -3.9).",
+      "priority": 0.194
+    },
+    {
+      "action": "transfer_in",
+      "element": 277,
+      "name": "Egan",
+      "reason": "Replacement for White: DEF \u00a34.1m, xPts 7.70, GW4 FDR 4.0.",
+      "priority": 0.175
+    },
+    {
+      "action": "transfer_in",
+      "element": 330,
+      "name": "Bogle",
+      "reason": "Replacement for White: DEF \u00a34.5m, xPts 7.30, GW4 FDR 2.0.",
+      "priority": 0.175
+    },
+    {
+      "action": "transfer_in",
+      "element": 115,
+      "name": "De Cuyper",
+      "reason": "Replacement for White: DEF \u00a34.7m, xPts 7.00, GW4 FDR 2.0.",
+      "priority": 0.175
+    },
+    {
+      "action": "transfer_out",
+      "element": 464,
+      "name": "Wissa",
+      "reason": "Scored 1 vs 4.1 expected in GW3 (delta -3.1).",
+      "priority": 0.154
+    },
+    {
+      "action": "transfer_in",
+      "element": 26,
+      "name": "Havertz",
+      "reason": "Replacement for Wissa: FWD \u00a37.5m, xPts 5.30, GW4 FDR 3.0.",
+      "priority": 0.139
+    },
+    {
+      "action": "transfer_in",
+      "element": 553,
+      "name": "Isidor",
+      "reason": "Replacement for Wissa: FWD \u00a35.5m, xPts 4.30, GW4 FDR 4.0.",
+      "priority": 0.139
+    },
+    {
+      "action": "transfer_in",
+      "element": 249,
+      "name": "Barry",
+      "reason": "Replacement for Wissa: FWD \u00a35.6m, xPts 4.00, GW4 FDR 3.0.",
+      "priority": 0.139
     }
   ]
 }
