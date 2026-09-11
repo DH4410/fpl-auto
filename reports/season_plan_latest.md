@@ -1,6 +1,6 @@
-# FPL Season Plan — GW3
+# FPL Season Plan — GW4
 
-*Generated 2026-09-03 22:16 UTC — advisory only, no transfers executed*
+*Generated 2026-09-11 02:55 UTC — advisory only, no transfers executed*
 
 ---
 
@@ -14,26 +14,15 @@ All predictions run locally — no external AI APIs are called. GitHub Actions f
 
 ---
 
-## Immediate Action — GW3
+## Immediate Action — GW4
 
-**Chip:** Wildcard  
-**Captain:** Tzolakis (9.00 xPts → 18.00 effective with double)  
-**Vice:** B.Fernandes (8.92 xPts)  
-**Transfer:** OUT Martinez (£5.0m) → IN Trafford (£5.0m)  
-**Transfer:** OUT Pickford (£5.5m) → IN Tzolakis (£4.6m)  
-**Transfer:** OUT Gabriel (£8.0m) → IN Calafiori (£5.6m)  
-**Transfer:** OUT James (£5.5m) → IN White (£5.5m)  
-**Transfer:** OUT Lacroix (£6.0m) → IN Tarkowski (£6.0m)  
-**Transfer:** OUT O'Reilly (£6.5m) → IN Ajayi (£4.1m)  
-**Transfer:** OUT Guéhi (£6.0m) → IN Mendy (£4.0m)  
-**Transfer:** OUT Lewis-Potter (£5.5m) → IN Saka (£9.5m)  
-**Transfer:** OUT Groß (£5.5m) → IN Palmer (£9.6m)  
-**Transfer:** OUT Szoboszlai (£7.0m) → IN M.Sangaré (£5.7m)  
-**Transfer:** OUT Thiago (£8.0m) → IN João Pedro (£7.7m)  
-**Transfer:** OUT Calvert-Lewin (£6.0m) → IN Emersonn (£5.5m)  
-**Transfer:** OUT Woltemade (£5.9m) → IN Wissa (£6.1m)  
-**Bank after:** £1.5m  
-**FT next GW:** 2  
+**Chip:** Bench Boost  
+**Captain:** B.Fernandes (6.68 xPts → 13.36 effective with double)  
+**Vice:** Mendy (7.20 xPts)  
+**Transfer:** OUT White (£5.5m) → IN Gvardiol (£5.6m)  
+**Transfer:** OUT Palmer (£9.6m) → IN Ødegaard (£6.7m)  
+**Bank after:** £4.2m  
+**FT next GW:** 1  
 
 ---
 
@@ -41,123 +30,72 @@ All predictions run locally — no external AI APIs are called. GitHub Actions f
 
 ### Starting XI
 
-- **Tzolakis** (GKP, £4.6m) [**CAPTAIN**]: Highest projected return in the squad: 9.00 xPts (18.00 effective with captain double). Ranked #1/16 among GKPs in the 150-player candidate pool. Captain is always the highest-xPts player in the XI.
-- **Ajayi** (DEF, £4.1m): 7.12 xPts for GW3, ranked #2/42 among DEFs in candidate pool. Hull City fixture. P(start) 90%.
-- **Calafiori** (DEF, £5.6m): 6.48 xPts for GW3, ranked #3/42 among DEFs in candidate pool. Arsenal fixture. P(start) 90%.
-- **Mendy** (DEF, £4.0m): 7.20 xPts for GW3, ranked #1/42 among DEFs in candidate pool. Hull City fixture. P(start) 90%.
-- **Tarkowski** (DEF, £6.0m): 5.98 xPts for GW3, ranked #4/42 among DEFs in candidate pool. Everton fixture. P(start) 90%.
-- **B.Fernandes** (MID, £12.0m) [**Vice**]: 8.92 xPts for GW3, ranked #1/72 among MIDs in candidate pool. Man Utd fixture. P(start) 90%.
-- **Cherki** (MID, £7.7m): 7.84 xPts for GW3, ranked #3/72 among MIDs in candidate pool. Man City fixture. P(start) 90%.
-- **M.Sangaré** (MID, £5.7m): 8.10 xPts for GW3, ranked #2/72 among MIDs in candidate pool. Brentford fixture. P(start) 90%.
-- **Palmer** (MID, £9.6m): 6.65 xPts for GW3, ranked #5/72 among MIDs in candidate pool. Chelsea fixture. P(start) 90%.
-- **Saka** (MID, £9.5m): 7.57 xPts for GW3, ranked #4/72 among MIDs in candidate pool. Arsenal fixture. P(start) 90%.
-- **João Pedro** (FWD, £7.7m): 6.41 xPts for GW3, ranked #1/20 among FWDs in candidate pool. Chelsea fixture. P(start) 90%.
+- **Tzolakis** (GKP, £4.6m): 7.83 xPts for GW4, ranked #1/16 among GKPs in candidate pool. Hull City fixture. P(start) 90%.
+- **Ajayi** (DEF, £4.1m): 5.88 xPts for GW4, ranked #2/44 among DEFs in candidate pool. Hull City fixture. P(start) 90%.
+- **Calafiori** (DEF, £5.8m): 5.04 xPts for GW4, ranked #6/44 among DEFs in candidate pool. Arsenal fixture. P(start) 90%.
+- **Gvardiol** (DEF, £5.6m): 5.14 xPts for GW4, ranked #4/44 among DEFs in candidate pool. Man City fixture. P(start) 90%.
+- **Mendy** (DEF, £4.1m) [**Vice**]: 7.20 xPts for GW4, ranked #1/44 among DEFs in candidate pool. Hull City fixture. P(start) 90%.
+- **B.Fernandes** (MID, £12.0m) [**CAPTAIN**]: Highest projected return in the squad: 6.68 xPts (13.37 effective with captain double). Ranked #1/76 among MIDs in the 150-player candidate pool. Captain is always the highest-xPts player in the XI.
+- **Cherki** (MID, £7.8m): 5.94 xPts for GW4, ranked #2/76 among MIDs in candidate pool. Man City fixture. P(start) 90%.
+- **M.Sangaré** (MID, £5.7m): 5.40 xPts for GW4, ranked #3/76 among MIDs in candidate pool. Brentford fixture. P(start) 90%.
+- **Saka** (MID, £9.5m): 5.37 xPts for GW4, ranked #4/76 among MIDs in candidate pool. Arsenal fixture. P(start) 90%.
+- **Ødegaard** (MID, £6.7m): 5.31 xPts for GW4, ranked #5/76 among MIDs in candidate pool. Arsenal fixture. P(start) 90%.
+- **João Pedro** (FWD, £7.7m): 4.67 xPts for GW4, ranked #3/14 among FWDs in candidate pool. Chelsea fixture. P(start) 90%.
 
 ### Bench
 
 *Bench picks are weighted at 10% in the MILP objective. The optimizer intentionally spends budget on the starting XI and uses bench slots for legal squad shape.*
 
-- **White** (DEF, £5.5m): 5.87 xPts. Budget saved here funds the premium XI picks.
-- **Emersonn** (FWD, £5.5m): 4.50 xPts. Budget saved here funds the premium XI picks.
-- **Trafford** (GKP, £5.0m): 4.67 xPts. Budget saved here funds the premium XI picks.
-- **Wissa** (FWD, £6.1m): 4.08 xPts. Budget saved here funds the premium XI picks.
+- **Tarkowski** (DEF, £6.0m): 4.93 xPts. Budget saved here funds the premium XI picks.
+- **Emersonn** (FWD, £5.5m): 3.60 xPts. Budget saved here funds the premium XI picks.
+- **Trafford** (GKP, £5.0m): 4.05 xPts. Budget saved here funds the premium XI picks.
+- **Wissa** (FWD, £6.2m): 3.18 xPts. Budget saved here funds the premium XI picks.
 
 ---
 
 ## Transfer Decision
 
-**OUT:** Martinez (£5.0m, 1.36 xPts GW3)
-**IN:** Trafford (£5.0m, 4.67 xPts GW3)
-**Net this week:** +3.30 xPts
+**OUT:** White (£5.5m, 4.91 xPts GW4)
+**IN:** Gvardiol (£5.6m, 5.14 xPts GW4)
+**Net this week:** +0.24 xPts
 
-Trafford projects 4.67 xPts vs Martinez's 1.36 — a 3.30 xPts improvement this GW alone. The MILP confirmed this swap also improves the full 6-GW plan after accounting for future fixtures and the value of free transfers.
-**OUT:** Pickford (£5.5m, 4.16 xPts GW3)
-**IN:** Tzolakis (£4.6m, 9.00 xPts GW3)
-**Net this week:** +4.84 xPts
+Gvardiol projects 5.14 xPts vs White's 4.91 — a 0.24 xPts improvement this GW alone. The MILP confirmed this swap also improves the full 6-GW plan after accounting for future fixtures and the value of free transfers.
+**OUT:** Palmer (£9.6m, 5.10 xPts GW4)
+**IN:** Ødegaard (£6.7m, 5.31 xPts GW4)
+**Net this week:** +0.21 xPts
 
-Tzolakis projects 9.00 xPts vs Pickford's 4.16 — a 4.84 xPts improvement this GW alone. The MILP confirmed this swap also improves the full 6-GW plan after accounting for future fixtures and the value of free transfers.
-**OUT:** Gabriel (£8.0m, 4.28 xPts GW3)
-**IN:** Calafiori (£5.6m, 6.48 xPts GW3)
-**Net this week:** +2.20 xPts
-
-Calafiori projects 6.48 xPts vs Gabriel's 4.28 — a 2.20 xPts improvement this GW alone. The MILP confirmed this swap also improves the full 6-GW plan after accounting for future fixtures and the value of free transfers.
-**OUT:** James (£5.5m, 1.31 xPts GW3)
-**IN:** White (£5.5m, 5.87 xPts GW3)
-**Net this week:** +4.56 xPts
-
-White projects 5.87 xPts vs James's 1.31 — a 4.56 xPts improvement this GW alone. The MILP confirmed this swap also improves the full 6-GW plan after accounting for future fixtures and the value of free transfers.
-**OUT:** Lacroix (£6.0m, 2.49 xPts GW3)
-**IN:** Tarkowski (£6.0m, 5.98 xPts GW3)
-**Net this week:** +3.49 xPts
-
-Tarkowski projects 5.98 xPts vs Lacroix's 2.49 — a 3.49 xPts improvement this GW alone. The MILP confirmed this swap also improves the full 6-GW plan after accounting for future fixtures and the value of free transfers.
-**OUT:** O'Reilly (£6.5m, 3.00 xPts GW3)
-**IN:** Ajayi (£4.1m, 7.12 xPts GW3)
-**Net this week:** +4.12 xPts
-
-Ajayi projects 7.12 xPts vs O'Reilly's 3.00 — a 4.12 xPts improvement this GW alone. The MILP confirmed this swap also improves the full 6-GW plan after accounting for future fixtures and the value of free transfers.
-**OUT:** Guéhi (£6.0m, 4.48 xPts GW3)
-**IN:** Mendy (£4.0m, 7.20 xPts GW3)
-**Net this week:** +2.72 xPts
-
-Mendy projects 7.20 xPts vs Guéhi's 4.48 — a 2.72 xPts improvement this GW alone. The MILP confirmed this swap also improves the full 6-GW plan after accounting for future fixtures and the value of free transfers.
-**OUT:** Lewis-Potter (£5.5m, 5.30 xPts GW3)
-**IN:** Saka (£9.5m, 7.57 xPts GW3)
-**Net this week:** +2.27 xPts
-
-Saka projects 7.57 xPts vs Lewis-Potter's 5.30 — a 2.27 xPts improvement this GW alone. The MILP confirmed this swap also improves the full 6-GW plan after accounting for future fixtures and the value of free transfers.
-**OUT:** Groß (£5.5m, 6.09 xPts GW3)
-**IN:** Palmer (£9.6m, 6.65 xPts GW3)
-**Net this week:** +0.56 xPts
-
-Palmer projects 6.65 xPts vs Groß's 6.09 — a 0.56 xPts improvement this GW alone. The MILP confirmed this swap also improves the full 6-GW plan after accounting for future fixtures and the value of free transfers.
-**OUT:** Szoboszlai (£7.0m, 5.02 xPts GW3)
-**IN:** M.Sangaré (£5.7m, 8.10 xPts GW3)
-**Net this week:** +3.08 xPts
-
-M.Sangaré projects 8.10 xPts vs Szoboszlai's 5.02 — a 3.08 xPts improvement this GW alone. The MILP confirmed this swap also improves the full 6-GW plan after accounting for future fixtures and the value of free transfers.
-**OUT:** Thiago (£8.0m, 1.94 xPts GW3)
-**IN:** João Pedro (£7.7m, 6.41 xPts GW3)
-**Net this week:** +4.47 xPts
-
-João Pedro projects 6.41 xPts vs Thiago's 1.94 — a 4.47 xPts improvement this GW alone. The MILP confirmed this swap also improves the full 6-GW plan after accounting for future fixtures and the value of free transfers.
-**OUT:** Calvert-Lewin (£6.0m, 3.45 xPts GW3)
-**IN:** Emersonn (£5.5m, 4.50 xPts GW3)
-**Net this week:** +1.05 xPts
-
-Emersonn projects 4.50 xPts vs Calvert-Lewin's 3.45 — a 1.05 xPts improvement this GW alone. The MILP confirmed this swap also improves the full 6-GW plan after accounting for future fixtures and the value of free transfers.
-**OUT:** Woltemade (£5.9m, 0.00 xPts GW3)
-**IN:** Wissa (£6.1m, 4.08 xPts GW3)
-**Net this week:** +4.08 xPts
-
-Wissa projects 4.08 xPts vs Woltemade's 0.00 — a 4.08 xPts improvement this GW alone. The MILP confirmed this swap also improves the full 6-GW plan after accounting for future fixtures and the value of free transfers.
+Ødegaard projects 5.31 xPts vs Palmer's 5.10 — a 0.21 xPts improvement this GW alone. The MILP confirmed this swap also improves the full 6-GW plan after accounting for future fixtures and the value of free transfers.
 
 ---
 
 ## Players We Considered But Didn't Pick
 
-### GW2 Standout Performers — Why They're Not In Your Squad
+### GW3 Standout Performers — Why They're Not In Your Squad
 
 *(A big GW score doesn't automatically trigger a transfer — the bot's 6-GW forward model uses EWMA form features that smooth out single-match spikes. One hot game shifts the model's view less than you'd expect.)*
 
-- **Groß** (MID, Brighton): **13 pts in GW2** (1 goal, 1 assist). Not transferred in — Forward projection: 6.09 xPts for GW3 (ranked #11 overall). This is below our lowest-ranked MID in the squad (6.65 xPts). The EWMA form model smooths over single-match spikes — a big GW shifts the average less than the raw score suggests.
-- **Haaland** (FWD, Man City): **13 pts in GW2** (2 goals). Not transferred in — Forward projection 5.52 xPts (ranked #19 overall) is competitive, but bringing them in at £15.5m would require dropping a player the MILP values more over the full 6-GW horizon.
-- **Gibbs-White** (MID, Nott'm Forest): **13 pts in GW2** (1 goal, 1 assist). Not transferred in — Forward projection: 5.91 xPts for GW3 (ranked #14 overall). This is below our lowest-ranked MID in the squad (6.65 xPts). The EWMA form model smooths over single-match spikes — a big GW shifts the average less than the raw score suggests.
-- **Scott** (MID, Bournemouth): **12 pts in GW2** (1 goal, clean sheet). Not transferred in — Forward projection: 4.54 xPts for GW3 (ranked #32 overall). This is below our lowest-ranked MID in the squad (6.65 xPts). The EWMA form model smooths over single-match spikes — a big GW shifts the average less than the raw score suggests.
-- **Mbeumo** (MID, Man Utd): **11 pts in GW2** (1 goal, 1 assist). Not transferred in — Forward projection: 4.84 xPts for GW3 (ranked #29 overall). This is below our lowest-ranked MID in the squad (6.65 xPts). The EWMA form model smooths over single-match spikes — a big GW shifts the average less than the raw score suggests.
-- **Hall** (DEF, Newcastle): **11 pts in GW2** (clean sheet, DEFCON bonus (11 CBIT)). Not transferred in — Forward projection: 5.12 xPts for GW3 (ranked #23 overall). This is below our lowest-ranked DEF in the squad (5.87 xPts). The EWMA form model smooths over single-match spikes — a big GW shifts the average less than the raw score suggests.
-- **Dedić** (DEF, Newcastle): **11 pts in GW2** (1 assist, clean sheet). Not transferred in — Forward projection: 5.40 xPts for GW3 (ranked #21 overall). This is below our lowest-ranked DEF in the squad (5.87 xPts). The EWMA form model smooths over single-match spikes — a big GW shifts the average less than the raw score suggests.
+- **Mitchell** (DEF, Crystal Palace): **15 pts in GW3** (2 goals). Not transferred in — Forward projection: 3.26 xPts for GW4 (ranked #78 overall). This is below our lowest-ranked DEF in the squad (4.93 xPts). The EWMA form model smooths over single-match spikes — a big GW shifts the average less than the raw score suggests.
+- **Bogle** (DEF, Leeds): **14 pts in GW3** (1 goal, clean sheet). Not transferred in — Forward projection 5.00 xPts (ranked #18 overall) is competitive, but bringing them in at £4.5m would require dropping a player the MILP values more over the full 6-GW horizon.
+- **Isak** (FWD, Liverpool): **13 pts in GW3** (2 goals, clean sheet). Not transferred in — Forward projection 5.48 xPts (ranked #8 overall) is competitive, but bringing them in at £9.1m would require dropping a player the MILP values more over the full 6-GW horizon.
+- **Barnes** (MID, Newcastle): **12 pts in GW3** (1 goal, 1 assist). Not transferred in — Forward projection: 4.11 xPts for GW4 (ranked #39 overall). This is below our lowest-ranked MID in the squad (5.31 xPts). The EWMA form model smooths over single-match spikes — a big GW shifts the average less than the raw score suggests.
+- **Vuskovic** (DEF, Brighton): **12 pts in GW3** (1 goal). Not transferred in — Forward projection: 4.88 xPts for GW4 (ranked #21 overall). This is below our lowest-ranked DEF in the squad (4.93 xPts). The EWMA form model smooths over single-match spikes — a big GW shifts the average less than the raw score suggests.
+- **Janelt** (MID, Brentford): **11 pts in GW3** (1 goal). Not transferred in — Forward projection: 4.75 xPts for GW4 (ranked #27 overall). This is below our lowest-ranked MID in the squad (5.31 xPts). The EWMA form model smooths over single-match spikes — a big GW shifts the average less than the raw score suggests.
+- **Gakpo** (MID, Liverpool): **11 pts in GW3** (2 assists, clean sheet). Not transferred in — Forward projection: 2.52 xPts for GW4 (ranked #109 overall). This is below our lowest-ranked MID in the squad (5.31 xPts). The EWMA form model smooths over single-match spikes — a big GW shifts the average less than the raw score suggests.
+- **Tavernier** (MID, Bournemouth): **10 pts in GW3** (1 goal). Not transferred in — Forward projection: 5.25 xPts for GW4 (ranked #12 overall). This is below our lowest-ranked MID in the squad (5.31 xPts). The EWMA form model smooths over single-match spikes — a big GW shifts the average less than the raw score suggests.
+- **Scott** (MID, Bournemouth): **10 pts in GW3** (2 assists). Not transferred in — Forward projection: 5.13 xPts for GW4 (ranked #14 overall). This is below our lowest-ranked MID in the squad (5.31 xPts). The EWMA form model smooths over single-match spikes — a big GW shifts the average less than the raw score suggests.
+- **George** (MID, Everton): **10 pts in GW3** (1 goal). Not transferred in — Forward projection: 4.00 xPts for GW4 (ranked #42 overall). This is below our lowest-ranked MID in the squad (5.31 xPts). The EWMA form model smooths over single-match spikes — a big GW shifts the average less than the raw score suggests.
+- **King** (MID, Fulham): **10 pts in GW3** (1 goal). Not transferred in — Forward projection: 4.40 xPts for GW4 (ranked #32 overall). This is below our lowest-ranked MID in the squad (5.31 xPts). The EWMA form model smooths over single-match spikes — a big GW shifts the average less than the raw score suggests.
 
 ### Highest-Projected Players Not In Your Squad
 
-- **Groß** (MID, Brighton, £5.5m, 6.09 xPts): ranked #11 overall. Edged out by selected MIDs with better 6-GW projections.
-- **Stach** (MID, Leeds, £6.0m, 5.94 xPts): ranked #13 overall. Edged out by selected MIDs with better 6-GW projections.
-- **Gibbs-White** (MID, Nott'm Forest, £7.9m, 5.91 xPts): ranked #14 overall. Edged out by selected MIDs with better 6-GW projections.
-- **Egan** (DEF, Hull City, £4.0m, 5.77 xPts): ranked #16 overall. 3-player Hull City cap is maxed.
-- **Elanga** (MID, Newcastle, £6.1m, 5.66 xPts): ranked #17 overall. Edged out by selected MIDs with better 6-GW projections.
-- **De Cuyper** (DEF, Brighton, £4.7m, 5.64 xPts): ranked #18 overall. Edged out by selected DEFs with better 6-GW projections.
-- **Haaland** (FWD, Man City, £15.5m, 5.52 xPts): ranked #19 overall. £15.5m is hard to fit within £100m without dropping a player the MILP values more over 6 GWs.
-- **Gakpo** (MID, Liverpool, £7.0m, 5.50 xPts): ranked #20 overall. Edged out by selected MIDs with better 6-GW projections.
+- **Haaland** (FWD, Man City, £15.5m, 5.62 xPts): ranked #6 overall. £15.5m is hard to fit within £100m without dropping a player the MILP values more over 6 GWs.
+- **Egan** (DEF, Hull City, £4.1m, 5.56 xPts): ranked #7 overall. 3-player Hull City cap is maxed.
+- **Isak** (FWD, Liverpool, £9.1m, 5.48 xPts): ranked #8 overall. £9.1m is hard to fit within £100m without dropping a player the MILP values more over 6 GWs.
+- **Tavernier** (MID, Bournemouth, £6.0m, 5.25 xPts): ranked #12 overall. Edged out by selected MIDs with better 6-GW projections.
+- **Scott** (MID, Bournemouth, £6.1m, 5.13 xPts): ranked #14 overall. Edged out by selected MIDs with better 6-GW projections.
+- **Palmer** (MID, Chelsea, £9.7m, 5.10 xPts): ranked #15 overall. Edged out by selected MIDs with better 6-GW projections.
+- **De Cuyper** (DEF, Brighton, £4.8m, 5.10 xPts): ranked #16 overall. £4.8m is hard to fit within £100m without dropping a player the MILP values more over 6 GWs.
+- **Bogle** (DEF, Leeds, £4.5m, 5.00 xPts): ranked #18 overall. £4.5m is hard to fit within £100m without dropping a player the MILP values more over 6 GWs.
 
 ---
 
@@ -165,31 +103,31 @@ Wissa projects 4.08 xPts vs Woltemade's 0.00 — a 4.08 xPts improvement this GW
 
 | GW | Chip | Est. Gain |
 |---:|---|---:|
-| 3 | Wildcard | +26.6 pts |
-| 4 | Triple Captain | +9.6 pts |
+| 4 | Bench Boost | +15.8 pts |
+| 9 | Triple Captain | +7.5 pts |
 
-*Play Wildcard this GW: dedicated legal rebuild beats the best ordinary plan by +26.63 discounted xPts (needs 12.00). Future chips were recalculated from the rebuilt squad.*
+*Play Bench Boost this GW (est. +15.8 pts; needs 11.0). 16 GW(s) remain before this chip set expires with 2 chip(s) unused; expiry only softens thresholds and never forces a chip.*
 
 ---
 
 ## GW-by-GW Plan
 
-|   GW | Transfers                                                                                                                                                                                                                                                        | Chip           | Captain     | Vice        |   XI xPts |   Bench xPts |   Hits |   FT→ | Bank   |
-|-----:|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:---------------|:------------|:------------|----------:|-------------:|-------:|------:|:-------|
-|    3 | Trafford ← Martinez, Tzolakis ← Pickford, Calafiori ← Gabriel, White ← James, Tarkowski ← Lacroix, Ajayi ← O'Reilly, Mendy ← Guéhi, Saka ← Lewis-Potter, Palmer ← Groß, M.Sangaré ← Szoboszlai, João Pedro ← Thiago, Emersonn ← Calvert-Lewin, Wissa ← Woltemade | Wildcard       | Tzolakis    | B.Fernandes |     90.28 |        19.11 |      0 |     2 | £1.5m  |
-|    4 | Stach ← M.Sangaré                                                                                                                                                                                                                                                | Triple Captain | Palmer      | João Pedro  |     86.47 |        17.95 |      0 |     2 | £1.2m  |
-|    5 | Elanga ← Stach                                                                                                                                                                                                                                                   | —              | B.Fernandes | Palmer      |     88.45 |        18.76 |      0 |     2 | £1.1m  |
-|    6 | Roll                                                                                                                                                                                                                                                             | —              | B.Fernandes | Saka        |     89.68 |        18.1  |      0 |     3 | £1.1m  |
-|    7 | Roll                                                                                                                                                                                                                                                             | —              | B.Fernandes | Palmer      |     85.67 |        16.22 |      0 |     4 | £1.1m  |
-|    8 | Roll                                                                                                                                                                                                                                                             | —              | B.Fernandes | Palmer      |     83.66 |        17.29 |      0 |     5 | £1.1m  |
+|   GW | Transfers                           | Chip           | Captain     | Vice        |   XI xPts |   Bench xPts |   Hits |   FT→ | Bank   |
+|-----:|:------------------------------------|:---------------|:------------|:------------|----------:|-------------:|-------:|------:|:-------|
+|    4 | Gvardiol ← White, Ødegaard ← Palmer | Bench Boost    | B.Fernandes | Mendy       |     71.14 |        15.76 |      0 |     1 | £4.2m  |
+|    5 | King ← M.Sangaré                    | —              | Cherki      | B.Fernandes |     73.47 |        15.15 |      0 |     1 | £4.4m  |
+|    6 | Roll                                | —              | B.Fernandes | Ødegaard    |     73.29 |        15.04 |      0 |     2 | £4.4m  |
+|    7 | Scott ← Saka, Haaland ← João Pedro  | —              | Cherki      | B.Fernandes |     76.97 |        13.04 |      0 |     1 | £0.0m  |
+|    8 | Roll                                | —              | B.Fernandes | Ajayi       |     69.92 |        13.84 |      0 |     2 | £0.0m  |
+|    9 | Roll                                | Triple Captain | Cherki      | Haaland     |     76.34 |        15.13 |      0 |     3 | £0.0m  |
 
 ---
 
-## Starting XI — GW3
+## Starting XI — GW4
 
-**GKP:** **Tzolakis**(C)  
-**DEF:** **Calafiori** | **Tarkowski** | **Ajayi** | **Mendy**  
-**MID:** **Saka** | **Palmer** | **Cherki** | **B.Fernandes** | **M.Sangaré**  
+**GKP:** **Tzolakis**  
+**DEF:** **Calafiori** | **Ajayi** | **Gvardiol** | **Mendy**  
+**MID:** **Saka** | **Ødegaard** | **Cherki** | **B.Fernandes**(C) | **M.Sangaré**  
 **FWD:** **João Pedro**  
 
-**Bench:** White | Emersonn | Trafford | Wissa
+**Bench:** Tarkowski | Emersonn | Trafford | Wissa

@@ -1,0 +1,49 @@
+{
+  "gw": 4,
+  "approved_transfers": [
+    {
+      "element_in": 391,
+      "name_in": "Gvardiol",
+      "purchase_price": 56,
+      "element_out": 10,
+      "name_out": "White",
+      "selling_price": 55,
+      "position": 2
+    },
+    {
+      "element_in": 15,
+      "name_in": "\u00d8degaard",
+      "purchase_price": 67,
+      "element_out": 154,
+      "name_out": "Palmer",
+      "selling_price": 96,
+      "position": 3
+    }
+  ],
+  "approved_chip": "bboost",
+  "expected_net_gain": 8.77,
+  "expected_gross_gain": 8.77,
+  "hit_count": 0,
+  "captain": {
+    "element": 426,
+    "name": "B.Fernandes",
+    "xpts": 6.68
+  },
+  "vice": {
+    "element": 586,
+    "name": "Mendy",
+    "xpts": 7.2
+  },
+  "reasoning": "Planner proposes 2 transfer(s) worth +8.77 xPts gross over 6 GWs (+8.77 net of 0 hit(s)). Chip bboost approved for GW4 (est. +15.8 pts, threshold 11.0). Play Bench Boost this GW (est. +15.8 pts; needs 11.0). 16 GW(s) remain before this chip set expires with 2 chip(s) unused; expiry only softens thresholds and never forces a chip.",
+  "transfer_plan_kind": "ordinary",
+  "execution_plan_version": 4,
+  "model_health": {
+    "loaded": true,
+    "inference_ok": true,
+    "error": null
+  },
+  "requires_replan": false,
+  "wildcard_validation_errors": [],
+  "wildcard_validated": false,
+  "vetoed_element_ids": []
+}
