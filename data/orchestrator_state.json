@@ -732,6 +732,13 @@
       "name": "Barry",
       "reason": "Replacement for Wissa: FWD \u00a35.6m, xPts 4.00, GW4 FDR 3.0.",
       "priority": 0.139
+    },
+    {
+      "action": "transfer_out",
+      "element": 586,
+      "name": "Mendy",
+      "reason": "Concussion - 50% chance of playing",
+      "priority": 1.0
     }
   ]
 }
