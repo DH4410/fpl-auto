@@ -71,6 +71,18 @@ def transfer(
     return r.json() if r.content else {}
 
 
+def _team_chip_value(chips) -> str | None:
+    """Normalize the legacy caller list to FPL's singular ``chip`` field."""
+    if not chips:
+        return None
+    if not isinstance(chips, (list, tuple)):
+        raise ValueError("team chip argument must be a list/tuple containing at most one chip")
+    if len(chips) != 1:
+        raise ValueError("FPL picks writes accept at most one team chip")
+    value = str(chips[0] or "").strip()
+    return value or None
+
+
 def update_picks(
     session: requests.Session,
     token: str,
@@ -82,11 +94,20 @@ def update_picks(
     Update starting XI, captain, bench order — does NOT change squad composition.
     Each pick: {element, position, is_captain, is_vice_captain}
     Positions 1–11 = starting XI, 12–15 = bench (12 = first sub, GKP goes to 12 if benched).
+
+    ``chips`` remains a list at the Python call boundary for compatibility with
+    existing callers, but FPL's wire contract is singular: ``chip`` is either
+    one team-chip name (for example ``3xc``/``bboost``) or null.
     """
+    chip = _team_chip_value(chips)
     r = session.post(
         f"{_BASE}/my-team/{entry_id}/",
-        json={"picks": picks, "chips": chips or []},
-        headers=_headers(token),
+        json={"picks": picks, "chip": chip},
+        headers=_headers(token, {
+            "X-Requested-With": "XMLHttpRequest",
+            "Referer": "https://fantasy.premierleague.com/my-team",
+            "Origin": "https://fantasy.premierleague.com",
+        }),
         timeout=TIMEOUT,
     )
     if not r.ok:
