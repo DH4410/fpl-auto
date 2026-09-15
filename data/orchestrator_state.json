@@ -1,5 +1,5 @@
 {
-  "last_analyzed_gw": 3,
+  "last_analyzed_gw": 4,
   "last_simulated_gw": 4,
   "last_executed_gw": 1,
   "approved_plan": {
@@ -335,90 +335,55 @@
     "execute_target_utc": "2026-09-12T04:43:59.999204+00:00"
   },
   "execute_target_utc": null,
-  "last_deep_research_gw": 2,
+  "last_deep_research_gw": 4,
   "research_ideas": [
     {
       "action": "transfer_in",
-      "element": 165,
-      "name": "Jo\u00e3o Pedro",
-      "reason": "Top-100 smart money: 24/10 managers hold, ep_next 10.0",
-      "priority": 0.4
-    },
-    {
-      "action": "transfer_in",
-      "element": 154,
-      "name": "Palmer",
-      "reason": "Top-100 smart money: 19/10 managers hold, ep_next 10.0",
-      "priority": 0.4
-    },
-    {
-      "action": "transfer_in",
-      "element": 8,
-      "name": "Calafiori",
-      "reason": "Top-100 smart money: 19/10 managers hold, ep_next 10.0",
-      "priority": 0.4
-    },
-    {
-      "action": "transfer_in",
-      "element": 411,
-      "name": "Haaland",
-      "reason": "Top-100 smart money: 15/10 managers hold, ep_next 7.5",
-      "priority": 0.4
-    },
-    {
-      "action": "transfer_in",
-      "element": 10,
-      "name": "White",
-      "reason": "Top-100 smart money: 14/10 managers hold, ep_next 9.0",
+      "element": 1,
+      "name": "Raya",
+      "reason": "Top-100 smart money: 8/10 managers hold (80%), ep_next 7.2",
       "priority": 0.4
     },
     {
       "action": "transfer_in",
       "element": 115,
       "name": "De Cuyper",
-      "reason": "Top-100 smart money: 14/10 managers hold, ep_next 8.5",
+      "reason": "Top-100 smart money: 8/10 managers hold (80%), ep_next 8.0",
+      "priority": 0.4
+    },
+    {
+      "action": "transfer_in",
+      "element": 154,
+      "name": "Palmer",
+      "reason": "Top-100 smart money: 7/10 managers hold (70%), ep_next 6.5",
       "priority": 0.4
     },
     {
       "action": "transfer_in",
       "element": 40,
       "name": "Rogers",
-      "reason": "Top-100 smart money: 13/10 managers hold, ep_next 6.5",
+      "reason": "Top-100 smart money: 7/10 managers hold (70%), ep_next 6.8",
+      "priority": 0.4
+    },
+    {
+      "action": "transfer_in",
+      "element": 411,
+      "name": "Haaland",
+      "reason": "Top-100 smart money: 7/10 managers hold (70%), ep_next 8.2",
       "priority": 0.4
     },
     {
       "action": "transfer_out",
-      "element": 142,
-      "name": "James",
-      "reason": "Top-100 avoid: ep_next only 0.5, 8.9% overall ownership \u2014 likely liability",
+      "element": 586,
+      "name": "Mendy",
+      "reason": "Top-100 avoid: ep_next only 3.1, 7.3% overall ownership \u2014 likely liability",
       "priority": 0.3
     },
     {
       "action": "transfer_out",
-      "element": 106,
-      "name": "Thiago",
-      "reason": "Top-100 avoid: ep_next only 1.0, 14.8% overall ownership \u2014 likely liability",
-      "priority": 0.3
-    },
-    {
-      "action": "transfer_out",
-      "element": 28,
-      "name": "Martinez",
-      "reason": "Top-100 avoid: ep_next only 1.0, 4.4% overall ownership \u2014 likely liability",
-      "priority": 0.3
-    },
-    {
-      "action": "transfer_out",
-      "element": 387,
-      "name": "O'Reilly",
-      "reason": "Top-100 avoid: ep_next only 2.0, 19.4% overall ownership \u2014 likely liability",
-      "priority": 0.3
-    },
-    {
-      "action": "transfer_out",
-      "element": 463,
-      "name": "Woltemade",
-      "reason": "Top-100 avoid: ep_next only 2.0, 1.4% overall ownership \u2014 likely liability",
+      "element": 464,
+      "name": "Wissa",
+      "reason": "Top-100 avoid: ep_next only 3.8, 18.2% overall ownership \u2014 likely liability",
       "priority": 0.3
     }
   ],
@@ -483,262 +448,143 @@
   "idea_list": [
     {
       "action": "transfer_out",
-      "element": 565,
-      "name": "M.Sangar\u00e9",
-      "reason": "Scored 0 vs 8.1 expected in GW3 (delta -8.1).",
+      "element": 586,
+      "name": "Mendy",
+      "reason": "Concussion - 50% chance of playing",
+      "priority": 0.45
+    },
+    {
+      "action": "transfer_in",
+      "element": 330,
+      "name": "Bogle",
+      "reason": "Replacement for Mendy: DEF \u00a34.5m, xPts 9.20, GW5 FDR 3.0.",
       "priority": 0.405
     },
     {
       "action": "transfer_in",
-      "element": 367,
-      "name": "Gakpo",
-      "reason": "Replacement for M.Sangar\u00e9: MID \u00a37.2m, xPts 9.30, GW4 FDR 2.0.",
-      "priority": 0.365
+      "element": 115,
+      "name": "De Cuyper",
+      "reason": "Replacement for Mendy: DEF \u00a34.8m, xPts 8.00, GW5 FDR 4.0.",
+      "priority": 0.405
     },
     {
       "action": "transfer_in",
-      "element": 15,
-      "name": "\u00d8degaard",
-      "reason": "Replacement for M.Sangar\u00e9: MID \u00a36.6m, xPts 8.00, GW4 FDR 3.0.",
-      "priority": 0.365
-    },
-    {
-      "action": "transfer_in",
-      "element": 69,
-      "name": "Scott",
-      "reason": "Replacement for M.Sangar\u00e9: MID \u00a36.0m, xPts 8.00, GW4 FDR 3.0.",
-      "priority": 0.365
+      "element": 649,
+      "name": "Maitland-Niles",
+      "reason": "Replacement for Mendy: DEF \u00a34.5m, xPts 6.50, GW5 FDR 2.0.",
+      "priority": 0.405
     },
     {
       "action": "transfer_out",
-      "element": 426,
-      "name": "B.Fernandes",
-      "reason": "Scored 2 vs 8.9 expected in GW3 (delta -6.9).",
-      "priority": 0.346
+      "element": 572,
+      "name": "Tzolakis",
+      "reason": "Scored 2 vs 7.8 expected in GW4 (delta -5.8).",
+      "priority": 0.291
     },
     {
       "action": "transfer_in",
-      "element": 367,
-      "name": "Gakpo",
-      "reason": "Replacement for B.Fernandes: MID \u00a37.2m, xPts 9.30, GW4 FDR 2.0.",
-      "priority": 0.311
+      "element": 1,
+      "name": "Raya",
+      "reason": "Replacement for Tzolakis: GKP \u00a36.0m, xPts 7.20, GW5 FDR 3.0.",
+      "priority": 0.262
     },
     {
       "action": "transfer_in",
-      "element": 15,
-      "name": "\u00d8degaard",
-      "reason": "Replacement for B.Fernandes: MID \u00a36.6m, xPts 8.00, GW4 FDR 3.0.",
-      "priority": 0.311
+      "element": 350,
+      "name": "A.Becker",
+      "reason": "Replacement for Tzolakis: GKP \u00a35.5m, xPts 4.80, GW5 FDR 3.0.",
+      "priority": 0.262
     },
     {
       "action": "transfer_in",
-      "element": 69,
-      "name": "Scott",
-      "reason": "Replacement for B.Fernandes: MID \u00a36.0m, xPts 8.00, GW4 FDR 3.0.",
-      "priority": 0.311
-    },
-    {
-      "action": "transfer_out",
-      "element": 154,
-      "name": "Palmer",
-      "reason": "Scored 1 vs 6.7 expected in GW3 (delta -5.7).",
-      "priority": 0.283
-    },
-    {
-      "action": "transfer_out",
-      "element": 12,
-      "name": "Saka",
-      "reason": "Scored 2 vs 7.6 expected in GW3 (delta -5.6).",
-      "priority": 0.279
-    },
-    {
-      "action": "transfer_out",
-      "element": 165,
-      "name": "Jo\u00e3o Pedro",
-      "reason": "Scored 1 vs 6.4 expected in GW3 (delta -5.4).",
-      "priority": 0.271
-    },
-    {
-      "action": "transfer_in",
-      "element": 367,
-      "name": "Gakpo",
-      "reason": "Replacement for Palmer: MID \u00a37.2m, xPts 9.30, GW4 FDR 2.0.",
-      "priority": 0.255
-    },
-    {
-      "action": "transfer_in",
-      "element": 15,
-      "name": "\u00d8degaard",
-      "reason": "Replacement for Palmer: MID \u00a36.6m, xPts 8.00, GW4 FDR 3.0.",
-      "priority": 0.255
-    },
-    {
-      "action": "transfer_in",
-      "element": 69,
-      "name": "Scott",
-      "reason": "Replacement for Palmer: MID \u00a36.0m, xPts 8.00, GW4 FDR 3.0.",
-      "priority": 0.255
-    },
-    {
-      "action": "transfer_in",
-      "element": 367,
-      "name": "Gakpo",
-      "reason": "Replacement for Saka: MID \u00a37.2m, xPts 9.30, GW4 FDR 2.0.",
-      "priority": 0.251
-    },
-    {
-      "action": "transfer_in",
-      "element": 15,
-      "name": "\u00d8degaard",
-      "reason": "Replacement for Saka: MID \u00a36.6m, xPts 8.00, GW4 FDR 3.0.",
-      "priority": 0.251
-    },
-    {
-      "action": "transfer_in",
-      "element": 69,
-      "name": "Scott",
-      "reason": "Replacement for Saka: MID \u00a36.0m, xPts 8.00, GW4 FDR 3.0.",
-      "priority": 0.251
-    },
-    {
-      "action": "transfer_in",
-      "element": 379,
-      "name": "Isak",
-      "reason": "Replacement for Jo\u00e3o Pedro: FWD \u00a39.0m, xPts 7.70, GW4 FDR 2.0.",
-      "priority": 0.244
-    },
-    {
-      "action": "transfer_in",
-      "element": 26,
-      "name": "Havertz",
-      "reason": "Replacement for Jo\u00e3o Pedro: FWD \u00a37.5m, xPts 5.30, GW4 FDR 3.0.",
-      "priority": 0.244
-    },
-    {
-      "action": "transfer_in",
-      "element": 553,
-      "name": "Isidor",
-      "reason": "Replacement for Jo\u00e3o Pedro: FWD \u00a35.5m, xPts 4.30, GW4 FDR 4.0.",
-      "priority": 0.244
+      "element": 226,
+      "name": "Pickford",
+      "reason": "Replacement for Tzolakis: GKP \u00a35.5m, xPts 4.20, GW5 FDR 2.0.",
+      "priority": 0.262
     },
     {
       "action": "transfer_out",
       "element": 399,
       "name": "Cherki",
-      "reason": "Scored 3 vs 7.8 expected in GW3 (delta -4.8).",
-      "priority": 0.242
+      "reason": "Scored 1 vs 5.9 expected in GW4 (delta -4.9).",
+      "priority": 0.247
     },
     {
       "action": "transfer_out",
-      "element": 8,
-      "name": "Calafiori",
-      "reason": "Scored 2 vs 6.5 expected in GW3 (delta -4.5).",
-      "priority": 0.224
+      "element": 279,
+      "name": "Ajayi",
+      "reason": "Scored 1 vs 5.9 expected in GW4 (delta -4.9).",
+      "priority": 0.244
+    },
+    {
+      "action": "transfer_out",
+      "element": 426,
+      "name": "B.Fernandes",
+      "reason": "Scored 2 vs 6.7 expected in GW4 (delta -4.7).",
+      "priority": 0.234
+    },
+    {
+      "action": "transfer_in",
+      "element": 124,
+      "name": "Gro\u00df",
+      "reason": "Replacement for Cherki: MID \u00a35.6m, xPts 8.20, GW5 FDR 4.0.",
+      "priority": 0.222
+    },
+    {
+      "action": "transfer_in",
+      "element": 94,
+      "name": "Schade",
+      "reason": "Replacement for Cherki: MID \u00a36.0m, xPts 7.50, GW5 FDR 4.0.",
+      "priority": 0.222
     },
     {
       "action": "transfer_in",
       "element": 367,
       "name": "Gakpo",
-      "reason": "Replacement for Cherki: MID \u00a37.2m, xPts 9.30, GW4 FDR 2.0.",
-      "priority": 0.218
-    },
-    {
-      "action": "transfer_in",
-      "element": 15,
-      "name": "\u00d8degaard",
-      "reason": "Replacement for Cherki: MID \u00a36.6m, xPts 8.00, GW4 FDR 3.0.",
-      "priority": 0.218
-    },
-    {
-      "action": "transfer_in",
-      "element": 69,
-      "name": "Scott",
-      "reason": "Replacement for Cherki: MID \u00a36.0m, xPts 8.00, GW4 FDR 3.0.",
-      "priority": 0.218
-    },
-    {
-      "action": "transfer_in",
-      "element": 277,
-      "name": "Egan",
-      "reason": "Replacement for Calafiori: DEF \u00a34.1m, xPts 7.70, GW4 FDR 4.0.",
-      "priority": 0.202
+      "reason": "Replacement for Cherki: MID \u00a37.2m, xPts 7.20, GW5 FDR 3.0.",
+      "priority": 0.222
     },
     {
       "action": "transfer_in",
       "element": 330,
       "name": "Bogle",
-      "reason": "Replacement for Calafiori: DEF \u00a34.5m, xPts 7.30, GW4 FDR 2.0.",
-      "priority": 0.202
+      "reason": "Replacement for Ajayi: DEF \u00a34.5m, xPts 9.20, GW5 FDR 3.0.",
+      "priority": 0.22
     },
     {
       "action": "transfer_in",
       "element": 115,
       "name": "De Cuyper",
-      "reason": "Replacement for Calafiori: DEF \u00a34.7m, xPts 7.00, GW4 FDR 2.0.",
-      "priority": 0.202
-    },
-    {
-      "action": "transfer_out",
-      "element": 10,
-      "name": "White",
-      "reason": "Scored 2 vs 5.9 expected in GW3 (delta -3.9).",
-      "priority": 0.194
+      "reason": "Replacement for Ajayi: DEF \u00a34.8m, xPts 8.00, GW5 FDR 4.0.",
+      "priority": 0.22
     },
     {
       "action": "transfer_in",
-      "element": 277,
-      "name": "Egan",
-      "reason": "Replacement for White: DEF \u00a34.1m, xPts 7.70, GW4 FDR 4.0.",
-      "priority": 0.175
+      "element": 649,
+      "name": "Maitland-Niles",
+      "reason": "Replacement for Ajayi: DEF \u00a34.5m, xPts 6.50, GW5 FDR 2.0.",
+      "priority": 0.22
     },
     {
       "action": "transfer_in",
-      "element": 330,
-      "name": "Bogle",
-      "reason": "Replacement for White: DEF \u00a34.5m, xPts 7.30, GW4 FDR 2.0.",
-      "priority": 0.175
+      "element": 124,
+      "name": "Gro\u00df",
+      "reason": "Replacement for B.Fernandes: MID \u00a35.6m, xPts 8.20, GW5 FDR 4.0.",
+      "priority": 0.211
     },
     {
       "action": "transfer_in",
-      "element": 115,
-      "name": "De Cuyper",
-      "reason": "Replacement for White: DEF \u00a34.7m, xPts 7.00, GW4 FDR 2.0.",
-      "priority": 0.175
-    },
-    {
-      "action": "transfer_out",
-      "element": 464,
-      "name": "Wissa",
-      "reason": "Scored 1 vs 4.1 expected in GW3 (delta -3.1).",
-      "priority": 0.154
+      "element": 94,
+      "name": "Schade",
+      "reason": "Replacement for B.Fernandes: MID \u00a36.0m, xPts 7.50, GW5 FDR 4.0.",
+      "priority": 0.211
     },
     {
       "action": "transfer_in",
-      "element": 26,
-      "name": "Havertz",
-      "reason": "Replacement for Wissa: FWD \u00a37.5m, xPts 5.30, GW4 FDR 3.0.",
-      "priority": 0.139
-    },
-    {
-      "action": "transfer_in",
-      "element": 553,
-      "name": "Isidor",
-      "reason": "Replacement for Wissa: FWD \u00a35.5m, xPts 4.30, GW4 FDR 4.0.",
-      "priority": 0.139
-    },
-    {
-      "action": "transfer_in",
-      "element": 249,
-      "name": "Barry",
-      "reason": "Replacement for Wissa: FWD \u00a35.6m, xPts 4.00, GW4 FDR 3.0.",
-      "priority": 0.139
-    },
-    {
-      "action": "transfer_out",
-      "element": 586,
-      "name": "Mendy",
-      "reason": "Concussion - 50% chance of playing",
-      "priority": 1.0
+      "element": 367,
+      "name": "Gakpo",
+      "reason": "Replacement for B.Fernandes: MID \u00a37.2m, xPts 7.20, GW5 FDR 3.0.",
+      "priority": 0.211
     }
   ]
 }
