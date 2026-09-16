@@ -585,6 +585,13 @@
       "name": "Gakpo",
       "reason": "Replacement for B.Fernandes: MID \u00a37.2m, xPts 7.20, GW5 FDR 3.0.",
       "priority": 0.211
+    },
+    {
+      "action": "transfer_out",
+      "element": 165,
+      "name": "Jo\u00e3o Pedro",
+      "reason": "Unspecified injury - 75% chance of playing",
+      "priority": 1.0
     }
   ]
 }
