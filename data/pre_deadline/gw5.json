@@ -1,0 +1,40 @@
+{
+  "gw": 5,
+  "approved_transfers": [
+    {
+      "element_in": 330,
+      "name_in": "Bogle",
+      "purchase_price": 45,
+      "element_out": 586,
+      "name_out": "Mendy",
+      "selling_price": 40,
+      "position": 2
+    }
+  ],
+  "approved_chip": null,
+  "expected_net_gain": 23.73,
+  "expected_gross_gain": 23.73,
+  "hit_count": 0,
+  "captain": {
+    "element": 426,
+    "name": "B.Fernandes",
+    "xpts": 5.74
+  },
+  "vice": {
+    "element": 330,
+    "name": "Bogle",
+    "xpts": 6.68
+  },
+  "reasoning": "Planner proposes 1 transfer(s) worth +23.73 xPts gross over 6 GWs (+23.73 net of 0 hit(s)). NOTE: Jo\u00e3o Pedro is flagged urgent (Unspecified injury - 75% chance of playing) but the optimiser kept them \u2014 benched or judged still worth holding.",
+  "transfer_plan_kind": "ordinary_no_hit_counterfactual",
+  "execution_plan_version": 4,
+  "model_health": {
+    "loaded": true,
+    "inference_ok": true,
+    "error": null
+  },
+  "requires_replan": false,
+  "wildcard_validation_errors": [],
+  "wildcard_validated": false,
+  "vetoed_element_ids": []
+}
