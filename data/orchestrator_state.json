@@ -1,8 +1,321 @@
 {
   "last_analyzed_gw": 4,
-  "last_simulated_gw": 0,
+  "last_simulated_gw": 5,
   "last_executed_gw": 1,
-  "approved_plan": null,
+  "approved_plan": {
+    "gw": 5,
+    "approved_transfers": [
+      {
+        "element_in": 330,
+        "name_in": "Bogle",
+        "purchase_price": 46,
+        "element_out": 586,
+        "name_out": "Mendy",
+        "selling_price": 40,
+        "position": 2
+      }
+    ],
+    "approved_chip": null,
+    "expected_net_gain": 35.23,
+    "expected_gross_gain": 35.23,
+    "hit_count": 0,
+    "captain": {
+      "element": 426,
+      "name": "B.Fernandes",
+      "xpts": 5.71
+    },
+    "vice": {
+      "element": 330,
+      "name": "Bogle",
+      "xpts": 6.63
+    },
+    "reasoning": "Planner proposes 1 transfer(s) worth +35.23 xPts gross over 6 GWs (+35.23 net of 0 hit(s)). NOTE: Jo\u00e3o Pedro is flagged urgent (Unspecified injury - 75% chance of playing) but the optimiser kept them \u2014 benched or judged still worth holding.",
+    "transfer_plan_kind": "ordinary",
+    "execution_plan_version": 4,
+    "model_health": {
+      "loaded": true,
+      "inference_ok": true,
+      "error": null
+    },
+    "requires_replan": false,
+    "wildcard_validation_errors": [],
+    "wildcard_validated": false,
+    "vetoed_element_ids": [],
+    "picks_payload": [
+      {
+        "element": 572,
+        "position": 1,
+        "is_captain": false,
+        "is_vice_captain": false
+      },
+      {
+        "element": 8,
+        "position": 2,
+        "is_captain": false,
+        "is_vice_captain": false
+      },
+      {
+        "element": 229,
+        "position": 3,
+        "is_captain": false,
+        "is_vice_captain": false
+      },
+      {
+        "element": 330,
+        "position": 4,
+        "is_captain": false,
+        "is_vice_captain": true
+      },
+      {
+        "element": 391,
+        "position": 5,
+        "is_captain": false,
+        "is_vice_captain": false
+      },
+      {
+        "element": 12,
+        "position": 6,
+        "is_captain": false,
+        "is_vice_captain": false
+      },
+      {
+        "element": 15,
+        "position": 7,
+        "is_captain": false,
+        "is_vice_captain": false
+      },
+      {
+        "element": 399,
+        "position": 8,
+        "is_captain": false,
+        "is_vice_captain": false
+      },
+      {
+        "element": 426,
+        "position": 9,
+        "is_captain": true,
+        "is_vice_captain": false
+      },
+      {
+        "element": 565,
+        "position": 10,
+        "is_captain": false,
+        "is_vice_captain": false
+      },
+      {
+        "element": 316,
+        "position": 11,
+        "is_captain": false,
+        "is_vice_captain": false
+      },
+      {
+        "element": 385,
+        "position": 12,
+        "is_captain": false,
+        "is_vice_captain": false
+      },
+      {
+        "element": 279,
+        "position": 13,
+        "is_captain": false,
+        "is_vice_captain": false
+      },
+      {
+        "element": 464,
+        "position": 14,
+        "is_captain": false,
+        "is_vice_captain": false
+      },
+      {
+        "element": 165,
+        "position": 15,
+        "is_captain": false,
+        "is_vice_captain": false
+      }
+    ],
+    "entry_id": 2330027,
+    "source_squad_signature": [
+      8,
+      12,
+      15,
+      165,
+      229,
+      279,
+      316,
+      385,
+      391,
+      399,
+      426,
+      464,
+      565,
+      572,
+      586
+    ],
+    "target_squad_signature": [
+      8,
+      12,
+      15,
+      165,
+      229,
+      279,
+      316,
+      330,
+      385,
+      391,
+      399,
+      426,
+      464,
+      565,
+      572
+    ],
+    "planning_news_guard": [
+      {
+        "element": 8,
+        "status": "a",
+        "chance_next_round": null,
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
+      },
+      {
+        "element": 12,
+        "status": "a",
+        "chance_next_round": null,
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
+      },
+      {
+        "element": 15,
+        "status": "a",
+        "chance_next_round": null,
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
+      },
+      {
+        "element": 165,
+        "status": "d",
+        "chance_next_round": 75,
+        "news": "Unspecified injury - 75% chance of playing",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
+      },
+      {
+        "element": 229,
+        "status": "a",
+        "chance_next_round": null,
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
+      },
+      {
+        "element": 279,
+        "status": "a",
+        "chance_next_round": 100,
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
+      },
+      {
+        "element": 316,
+        "status": "a",
+        "chance_next_round": 100,
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
+      },
+      {
+        "element": 330,
+        "status": "a",
+        "chance_next_round": null,
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
+      },
+      {
+        "element": 385,
+        "status": "a",
+        "chance_next_round": null,
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
+      },
+      {
+        "element": 391,
+        "status": "a",
+        "chance_next_round": null,
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
+      },
+      {
+        "element": 399,
+        "status": "a",
+        "chance_next_round": null,
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
+      },
+      {
+        "element": 426,
+        "status": "a",
+        "chance_next_round": null,
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
+      },
+      {
+        "element": 464,
+        "status": "a",
+        "chance_next_round": null,
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
+      },
+      {
+        "element": 565,
+        "status": "a",
+        "chance_next_round": null,
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
+      },
+      {
+        "element": 572,
+        "status": "a",
+        "chance_next_round": null,
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
+      },
+      {
+        "element": 586,
+        "status": "i",
+        "chance_next_round": 0,
+        "news": "Concussion - Expected back 11 Oct",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
+      }
+    ],
+    "execute_target_utc": "2026-09-18T03:51:44.994632+00:00"
+  },
   "execute_target_utc": null,
   "last_deep_research_gw": 4,
   "research_ideas": [
