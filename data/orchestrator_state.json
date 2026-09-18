@@ -420,7 +420,12 @@
       "priority": 0.4
     }
   ],
-  "executed_transfers": {},
+  "executed_transfers": {
+    "gw": 5,
+    "pairs": [
+      "586->330"
+    ]
+  },
   "idea_list": [
     {
       "action": "transfer_out",
