@@ -321,5 +321,20 @@
   "research_ideas": [],
   "signing_ideas": [],
   "executed_transfers": {},
-  "idea_list": []
+  "idea_list": [
+    {
+      "action": "transfer_out",
+      "element": 165,
+      "name": "Jo\u00e3o Pedro",
+      "reason": "Unspecified injury - 75% chance of playing",
+      "priority": 1.0
+    },
+    {
+      "action": "transfer_out",
+      "element": 586,
+      "name": "Mendy",
+      "reason": "Concussion - Expected back 11 Oct",
+      "priority": 1.0
+    }
+  ]
 }
