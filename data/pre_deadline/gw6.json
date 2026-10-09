@@ -1,0 +1,58 @@
+{
+  "gw": 6,
+  "approved_transfers": [
+    {
+      "element_in": 94,
+      "name_in": "Schade",
+      "purchase_price": 62,
+      "element_out": 15,
+      "name_out": "\u00d8degaard",
+      "selling_price": 67,
+      "position": 3
+    },
+    {
+      "element_in": 124,
+      "name_in": "Gro\u00df",
+      "purchase_price": 59,
+      "element_out": 426,
+      "name_out": "B.Fernandes",
+      "selling_price": 119,
+      "position": 3
+    },
+    {
+      "element_in": 286,
+      "name_in": "Belloumi",
+      "purchase_price": 51,
+      "element_out": 565,
+      "name_out": "M.Sangar\u00e9",
+      "selling_price": 56,
+      "position": 3
+    }
+  ],
+  "approved_chip": null,
+  "expected_net_gain": 64.05,
+  "expected_gross_gain": 72.05,
+  "hit_count": 2,
+  "captain": {
+    "element": 124,
+    "name": "Gro\u00df",
+    "xpts": 10.49
+  },
+  "vice": {
+    "element": 286,
+    "name": "Belloumi",
+    "xpts": 7.65
+  },
+  "reasoning": "Planner proposes 3 transfer(s) worth +72.05 xPts gross over 6 GWs (+64.05 net of 2 hit(s)). Hit approved: 72.05 gross >= 10.0 required.",
+  "transfer_plan_kind": "ordinary",
+  "execution_plan_version": 4,
+  "model_health": {
+    "loaded": true,
+    "inference_ok": true,
+    "error": null
+  },
+  "requires_replan": false,
+  "wildcard_validation_errors": [],
+  "wildcard_validated": false,
+  "vetoed_element_ids": []
+}
