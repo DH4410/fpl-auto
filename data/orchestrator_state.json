@@ -356,7 +356,14 @@
   "last_deep_research_gw": 4,
   "research_ideas": [],
   "signing_ideas": [],
-  "executed_transfers": {},
+  "executed_transfers": {
+    "gw": 6,
+    "pairs": [
+      "15->94",
+      "426->124",
+      "565->286"
+    ]
+  },
   "idea_list": [
     {
       "action": "transfer_out",
