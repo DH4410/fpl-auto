@@ -1,6 +1,6 @@
-# FPL Season Plan — GW6
+# FPL Season Plan — GW7
 
-*Generated 2026-10-09 16:48 UTC — advisory only, no transfers executed*
+*Generated 2026-10-15 22:53 UTC — advisory only, no transfers executed*
 
 ---
 
@@ -14,15 +14,15 @@ All predictions run locally — no external AI APIs are called. GitHub Actions f
 
 ---
 
-## Immediate Action — GW6
+## Immediate Action — GW7
 
-**Captain:** Groß (10.49 xPts → 20.98 effective with double)  
-**Vice:** Belloumi (7.65 xPts)  
-**Transfer:** OUT Ødegaard (£6.7m) → IN Schade (£6.2m)  
-**Transfer:** OUT B.Fernandes (£11.9m) → IN Groß (£5.9m)  
-**Transfer:** OUT M.Sangaré (£5.6m) → IN Belloumi (£5.1m)  
+**Captain:** Groß (8.11 xPts → 16.22 effective with double)  
+**Vice:** Dasilva (9.00 xPts)  
+**Transfer:** OUT Ajayi (£4.1m) → IN Dasilva (£4.0m)  
+**Transfer:** OUT Saka (£9.5m) → IN Manzambi (£5.9m)  
+**Transfer:** OUT Schade (£6.2m) → IN Henderson (£4.9m)  
 **Hits:** 2 (−8 pts)  
-**Bank after:** £10.6m  
+**Bank after:** £15.6m  
 **FT next GW:** 1  
 
 ---
@@ -31,46 +31,46 @@ All predictions run locally — no external AI APIs are called. GitHub Actions f
 
 ### Starting XI
 
-- **Trafford** (GKP, £5.0m): 4.11 xPts for GW6, ranked #8/13 among GKPs in candidate pool. Leeds fixture. P(start) 90%.
-- **Bogle** (DEF, £4.6m): 5.75 xPts for GW6, ranked #9/47 among DEFs in candidate pool. Leeds fixture. P(start) 90%.
-- **Calafiori** (DEF, £5.9m): 3.52 xPts for GW6, ranked #34/47 among DEFs in candidate pool. Arsenal fixture. P(start) 90%.
-- **Gvardiol** (DEF, £5.7m): 5.30 xPts for GW6, ranked #14/47 among DEFs in candidate pool. Man City fixture. P(start) 90%.
-- **Tarkowski** (DEF, £6.2m): 7.28 xPts for GW6, ranked #2/47 among DEFs in candidate pool. Everton fixture. P(start) 90%.
-- **Belloumi** (MID, £5.1m) [**Vice**]: 7.65 xPts for GW6, ranked #2/75 among MIDs in candidate pool. Hull City fixture. P(start) 90%.
-- **Cherki** (MID, £7.8m): 4.44 xPts for GW6, ranked #8/75 among MIDs in candidate pool. Man City fixture. P(start) 90%.
-- **Groß** (MID, £5.9m) [**CAPTAIN**]: Highest projected return in the squad: 10.49 xPts (20.97 effective with captain double). Ranked #1/75 among MIDs in the 150-player candidate pool. Captain is always the highest-xPts player in the XI.
-- **Saka** (MID, £9.6m): 4.17 xPts for GW6, ranked #10/75 among MIDs in candidate pool. Arsenal fixture. P(start) 90%.
-- **Schade** (MID, £6.2m): 7.60 xPts for GW6, ranked #3/75 among MIDs in candidate pool. Brentford fixture. P(start) 90%.
-- **Emersonn** (FWD, £5.5m): 6.30 xPts for GW6, ranked #2/15 among FWDs in candidate pool. Ipswich Town fixture. P(start) 90%.
+- **Trafford** (GKP, £5.0m): 4.33 xPts for GW7, ranked #4/11 among GKPs in candidate pool. Leeds fixture. P(start) 90%.
+- **Calafiori** (DEF, £5.9m): 3.79 xPts for GW7, ranked #24/44 among DEFs in candidate pool. Arsenal fixture. P(start) 90%.
+- **Dasilva** (DEF, £4.0m) [**Vice**]: 9.00 xPts for GW7, ranked #1/44 among DEFs in candidate pool. Coventry City fixture. P(start) 90%.
+- **Gvardiol** (DEF, £5.8m): 3.39 xPts for GW7, ranked #28/44 among DEFs in candidate pool. Man City fixture. P(start) 90%.
+- **Tarkowski** (DEF, £6.2m): 5.85 xPts for GW7, ranked #3/44 among DEFs in candidate pool. Everton fixture. P(start) 90%.
+- **Belloumi** (MID, £5.2m): 4.50 xPts for GW7, ranked #15/77 among MIDs in candidate pool. Hull City fixture. P(start) 90%.
+- **Cherki** (MID, £7.9m): 6.73 xPts for GW7, ranked #3/77 among MIDs in candidate pool. Man City fixture. P(start) 90%.
+- **Groß** (MID, £6.0m) [**CAPTAIN**]: Highest projected return in the squad: 8.11 xPts (16.21 effective with captain double). Ranked #1/77 among MIDs in the 150-player candidate pool. Captain is always the highest-xPts player in the XI.
+- **Henderson** (MID, £4.9m): 6.66 xPts for GW7, ranked #4/77 among MIDs in candidate pool. Chelsea fixture. P(start) 90%.
+- **Manzambi** (MID, £5.9m): 8.10 xPts for GW7, ranked #2/77 among MIDs in candidate pool. Aston Villa fixture. P(start) 90%.
+- **João Pedro** (FWD, £7.8m): 4.20 xPts for GW7, ranked #4/18 among FWDs in candidate pool. Chelsea fixture. P(start) 90%.
 
 ### Bench
 
 *Bench picks are weighted at 10% in the MILP objective. The optimizer intentionally spends budget on the starting XI and uses bench slots for legal squad shape.*
 
-- **João Pedro** (FWD, £7.7m): 3.47 xPts. Budget saved here funds the premium XI picks.
-- **Ajayi** (DEF, £4.2m): 1.58 xPts. Budget saved here funds the premium XI picks.
-- **Wissa** (FWD, £6.2m): 1.34 xPts. Budget saved here funds the premium XI picks.
+- **Emersonn** (FWD, £5.6m): 1.80 xPts. Budget saved here funds the premium XI picks.
+- **Bogle** (DEF, £4.7m): 2.55 xPts. Budget saved here funds the premium XI picks.
+- **Wissa** (FWD, £6.3m): 1.05 xPts. Budget saved here funds the premium XI picks.
 - **Tzolakis** (GKP, £4.7m): 3.60 xPts. Budget saved here funds the premium XI picks.
 
 ---
 
 ## Transfer Decision
 
-**OUT:** Ødegaard (£6.7m, 2.27 xPts GW6)
-**IN:** Schade (£6.2m, 7.60 xPts GW6)
-**Net this week:** +5.32 xPts
+**OUT:** Ajayi (£4.1m, 1.63 xPts GW7)
+**IN:** Dasilva (£4.0m, 9.00 xPts GW7)
+**Net this week:** +7.37 xPts
 
-Schade projects 7.60 xPts vs Ødegaard's 2.27 — a 5.32 xPts improvement this GW alone. The MILP confirmed this swap also improves the full 6-GW plan after accounting for future fixtures and the value of free transfers.
-**OUT:** B.Fernandes (£11.9m, 3.45 xPts GW6)
-**IN:** Groß (£5.9m, 10.49 xPts GW6)
-**Net this week:** +7.03 xPts
+Dasilva projects 9.00 xPts vs Ajayi's 1.63 — a 7.37 xPts improvement this GW alone. The MILP confirmed this swap also improves the full 6-GW plan after accounting for future fixtures and the value of free transfers.
+**OUT:** Saka (£9.5m, 2.21 xPts GW7)
+**IN:** Manzambi (£5.9m, 8.10 xPts GW7)
+**Net this week:** +5.89 xPts
 
-Groß projects 10.49 xPts vs B.Fernandes's 3.45 — a 7.03 xPts improvement this GW alone. The MILP confirmed this swap also improves the full 6-GW plan after accounting for future fixtures and the value of free transfers.
-**OUT:** M.Sangaré (£5.6m, 1.80 xPts GW6)
-**IN:** Belloumi (£5.1m, 7.65 xPts GW6)
-**Net this week:** +5.85 xPts
+Manzambi projects 8.10 xPts vs Saka's 2.21 — a 5.89 xPts improvement this GW alone. The MILP confirmed this swap also improves the full 6-GW plan after accounting for future fixtures and the value of free transfers.
+**OUT:** Schade (£6.2m, 1.23 xPts GW7)
+**IN:** Henderson (£4.9m, 6.66 xPts GW7)
+**Net this week:** +5.43 xPts
 
-Belloumi projects 7.65 xPts vs M.Sangaré's 1.80 — a 5.85 xPts improvement this GW alone. The MILP confirmed this swap also improves the full 6-GW plan after accounting for future fixtures and the value of free transfers.
+Henderson projects 6.66 xPts vs Schade's 1.23 — a 5.43 xPts improvement this GW alone. The MILP confirmed this swap also improves the full 6-GW plan after accounting for future fixtures and the value of free transfers.
 
 ⚠️ **2 hit(s) required (−8 pts).** The planner only recommends hits when the projected 6-GW gain exceeds the penalty. Skip and roll if you want to avoid the risk — the bot will adapt next week.
 
@@ -78,52 +78,50 @@ Belloumi projects 7.65 xPts vs M.Sangaré's 1.80 — a 5.85 xPts improvement thi
 
 ## Players We Considered But Didn't Pick
 
-### GW5 Standout Performers — Why They're Not In Your Squad
+### GW6 Standout Performers — Why They're Not In Your Squad
 
 *(A big GW score doesn't automatically trigger a transfer — the bot's 6-GW forward model uses EWMA form features that smooth out single-match spikes. One hot game shifts the model's view less than you'd expect.)*
 
-- **Semenyo** (MID, Man City): **17 pts in GW5** (2 goals, 1 assist). Not transferred in — Forward projection: 2.40 xPts for GW6 (ranked #120 overall). This is below our lowest-ranked MID in the squad (4.17 xPts). The EWMA form model smooths over single-match spikes — a big GW shifts the average less than the raw score suggests.
-- **Brobbey** (FWD, Sunderland): **17 pts in GW5** (3 goals). Not transferred in — Forward projection: 0.00 xPts for GW6 (ranked #149 overall). This is below our lowest-ranked FWD in the squad (1.34 xPts). The EWMA form model smooths over single-match spikes — a big GW shifts the average less than the raw score suggests.
-- **Dasilva** (DEF, Coventry City): **15 pts in GW5** (1 goal, clean sheet). Not transferred in — Forward projection 6.75 xPts (ranked #7 overall) is competitive, but bringing them in at £4.0m would require dropping a player the MILP values more over the full 6-GW horizon.
-- **Schuster** (DEF, Brentford): **14 pts in GW5** (1 assist, clean sheet, DEFCON bonus (15 CBIT)). Not transferred in — Forward projection 7.65 xPts (ranked #3 overall) is competitive, but bringing them in at £4.5m would require dropping a player the MILP values more over the full 6-GW horizon.
-- **Manzambi** (MID, Aston Villa): **13 pts in GW5** (1 goal, 1 assist, clean sheet). Not transferred in — Forward projection 6.30 xPts (ranked #9 overall) is competitive, but bringing them in at £5.9m would require dropping a player the MILP values more over the full 6-GW horizon.
-- **Hall** (DEF, Newcastle): **13 pts in GW5** (1 goal). Not transferred in — Forward projection 5.33 xPts (ranked #25 overall) is competitive, but bringing them in at £5.3m would require dropping a player the MILP values more over the full 6-GW horizon.
-- **Buendía** (MID, Aston Villa): **12 pts in GW5** (1 goal). Not transferred in — Forward projection 5.52 xPts (ranked #21 overall) is competitive, but bringing them in at £5.9m would require dropping a player the MILP values more over the full 6-GW horizon.
-- **Rushworth** (GKP, Coventry City): **11 pts in GW5** (1 assist, clean sheet). Not transferred in — Forward projection 4.79 xPts (ranked #32 overall) is competitive, but bringing them in at £4.5m would require dropping a player the MILP values more over the full 6-GW horizon.
-- **Anthony** (MID, Brentford): **10 pts in GW5** (1 goal, clean sheet). Not transferred in — Forward projection: 4.03 xPts for GW6 (ranked #53 overall). This is below our lowest-ranked MID in the squad (4.17 xPts). The EWMA form model smooths over single-match spikes — a big GW shifts the average less than the raw score suggests.
-- **Kostoulas** (FWD, Brighton): **10 pts in GW5** (1 goal, 1 assist, clean sheet). Not transferred in — Forward projection 6.32 xPts (ranked #8 overall) is competitive, but bringing them in at £5.6m would require dropping a player the MILP values more over the full 6-GW horizon.
+- **De Cuyper** (DEF, Brighton): **15 pts in GW6** (1 goal, clean sheet). Not transferred in — Forward projection 7.04 xPts (ranked #4 overall) is competitive, but bringing them in at £5.1m would require dropping a player the MILP values more over the full 6-GW horizon.
+- **Dewsbury-Hall** (MID, Everton): **13 pts in GW6** (1 goal, 1 assist). Not transferred in — Forward projection 5.42 xPts (ranked #13 overall) is competitive, but bringing them in at £6.6m would require dropping a player the MILP values more over the full 6-GW horizon.
+- **Doku** (MID, Man City): **12 pts in GW6** (1 goal, 1 assist). Not transferred in — Forward projection 4.58 xPts (ranked #28 overall) is competitive, but bringing them in at £7.4m would require dropping a player the MILP values more over the full 6-GW horizon.
+- **Cherif** (FWD, Coventry City): **12 pts in GW6** (1 goal, 1 assist). Not transferred in — Forward projection 5.40 xPts (ranked #16 overall) is competitive, but bringing them in at £5.0m would require dropping a player the MILP values more over the full 6-GW horizon.
+- **O'Shea** (DEF, Ipswich Town): **11 pts in GW6** (1 goal). Not transferred in — Forward projection 4.44 xPts (ranked #35 overall) is competitive, but bringing them in at £4.0m would require dropping a player the MILP values more over the full 6-GW horizon.
+- **McGinn** (MID, Aston Villa): **10 pts in GW6** (1 goal). Not transferred in — Forward projection 5.41 xPts (ranked #14 overall) is competitive, but bringing them in at £5.4m would require dropping a player the MILP values more over the full 6-GW horizon.
+- **Cunha** (MID, Man Utd): **10 pts in GW6** (1 assist). Not transferred in — Forward projection 6.37 xPts (ranked #7 overall) is competitive, but bringing them in at £7.9m would require dropping a player the MILP values more over the full 6-GW horizon.
+- **Ouattara** (DEF, Ipswich Town): **10 pts in GW6** (1 goal). Not transferred in — Forward projection 5.40 xPts (ranked #15 overall) is competitive, but bringing them in at £4.0m would require dropping a player the MILP values more over the full 6-GW horizon.
 
 ### Highest-Projected Players Not In Your Squad
 
-- **Schuster** (DEF, Brentford, £4.5m, 7.65 xPts): ranked #3 overall. £4.5m is hard to fit within £100m without dropping a player the MILP values more over 6 GWs.
-- **Jacquet** (DEF, Liverpool, £5.0m, 6.75 xPts): ranked #6 overall. £5.0m is hard to fit within £100m without dropping a player the MILP values more over 6 GWs.
-- **Dasilva** (DEF, Coventry City, £4.0m, 6.75 xPts): ranked #7 overall. £4.0m is hard to fit within £100m without dropping a player the MILP values more over 6 GWs.
-- **Kostoulas** (FWD, Brighton, £5.6m, 6.32 xPts): ranked #8 overall. £5.6m is hard to fit within £100m without dropping a player the MILP values more over 6 GWs.
-- **Manzambi** (MID, Aston Villa, £5.9m, 6.30 xPts): ranked #9 overall. £5.9m is hard to fit within £100m without dropping a player the MILP values more over 6 GWs.
-- **A.Becker** (GKP, Liverpool, £5.5m, 6.10 xPts): ranked #11 overall. £5.5m is hard to fit within £100m without dropping a player the MILP values more over 6 GWs.
-- **De Cuyper** (DEF, Brighton, £5.0m, 5.95 xPts): ranked #12 overall. £5.0m is hard to fit within £100m without dropping a player the MILP values more over 6 GWs.
-- **Araujo** (DEF, Liverpool, £5.4m, 5.85 xPts): ranked #14 overall. £5.4m is hard to fit within £100m without dropping a player the MILP values more over 6 GWs.
+- **De Cuyper** (DEF, Brighton, £5.1m, 7.04 xPts): ranked #4 overall. £5.1m is hard to fit within £100m without dropping a player the MILP values more over 6 GWs.
+- **Cunha** (MID, Man Utd, £7.9m, 6.37 xPts): ranked #7 overall. £7.9m is hard to fit within £100m without dropping a player the MILP values more over 6 GWs.
+- **Buendía** (MID, Aston Villa, £5.9m, 5.62 xPts): ranked #9 overall. £5.9m is hard to fit within £100m without dropping a player the MILP values more over 6 GWs.
+- **Rudoni** (MID, Coventry City, £4.9m, 5.54 xPts): ranked #10 overall. £4.9m is hard to fit within £100m without dropping a player the MILP values more over 6 GWs.
+- **Rushworth** (GKP, Coventry City, £4.5m, 5.50 xPts): ranked #11 overall. £4.5m is hard to fit within £100m without dropping a player the MILP values more over 6 GWs.
+- **Vuskovic** (DEF, Brighton, £5.1m, 5.44 xPts): ranked #12 overall. £5.1m is hard to fit within £100m without dropping a player the MILP values more over 6 GWs.
+- **Dewsbury-Hall** (MID, Everton, £6.6m, 5.42 xPts): ranked #13 overall. £6.6m is hard to fit within £100m without dropping a player the MILP values more over 6 GWs.
+- **McGinn** (MID, Aston Villa, £5.4m, 5.41 xPts): ranked #14 overall. £5.4m is hard to fit within £100m without dropping a player the MILP values more over 6 GWs.
 
 ---
 
 ## GW-by-GW Plan
 
-|   GW | Transfers                                                   | Chip   | Captain   | Vice     |   XI xPts |   Bench xPts |   Hits |   FT→ | Bank   |
-|-----:|:------------------------------------------------------------|:-------|:----------|:---------|----------:|-------------:|-------:|------:|:-------|
-|    6 | Schade ← Ødegaard, Groß ← B.Fernandes, Belloumi ← M.Sangaré | —      | Groß      | Belloumi |     77.08 |         9.98 |      2 |     1 | £10.6m |
-|    7 | Haaland ← Wissa                                             | —      | Groß      | Haaland  |     77.57 |        13.69 |      0 |     1 | £1.1m  |
-|    8 | Schuster ← Ajayi                                            | —      | Schade    | Groß     |     75.77 |        16.62 |      0 |     1 | £0.7m  |
-|    9 | Roll                                                        | —      | Schade    | Bogle    |     73.28 |        16.22 |      0 |     2 | £0.7m  |
-|   10 | Roll                                                        | —      | Groß      | Bogle    |     78.33 |        15.25 |      0 |     3 | £0.7m  |
-|   11 | Roll                                                        | —      | Groß      | Haaland  |     80.31 |        16.85 |      0 |     4 | £0.7m  |
+|   GW | Transfers                                            | Chip   | Captain   | Vice       |   XI xPts |   Bench xPts |   Hits |   FT→ | Bank   |
+|-----:|:-----------------------------------------------------|:-------|:----------|:-----------|----------:|-------------:|-------:|------:|:-------|
+|    7 | Dasilva ← Ajayi, Manzambi ← Saka, Henderson ← Schade | —      | Groß      | Dasilva    |     72.77 |         9    |      2 |     1 | £15.6m |
+|    8 | De Cuyper ← Gvardiol                                 | —      | Henderson | João Pedro |     66.66 |        13.68 |      0 |     1 | £16.2m |
+|    9 | Brobbey ← Wissa                                      | —      | Manzambi  | Tarkowski  |     64.92 |        16.29 |      0 |     1 | £16.7m |
+|   10 | Dewsbury-Hall ← Belloumi                             | —      | Groß      | Tarkowski  |     71.88 |        14.98 |      0 |     1 | £15.2m |
+|   11 | Roll                                                 | —      | Groß      | De Cuyper  |     73.9  |        15.13 |      0 |     2 | £15.2m |
+|   12 | Roll                                                 | —      | Groß      | Henderson  |     69.47 |        15.27 |      0 |     3 | £15.2m |
 
 ---
 
-## Starting XI — GW6
+## Starting XI — GW7
 
 **GKP:** **Trafford**  
-**DEF:** **Calafiori** | **Tarkowski** | **Bogle** | **Gvardiol**  
-**MID:** **Saka** | **Schade** | **Groß**(C) | **Belloumi** | **Cherki**  
-**FWD:** **Emersonn**  
+**DEF:** **Calafiori** | **Dasilva** | **Tarkowski** | **Gvardiol**  
+**MID:** **Manzambi** | **Henderson** | **Groß**(C) | **Belloumi** | **Cherki**  
+**FWD:** **João Pedro**  
 
-**Bench:** João Pedro | Ajayi | Wissa | Tzolakis
+**Bench:** Emersonn | Bogle | Wissa | Tzolakis

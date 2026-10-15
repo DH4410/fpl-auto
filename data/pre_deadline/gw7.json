@@ -1,0 +1,58 @@
+{
+  "gw": 7,
+  "approved_transfers": [
+    {
+      "element_in": 176,
+      "name_in": "Dasilva",
+      "purchase_price": 40,
+      "element_out": 279,
+      "name_out": "Ajayi",
+      "selling_price": 41,
+      "position": 2
+    },
+    {
+      "element_in": 53,
+      "name_in": "Manzambi",
+      "purchase_price": 59,
+      "element_out": 12,
+      "name_out": "Saka",
+      "selling_price": 95,
+      "position": 3
+    },
+    {
+      "element_in": 101,
+      "name_in": "Henderson",
+      "purchase_price": 49,
+      "element_out": 94,
+      "name_out": "Schade",
+      "selling_price": 62,
+      "position": 3
+    }
+  ],
+  "approved_chip": null,
+  "expected_net_gain": 49.74,
+  "expected_gross_gain": 57.74,
+  "hit_count": 2,
+  "captain": {
+    "element": 124,
+    "name": "Gro\u00df",
+    "xpts": 8.11
+  },
+  "vice": {
+    "element": 176,
+    "name": "Dasilva",
+    "xpts": 9.0
+  },
+  "reasoning": "Planner proposes 3 transfer(s) worth +57.74 xPts gross over 6 GWs (+49.74 net of 2 hit(s)). Hit approved: 57.74 gross >= 10.0 required.",
+  "transfer_plan_kind": "ordinary",
+  "execution_plan_version": 4,
+  "model_health": {
+    "loaded": true,
+    "inference_ok": true,
+    "error": null
+  },
+  "requires_replan": false,
+  "wildcard_validation_errors": [],
+  "wildcard_validated": false,
+  "vetoed_element_ids": []
+}
