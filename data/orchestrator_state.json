@@ -364,6 +364,13 @@
       "name": "Schade",
       "reason": "Shoulder injury - 75% chance of playing",
       "priority": 1.0
+    },
+    {
+      "action": "transfer_out",
+      "element": 53,
+      "name": "Manzambi",
+      "reason": "Calf injury - 75% chance of playing",
+      "priority": 1.0
     }
   ]
 }
