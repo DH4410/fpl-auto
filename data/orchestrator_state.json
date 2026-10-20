@@ -1,5 +1,5 @@
 {
-  "last_analyzed_gw": 6,
+  "last_analyzed_gw": 7,
   "last_simulated_gw": 7,
   "last_executed_gw": 7,
   "approved_plan": {
@@ -360,17 +360,199 @@
   "idea_list": [
     {
       "action": "transfer_out",
-      "element": 94,
-      "name": "Schade",
-      "reason": "Shoulder injury - 75% chance of playing",
-      "priority": 1.0
+      "element": 176,
+      "name": "Dasilva",
+      "reason": "Scored 0 vs 9.0 expected in GW7 (delta -9.0).",
+      "priority": 0.45
+    },
+    {
+      "action": "transfer_in",
+      "element": 115,
+      "name": "De Cuyper",
+      "reason": "Replacement for Dasilva: DEF \u00a35.3m, xPts 10.50, GW8 FDR 4.0.",
+      "priority": 0.405
+    },
+    {
+      "action": "transfer_in",
+      "element": 504,
+      "name": "Vuskovic",
+      "reason": "Replacement for Dasilva: DEF \u00a35.1m, xPts 9.50, GW8 FDR 4.0.",
+      "priority": 0.405
+    },
+    {
+      "action": "transfer_in",
+      "element": 113,
+      "name": "F.Kad\u0131o\u011flu",
+      "reason": "Replacement for Dasilva: DEF \u00a34.4m, xPts 7.50, GW8 FDR 4.0.",
+      "priority": 0.405
+    },
+    {
+      "action": "transfer_out",
+      "element": 399,
+      "name": "Cherki",
+      "reason": "Scored 0 vs 6.7 expected in GW7 (delta -6.7).",
+      "priority": 0.337
+    },
+    {
+      "action": "transfer_in",
+      "element": 156,
+      "name": "Neto",
+      "reason": "Replacement for Cherki: MID \u00a36.5m, xPts 10.00, GW8 FDR 2.0.",
+      "priority": 0.303
+    },
+    {
+      "action": "transfer_in",
+      "element": 400,
+      "name": "Doku",
+      "reason": "Replacement for Cherki: MID \u00a37.5m, xPts 9.00, GW8 FDR 3.0.",
+      "priority": 0.303
+    },
+    {
+      "action": "transfer_in",
+      "element": 13,
+      "name": "Rice",
+      "reason": "Replacement for Cherki: MID \u00a37.3m, xPts 8.00, GW8 FDR 3.0.",
+      "priority": 0.303
+    },
+    {
+      "action": "transfer_out",
+      "element": 229,
+      "name": "Tarkowski",
+      "reason": "Scored 0 vs 5.8 expected in GW7 (delta -5.8).",
+      "priority": 0.292
+    },
+    {
+      "action": "transfer_in",
+      "element": 115,
+      "name": "De Cuyper",
+      "reason": "Replacement for Tarkowski: DEF \u00a35.3m, xPts 10.50, GW8 FDR 4.0.",
+      "priority": 0.263
+    },
+    {
+      "action": "transfer_in",
+      "element": 504,
+      "name": "Vuskovic",
+      "reason": "Replacement for Tarkowski: DEF \u00a35.1m, xPts 9.50, GW8 FDR 4.0.",
+      "priority": 0.263
+    },
+    {
+      "action": "transfer_in",
+      "element": 113,
+      "name": "F.Kad\u0131o\u011flu",
+      "reason": "Replacement for Tarkowski: DEF \u00a34.4m, xPts 7.50, GW8 FDR 4.0.",
+      "priority": 0.263
     },
     {
       "action": "transfer_out",
       "element": 53,
       "name": "Manzambi",
       "reason": "Calf injury - 75% chance of playing",
-      "priority": 1.0
+      "priority": 0.225
+    },
+    {
+      "action": "transfer_in",
+      "element": 156,
+      "name": "Neto",
+      "reason": "Replacement for Manzambi: MID \u00a36.5m, xPts 10.00, GW8 FDR 2.0.",
+      "priority": 0.203
+    },
+    {
+      "action": "transfer_in",
+      "element": 400,
+      "name": "Doku",
+      "reason": "Replacement for Manzambi: MID \u00a37.5m, xPts 9.00, GW8 FDR 3.0.",
+      "priority": 0.203
+    },
+    {
+      "action": "transfer_in",
+      "element": 13,
+      "name": "Rice",
+      "reason": "Replacement for Manzambi: MID \u00a37.3m, xPts 8.00, GW8 FDR 3.0.",
+      "priority": 0.203
+    },
+    {
+      "action": "transfer_out",
+      "element": 101,
+      "name": "Henderson",
+      "reason": "Scored 3 vs 6.7 expected in GW7 (delta -3.7).",
+      "priority": 0.183
+    },
+    {
+      "action": "transfer_out",
+      "element": 391,
+      "name": "Gvardiol",
+      "reason": "Scored 0 vs 3.4 expected in GW7 (delta -3.4).",
+      "priority": 0.17
+    },
+    {
+      "action": "transfer_in",
+      "element": 156,
+      "name": "Neto",
+      "reason": "Replacement for Henderson: MID \u00a36.5m, xPts 10.00, GW8 FDR 2.0.",
+      "priority": 0.165
+    },
+    {
+      "action": "transfer_in",
+      "element": 129,
+      "name": "Ayari",
+      "reason": "Replacement for Henderson: MID \u00a35.4m, xPts 8.00, GW8 FDR 4.0.",
+      "priority": 0.165
+    },
+    {
+      "action": "transfer_in",
+      "element": 261,
+      "name": "Iwobi",
+      "reason": "Replacement for Henderson: MID \u00a35.4m, xPts 7.50, GW8 FDR 2.0.",
+      "priority": 0.165
+    },
+    {
+      "action": "transfer_out",
+      "element": 124,
+      "name": "Gro\u00df",
+      "reason": "Scored 5 vs 8.1 expected in GW7 (delta -3.1).",
+      "priority": 0.155
+    },
+    {
+      "action": "transfer_in",
+      "element": 115,
+      "name": "De Cuyper",
+      "reason": "Replacement for Gvardiol: DEF \u00a35.3m, xPts 10.50, GW8 FDR 4.0.",
+      "priority": 0.153
+    },
+    {
+      "action": "transfer_in",
+      "element": 504,
+      "name": "Vuskovic",
+      "reason": "Replacement for Gvardiol: DEF \u00a35.1m, xPts 9.50, GW8 FDR 4.0.",
+      "priority": 0.153
+    },
+    {
+      "action": "transfer_in",
+      "element": 113,
+      "name": "F.Kad\u0131o\u011flu",
+      "reason": "Replacement for Gvardiol: DEF \u00a34.4m, xPts 7.50, GW8 FDR 4.0.",
+      "priority": 0.153
+    },
+    {
+      "action": "transfer_in",
+      "element": 156,
+      "name": "Neto",
+      "reason": "Replacement for Gro\u00df: MID \u00a36.5m, xPts 10.00, GW8 FDR 2.0.",
+      "priority": 0.14
+    },
+    {
+      "action": "transfer_in",
+      "element": 400,
+      "name": "Doku",
+      "reason": "Replacement for Gro\u00df: MID \u00a37.5m, xPts 9.00, GW8 FDR 3.0.",
+      "priority": 0.14
+    },
+    {
+      "action": "transfer_in",
+      "element": 13,
+      "name": "Rice",
+      "reason": "Replacement for Gro\u00df: MID \u00a37.3m, xPts 8.00, GW8 FDR 3.0.",
+      "priority": 0.14
     }
   ]
 }
