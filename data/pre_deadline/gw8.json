@@ -1,0 +1,58 @@
+{
+  "gw": 8,
+  "approved_transfers": [
+    {
+      "element_in": 115,
+      "name_in": "De Cuyper",
+      "purchase_price": 53,
+      "element_out": 176,
+      "name_out": "Dasilva",
+      "selling_price": 40,
+      "position": 2
+    },
+    {
+      "element_in": 504,
+      "name_in": "Vuskovic",
+      "purchase_price": 51,
+      "element_out": 391,
+      "name_out": "Gvardiol",
+      "selling_price": 57,
+      "position": 2
+    },
+    {
+      "element_in": 411,
+      "name_in": "Haaland",
+      "purchase_price": 157,
+      "element_out": 464,
+      "name_out": "Wissa",
+      "selling_price": 61,
+      "position": 4
+    }
+  ],
+  "approved_chip": null,
+  "expected_net_gain": 63.57,
+  "expected_gross_gain": 71.57,
+  "hit_count": 2,
+  "captain": {
+    "element": 101,
+    "name": "Henderson",
+    "xpts": 6.67
+  },
+  "vice": {
+    "element": 115,
+    "name": "De Cuyper",
+    "xpts": 6.93
+  },
+  "reasoning": "Planner proposes 3 transfer(s) worth +71.57 xPts gross over 6 GWs (+63.57 net of 2 hit(s)). Hit approved: 71.57 gross >= 10.0 required.",
+  "transfer_plan_kind": "ordinary",
+  "execution_plan_version": 4,
+  "model_health": {
+    "loaded": true,
+    "inference_ok": true,
+    "error": null
+  },
+  "requires_replan": false,
+  "wildcard_validation_errors": [],
+  "wildcard_validated": false,
+  "vetoed_element_ids": []
+}
