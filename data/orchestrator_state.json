@@ -357,5 +357,13 @@
   "research_ideas": [],
   "signing_ideas": [],
   "executed_transfers": {},
-  "idea_list": []
+  "idea_list": [
+    {
+      "action": "transfer_out",
+      "element": 53,
+      "name": "Manzambi",
+      "reason": "Calf injury - 75% chance of playing",
+      "priority": 1.0
+    }
+  ]
 }
