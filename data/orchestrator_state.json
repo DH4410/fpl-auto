@@ -1,5 +1,5 @@
 {
-  "last_analyzed_gw": 7,
+  "last_analyzed_gw": 8,
   "last_simulated_gw": 8,
   "last_executed_gw": 8,
   "approved_plan": {
@@ -353,31 +353,249 @@
     "execute_target_utc": "2026-10-23T12:45:29.792198+00:00"
   },
   "execute_target_utc": null,
-  "last_deep_research_gw": 6,
-  "research_ideas": [],
+  "last_deep_research_gw": 8,
+  "research_ideas": [
+    {
+      "action": "transfer_in",
+      "element": 1,
+      "name": "Raya",
+      "reason": "Top-100 smart money: 22/25 managers hold (88%), ep_next 6.3",
+      "priority": 0.4
+    },
+    {
+      "action": "transfer_out",
+      "element": 229,
+      "name": "Tarkowski",
+      "reason": "Top-100 avoid: ep_next only 1.7, 18.4% overall ownership \u2014 likely liability",
+      "priority": 0.3
+    },
+    {
+      "action": "transfer_out",
+      "element": 316,
+      "name": "Emersonn",
+      "reason": "Top-100 avoid: ep_next only 1.7, 3.4% overall ownership \u2014 likely liability",
+      "priority": 0.3
+    },
+    {
+      "action": "transfer_out",
+      "element": 330,
+      "name": "Bogle",
+      "reason": "Top-100 avoid: ep_next only 2.7, 11.1% overall ownership \u2014 likely liability",
+      "priority": 0.3
+    },
+    {
+      "action": "transfer_out",
+      "element": 572,
+      "name": "Tzolakis",
+      "reason": "Top-100 avoid: ep_next only 2.7, 14.2% overall ownership \u2014 likely liability",
+      "priority": 0.3
+    },
+    {
+      "action": "transfer_out",
+      "element": 399,
+      "name": "Cherki",
+      "reason": "Top-100 avoid: ep_next only 3.3, 38.7% overall ownership \u2014 likely liability",
+      "priority": 0.3
+    }
+  ],
   "signing_ideas": [],
   "executed_transfers": {},
   "idea_list": [
     {
       "action": "transfer_out",
-      "element": 53,
-      "name": "Manzambi",
-      "reason": "Calf injury - 75% chance of playing",
-      "priority": 1.0
+      "element": 115,
+      "name": "De Cuyper",
+      "reason": "Scored 1 vs 6.9 expected in GW8 (delta -5.9).",
+      "priority": 0.296
+    },
+    {
+      "action": "transfer_in",
+      "element": 31,
+      "name": "Konsa",
+      "reason": "Replacement for De Cuyper: DEF \u00a34.7m, xPts 9.00, GW9 FDR 4.0.",
+      "priority": 0.266
+    },
+    {
+      "action": "transfer_in",
+      "element": 10,
+      "name": "White",
+      "reason": "Replacement for De Cuyper: DEF \u00a35.4m, xPts 7.00, GW9 FDR 4.0.",
+      "priority": 0.266
+    },
+    {
+      "action": "transfer_in",
+      "element": 60,
+      "name": "Hill",
+      "reason": "Replacement for De Cuyper: DEF \u00a35.5m, xPts 6.70, GW9 FDR 3.0.",
+      "priority": 0.266
     },
     {
       "action": "transfer_out",
-      "element": 165,
-      "name": "Jo\u00e3o Pedro",
-      "reason": "Unspecified injury - 75% chance of playing",
-      "priority": 1.0
+      "element": 504,
+      "name": "Vuskovic",
+      "reason": "Scored 1 vs 6.2 expected in GW8 (delta -5.2).",
+      "priority": 0.258
+    },
+    {
+      "action": "transfer_out",
+      "element": 101,
+      "name": "Henderson",
+      "reason": "Scored 2 vs 6.7 expected in GW8 (delta -4.7).",
+      "priority": 0.233
+    },
+    {
+      "action": "transfer_in",
+      "element": 31,
+      "name": "Konsa",
+      "reason": "Replacement for Vuskovic: DEF \u00a34.7m, xPts 9.00, GW9 FDR 4.0.",
+      "priority": 0.232
+    },
+    {
+      "action": "transfer_in",
+      "element": 10,
+      "name": "White",
+      "reason": "Replacement for Vuskovic: DEF \u00a35.4m, xPts 7.00, GW9 FDR 4.0.",
+      "priority": 0.232
+    },
+    {
+      "action": "transfer_in",
+      "element": 60,
+      "name": "Hill",
+      "reason": "Replacement for Vuskovic: DEF \u00a35.5m, xPts 6.70, GW9 FDR 3.0.",
+      "priority": 0.232
+    },
+    {
+      "action": "transfer_out",
+      "element": 124,
+      "name": "Gro\u00df",
+      "reason": "Scored 0 vs 4.5 expected in GW8 (delta -4.5).",
+      "priority": 0.227
     },
     {
       "action": "transfer_out",
       "element": 8,
       "name": "Calafiori",
       "reason": "Hip injury - 75% chance of playing",
-      "priority": 1.0
+      "priority": 0.225
+    },
+    {
+      "action": "transfer_out",
+      "element": 165,
+      "name": "Jo\u00e3o Pedro",
+      "reason": "Unspecified injury - 75% chance of playing",
+      "priority": 0.225
+    },
+    {
+      "action": "transfer_out",
+      "element": 399,
+      "name": "Cherki",
+      "reason": "Scored 0 vs 4.3 expected in GW8 (delta -4.3).",
+      "priority": 0.216
+    },
+    {
+      "action": "transfer_in",
+      "element": 156,
+      "name": "Neto",
+      "reason": "Replacement for Henderson: MID \u00a36.6m, xPts 7.70, GW9 FDR 4.0.",
+      "priority": 0.21
+    },
+    {
+      "action": "transfer_in",
+      "element": 68,
+      "name": "Tavernier",
+      "reason": "Replacement for Henderson: MID \u00a36.3m, xPts 7.00, GW9 FDR 3.0.",
+      "priority": 0.21
+    },
+    {
+      "action": "transfer_in",
+      "element": 261,
+      "name": "Iwobi",
+      "reason": "Replacement for Henderson: MID \u00a35.4m, xPts 6.00, GW9 FDR 3.0.",
+      "priority": 0.21
+    },
+    {
+      "action": "transfer_in",
+      "element": 156,
+      "name": "Neto",
+      "reason": "Replacement for Gro\u00df: MID \u00a36.6m, xPts 7.70, GW9 FDR 4.0.",
+      "priority": 0.204
+    },
+    {
+      "action": "transfer_in",
+      "element": 68,
+      "name": "Tavernier",
+      "reason": "Replacement for Gro\u00df: MID \u00a36.3m, xPts 7.00, GW9 FDR 3.0.",
+      "priority": 0.204
+    },
+    {
+      "action": "transfer_in",
+      "element": 400,
+      "name": "Doku",
+      "reason": "Replacement for Gro\u00df: MID \u00a37.5m, xPts 6.70, GW9 FDR 3.0.",
+      "priority": 0.204
+    },
+    {
+      "action": "transfer_in",
+      "element": 4,
+      "name": "Gabriel",
+      "reason": "Replacement for Calafiori: DEF \u00a37.9m, xPts 9.00, GW9 FDR 4.0.",
+      "priority": 0.203
+    },
+    {
+      "action": "transfer_in",
+      "element": 31,
+      "name": "Konsa",
+      "reason": "Replacement for Calafiori: DEF \u00a34.7m, xPts 9.00, GW9 FDR 4.0.",
+      "priority": 0.203
+    },
+    {
+      "action": "transfer_in",
+      "element": 10,
+      "name": "White",
+      "reason": "Replacement for Calafiori: DEF \u00a35.4m, xPts 7.00, GW9 FDR 4.0.",
+      "priority": 0.203
+    },
+    {
+      "action": "transfer_in",
+      "element": 79,
+      "name": "Evanilson",
+      "reason": "Replacement for Jo\u00e3o Pedro: FWD \u00a36.2m, xPts 8.30, GW9 FDR 3.0.",
+      "priority": 0.203
+    },
+    {
+      "action": "transfer_in",
+      "element": 166,
+      "name": "N.Jackson",
+      "reason": "Replacement for Jo\u00e3o Pedro: FWD \u00a36.7m, xPts 8.00, GW9 FDR 2.0.",
+      "priority": 0.203
+    },
+    {
+      "action": "transfer_in",
+      "element": 379,
+      "name": "Isak",
+      "reason": "Replacement for Jo\u00e3o Pedro: FWD \u00a39.0m, xPts 6.00, GW9 FDR 4.0.",
+      "priority": 0.203
+    },
+    {
+      "action": "transfer_in",
+      "element": 156,
+      "name": "Neto",
+      "reason": "Replacement for Cherki: MID \u00a36.6m, xPts 7.70, GW9 FDR 4.0.",
+      "priority": 0.194
+    },
+    {
+      "action": "transfer_in",
+      "element": 68,
+      "name": "Tavernier",
+      "reason": "Replacement for Cherki: MID \u00a36.3m, xPts 7.00, GW9 FDR 3.0.",
+      "priority": 0.194
+    },
+    {
+      "action": "transfer_in",
+      "element": 400,
+      "name": "Doku",
+      "reason": "Replacement for Cherki: MID \u00a37.5m, xPts 6.70, GW9 FDR 3.0.",
+      "priority": 0.194
     }
   ]
 }

@@ -1,39 +1,39 @@
-# FPL Auto — GW7 Post-Match Reflection
+# FPL Auto — GW8 Post-Match Reflection
 
-*Generated: 2026-10-20 18:18 UTC*
+*Generated: 2026-10-26 16:27 UTC*
 
 
 ## Summary
 
 | Metric | Value |
 |--------|------:|
-| Actual GW Points | **38** |
+| Actual GW Points | **35** |
 | Predicted (xPts) | 0.0 |
-| Difference | +38.0 |
+| Difference | +35.0 |
 
 ## Player Breakdown
 
 | Player | Pos | Pts | xPts | Diff | Stats |
 |--------|-----|----:|-----:|-----:|-------|
-| Trafford | GKP | 2 | — | — | 90m |
-| Calafiori | DEF | 6 | — | — | 90m CS |
-| Gvardiol | DEF | 0 | — | — | 29m |
-| Tarkowski | DEF | 0 | — | — | 90m |
-| Dasilva ® | DEF | 0 | — | — | 90m |
-| Bogle | DEF | 2 | — | — | 90m |
-| Belloumi | MID | 2 | — | — | 90m |
-| Groß © | MID | 10 | 0.00 | +10.0 | 70m 1A CS |
-| Henderson | MID | 3 | — | — | 90m CS |
-| Manzambi | MID | 11 | — | — | 71m 1G CS +3b |
-| João Pedro | FWD | 2 | — | — | 90m CS |
+| Trafford | GKP | 10 | — | — | 90m CS +3b |
+| Calafiori | DEF | 1 | — | — | 22m |
+| Vuskovic | DEF | 1 | — | — | 90m |
+| De Cuyper ® | DEF | 1 | — | — | 90m |
+| Bogle | DEF | 5 | — | — | 90m CS |
+| Belloumi | MID | 4 | — | — | 85m |
+| Cherki | MID | 0 | 0.00 | +0.0 | 45m |
+| Groß | MID | 0 | 0.00 | +0.0 | 90m |
+| Henderson © | MID | 4 | — | — | 90m |
+| Manzambi | MID | 1 | — | — | 65m |
+| Haaland | FWD | 8 | — | — | 90m 1G +2b |
 | *— Bench —* | | | | | |
 | Tzolakis (B) | GKP | 0 | — | — | 90m |
-| Cherki (B) | MID | 0 | 0.00 | +0.0 | 0m |
-| Emersonn (B) | FWD | 0 | — | — | 77m |
-| Wissa (B) | FWD | 0 | — | — | 90m |
+| João Pedro (B) | FWD | 0 | — | — | 0m |
+| Emersonn (B) | FWD | 0 | — | — | 59m |
+| Tarkowski (B) | DEF | 0 | — | — | 90m |
 
 ## Notes
 
 - Predicted values are blended xPts from the pre-GW ML model (40% model + 60% FPL ep_next).
 - Predictions currently only available for GW1 squad; later GWs will add per-GW reports.
-- To get transfer recommendations for next GW, run `python scripts/post_gw.py --gw 8` locally.
+- To get transfer recommendations for next GW, run `python scripts/post_gw.py --gw 9` locally.
