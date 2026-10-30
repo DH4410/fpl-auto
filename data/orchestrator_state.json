@@ -1,53 +1,53 @@
 {
   "last_analyzed_gw": 8,
-  "last_simulated_gw": 8,
+  "last_simulated_gw": 9,
   "last_executed_gw": 8,
   "approved_plan": {
-    "gw": 8,
+    "gw": 9,
     "approved_transfers": [
       {
-        "element_in": 115,
-        "name_in": "De Cuyper",
-        "purchase_price": 53,
-        "element_out": 176,
-        "name_out": "Dasilva",
-        "selling_price": 40,
+        "element_in": 4,
+        "name_in": "Gabriel",
+        "purchase_price": 79,
+        "element_out": 8,
+        "name_out": "Calafiori",
+        "selling_price": 58,
         "position": 2
       },
       {
-        "element_in": 504,
-        "name_in": "Vuskovic",
-        "purchase_price": 51,
-        "element_out": 391,
-        "name_out": "Gvardiol",
-        "selling_price": 57,
-        "position": 2
-      },
-      {
-        "element_in": 411,
-        "name_in": "Haaland",
-        "purchase_price": 157,
-        "element_out": 464,
-        "name_out": "Wissa",
+        "element_in": 31,
+        "name_in": "Konsa",
+        "purchase_price": 47,
+        "element_out": 229,
+        "name_out": "Tarkowski",
         "selling_price": 61,
+        "position": 2
+      },
+      {
+        "element_in": 79,
+        "name_in": "Evanilson",
+        "purchase_price": 63,
+        "element_out": 165,
+        "name_out": "Jo\u00e3o Pedro",
+        "selling_price": 77,
         "position": 4
       }
     ],
     "approved_chip": null,
-    "expected_net_gain": 63.57,
-    "expected_gross_gain": 71.57,
+    "expected_net_gain": 57.11,
+    "expected_gross_gain": 65.11,
     "hit_count": 2,
     "captain": {
-      "element": 101,
-      "name": "Henderson",
-      "xpts": 6.67
+      "element": 411,
+      "name": "Haaland",
+      "xpts": 6.45
     },
     "vice": {
-      "element": 115,
-      "name": "De Cuyper",
-      "xpts": 6.93
+      "element": 4,
+      "name": "Gabriel",
+      "xpts": 6.29
     },
-    "reasoning": "Planner proposes 3 transfer(s) worth +71.57 xPts gross over 6 GWs (+63.57 net of 2 hit(s)). Hit approved: 71.57 gross >= 10.0 required.",
+    "reasoning": "Planner proposes 3 transfer(s) worth +65.11 xPts gross over 6 GWs (+57.11 net of 2 hit(s)). Hit approved: 65.11 gross >= 10.0 required.",
     "transfer_plan_kind": "ordinary",
     "execution_plan_version": 4,
     "model_health": {
@@ -67,55 +67,55 @@
         "is_vice_captain": false
       },
       {
-        "element": 8,
+        "element": 4,
         "position": 2,
+        "is_captain": false,
+        "is_vice_captain": true
+      },
+      {
+        "element": 31,
+        "position": 3,
         "is_captain": false,
         "is_vice_captain": false
       },
       {
         "element": 115,
-        "position": 3,
-        "is_captain": false,
-        "is_vice_captain": true
-      },
-      {
-        "element": 504,
         "position": 4,
         "is_captain": false,
         "is_vice_captain": false
       },
       {
-        "element": 53,
+        "element": 504,
         "position": 5,
         "is_captain": false,
         "is_vice_captain": false
       },
       {
-        "element": 101,
+        "element": 53,
         "position": 6,
-        "is_captain": true,
+        "is_captain": false,
         "is_vice_captain": false
       },
       {
-        "element": 124,
+        "element": 101,
         "position": 7,
         "is_captain": false,
         "is_vice_captain": false
       },
       {
-        "element": 286,
+        "element": 124,
         "position": 8,
         "is_captain": false,
         "is_vice_captain": false
       },
       {
-        "element": 399,
+        "element": 286,
         "position": 9,
         "is_captain": false,
         "is_vice_captain": false
       },
       {
-        "element": 165,
+        "element": 79,
         "position": 10,
         "is_captain": false,
         "is_vice_captain": false
@@ -123,7 +123,7 @@
       {
         "element": 411,
         "position": 11,
-        "is_captain": false,
+        "is_captain": true,
         "is_vice_captain": false
       },
       {
@@ -133,19 +133,19 @@
         "is_vice_captain": false
       },
       {
-        "element": 330,
+        "element": 399,
         "position": 13,
         "is_captain": false,
         "is_vice_captain": false
       },
       {
-        "element": 316,
+        "element": 330,
         "position": 14,
         "is_captain": false,
         "is_vice_captain": false
       },
       {
-        "element": 229,
+        "element": 316,
         "position": 15,
         "is_captain": false,
         "is_vice_captain": false
@@ -153,23 +153,6 @@
     ],
     "entry_id": 2330027,
     "source_squad_signature": [
-      8,
-      53,
-      101,
-      124,
-      165,
-      176,
-      229,
-      286,
-      316,
-      330,
-      385,
-      391,
-      399,
-      464,
-      572
-    ],
-    "target_squad_signature": [
       8,
       53,
       101,
@@ -186,9 +169,26 @@
       504,
       572
     ],
+    "target_squad_signature": [
+      4,
+      31,
+      53,
+      79,
+      101,
+      115,
+      124,
+      286,
+      316,
+      330,
+      385,
+      399,
+      411,
+      504,
+      572
+    ],
     "planning_news_guard": [
       {
-        "element": 8,
+        "element": 4,
         "status": "a",
         "chance_next_round": null,
         "news": "",
@@ -197,10 +197,37 @@
         "removed": false
       },
       {
-        "element": 53,
+        "element": 8,
         "status": "d",
         "chance_next_round": 75,
-        "news": "Calf injury - 75% chance of playing",
+        "news": "Hip injury - 75% chance of playing",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
+      },
+      {
+        "element": 31,
+        "status": "a",
+        "chance_next_round": 100,
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
+      },
+      {
+        "element": 53,
+        "status": "a",
+        "chance_next_round": 100,
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
+      },
+      {
+        "element": 79,
+        "status": "a",
+        "chance_next_round": null,
+        "news": "",
         "can_select": true,
         "can_transact": true,
         "removed": false
@@ -234,18 +261,9 @@
       },
       {
         "element": 165,
-        "status": "a",
-        "chance_next_round": 100,
-        "news": "",
-        "can_select": true,
-        "can_transact": true,
-        "removed": false
-      },
-      {
-        "element": 176,
-        "status": "a",
-        "chance_next_round": null,
-        "news": "",
+        "status": "i",
+        "chance_next_round": 0,
+        "news": "Thigh injury - Unknown return date",
         "can_select": true,
         "can_transact": true,
         "removed": false
@@ -296,15 +314,6 @@
         "removed": false
       },
       {
-        "element": 391,
-        "status": "a",
-        "chance_next_round": null,
-        "news": "",
-        "can_select": true,
-        "can_transact": true,
-        "removed": false
-      },
-      {
         "element": 399,
         "status": "a",
         "chance_next_round": null,
@@ -317,15 +326,6 @@
         "element": 411,
         "status": "a",
         "chance_next_round": 100,
-        "news": "",
-        "can_select": true,
-        "can_transact": true,
-        "removed": false
-      },
-      {
-        "element": 464,
-        "status": "a",
-        "chance_next_round": null,
         "news": "",
         "can_select": true,
         "can_transact": true,
@@ -350,7 +350,7 @@
         "removed": false
       }
     ],
-    "execute_target_utc": "2026-10-23T12:45:29.792198+00:00"
+    "execute_target_utc": "2026-10-30T23:03:45.630365+00:00"
   },
   "execute_target_utc": null,
   "last_deep_research_gw": 8,
