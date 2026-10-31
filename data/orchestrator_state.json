@@ -371,6 +371,13 @@
       "name": "Calafiori",
       "reason": "Hip injury - 75% chance of playing",
       "priority": 1.0
+    },
+    {
+      "action": "transfer_out",
+      "element": 101,
+      "name": "Henderson",
+      "reason": "Illness - 75% chance of playing",
+      "priority": 1.0
     }
   ]
 }
