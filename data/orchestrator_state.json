@@ -399,7 +399,14 @@
     }
   ],
   "signing_ideas": [],
-  "executed_transfers": {},
+  "executed_transfers": {
+    "gw": 9,
+    "pairs": [
+      "8->4",
+      "229->31",
+      "165->79"
+    ]
+  },
   "idea_list": [
     {
       "action": "transfer_out",
