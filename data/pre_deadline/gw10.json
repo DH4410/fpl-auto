@@ -1,0 +1,40 @@
+{
+  "gw": 10,
+  "approved_transfers": [
+    {
+      "element_in": 183,
+      "name_in": "Rudoni",
+      "purchase_price": 49,
+      "element_out": 101,
+      "name_out": "Henderson",
+      "selling_price": 49,
+      "position": 3
+    }
+  ],
+  "approved_chip": null,
+  "expected_net_gain": 12.8,
+  "expected_gross_gain": 12.8,
+  "hit_count": 0,
+  "captain": {
+    "element": 183,
+    "name": "Rudoni",
+    "xpts": 6.11
+  },
+  "vice": {
+    "element": 31,
+    "name": "Konsa",
+    "xpts": 6.19
+  },
+  "reasoning": "Planner proposes 1 transfer(s) worth +12.80 xPts gross over 6 GWs (+12.80 net of 0 hit(s)).",
+  "transfer_plan_kind": "ordinary_no_hit_counterfactual",
+  "execution_plan_version": 4,
+  "model_health": {
+    "loaded": true,
+    "inference_ok": true,
+    "error": null
+  },
+  "requires_replan": false,
+  "wildcard_validation_errors": [],
+  "wildcard_validated": false,
+  "vetoed_element_ids": []
+}

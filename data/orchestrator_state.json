@@ -1,54 +1,36 @@
 {
   "last_analyzed_gw": 9,
-  "last_simulated_gw": 9,
+  "last_simulated_gw": 10,
   "last_executed_gw": 9,
   "approved_plan": {
-    "gw": 9,
+    "gw": 10,
     "approved_transfers": [
       {
-        "element_in": 4,
-        "name_in": "Gabriel",
-        "purchase_price": 79,
-        "element_out": 8,
-        "name_out": "Calafiori",
-        "selling_price": 58,
-        "position": 2
-      },
-      {
-        "element_in": 31,
-        "name_in": "Konsa",
-        "purchase_price": 47,
-        "element_out": 229,
-        "name_out": "Tarkowski",
-        "selling_price": 61,
-        "position": 2
-      },
-      {
-        "element_in": 79,
-        "name_in": "Evanilson",
-        "purchase_price": 63,
-        "element_out": 165,
-        "name_out": "Jo\u00e3o Pedro",
-        "selling_price": 77,
-        "position": 4
+        "element_in": 183,
+        "name_in": "Rudoni",
+        "purchase_price": 49,
+        "element_out": 101,
+        "name_out": "Henderson",
+        "selling_price": 49,
+        "position": 3
       }
     ],
     "approved_chip": null,
-    "expected_net_gain": 57.11,
-    "expected_gross_gain": 65.11,
-    "hit_count": 2,
+    "expected_net_gain": 12.8,
+    "expected_gross_gain": 12.8,
+    "hit_count": 0,
     "captain": {
-      "element": 411,
-      "name": "Haaland",
-      "xpts": 6.45
+      "element": 183,
+      "name": "Rudoni",
+      "xpts": 6.11
     },
     "vice": {
-      "element": 4,
-      "name": "Gabriel",
-      "xpts": 6.29
+      "element": 31,
+      "name": "Konsa",
+      "xpts": 6.19
     },
-    "reasoning": "Planner proposes 3 transfer(s) worth +65.11 xPts gross over 6 GWs (+57.11 net of 2 hit(s)). Hit approved: 65.11 gross >= 10.0 required.",
-    "transfer_plan_kind": "ordinary",
+    "reasoning": "Planner proposes 1 transfer(s) worth +12.80 xPts gross over 6 GWs (+12.80 net of 0 hit(s)).",
+    "transfer_plan_kind": "ordinary_no_hit_counterfactual",
     "execution_plan_version": 4,
     "model_health": {
       "loaded": true,
@@ -70,13 +52,13 @@
         "element": 4,
         "position": 2,
         "is_captain": false,
-        "is_vice_captain": true
+        "is_vice_captain": false
       },
       {
         "element": 31,
         "position": 3,
         "is_captain": false,
-        "is_vice_captain": false
+        "is_vice_captain": true
       },
       {
         "element": 115,
@@ -97,15 +79,15 @@
         "is_vice_captain": false
       },
       {
-        "element": 101,
+        "element": 124,
         "position": 7,
         "is_captain": false,
         "is_vice_captain": false
       },
       {
-        "element": 124,
+        "element": 183,
         "position": 8,
-        "is_captain": false,
+        "is_captain": true,
         "is_vice_captain": false
       },
       {
@@ -123,7 +105,7 @@
       {
         "element": 411,
         "position": 11,
-        "is_captain": true,
+        "is_captain": false,
         "is_vice_captain": false
       },
       {
@@ -153,23 +135,6 @@
     ],
     "entry_id": 2330027,
     "source_squad_signature": [
-      8,
-      53,
-      101,
-      115,
-      124,
-      165,
-      229,
-      286,
-      316,
-      330,
-      385,
-      399,
-      411,
-      504,
-      572
-    ],
-    "target_squad_signature": [
       4,
       31,
       53,
@@ -186,21 +151,29 @@
       504,
       572
     ],
+    "target_squad_signature": [
+      4,
+      31,
+      53,
+      79,
+      115,
+      124,
+      183,
+      286,
+      316,
+      330,
+      385,
+      399,
+      411,
+      504,
+      572
+    ],
     "planning_news_guard": [
       {
         "element": 4,
         "status": "a",
         "chance_next_round": null,
         "news": "",
-        "can_select": true,
-        "can_transact": true,
-        "removed": false
-      },
-      {
-        "element": 8,
-        "status": "d",
-        "chance_next_round": 75,
-        "news": "Hip injury - 75% chance of playing",
         "can_select": true,
         "can_transact": true,
         "removed": false
@@ -234,9 +207,9 @@
       },
       {
         "element": 101,
-        "status": "a",
-        "chance_next_round": 100,
-        "news": "",
+        "status": "d",
+        "chance_next_round": 75,
+        "news": "Illness - 75% chance of playing",
         "can_select": true,
         "can_transact": true,
         "removed": false
@@ -260,18 +233,9 @@
         "removed": false
       },
       {
-        "element": 165,
-        "status": "i",
-        "chance_next_round": 0,
-        "news": "Thigh injury - Unknown return date",
-        "can_select": true,
-        "can_transact": true,
-        "removed": false
-      },
-      {
-        "element": 229,
+        "element": 183,
         "status": "a",
-        "chance_next_round": null,
+        "chance_next_round": 100,
         "news": "",
         "can_select": true,
         "can_transact": true,
@@ -350,7 +314,7 @@
         "removed": false
       }
     ],
-    "execute_target_utc": "2026-10-30T23:03:45.630365+00:00"
+    "execute_target_utc": "2026-11-06T14:33:02.380889+00:00"
   },
   "execute_target_utc": null,
   "last_deep_research_gw": 8,
