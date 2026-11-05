@@ -377,6 +377,13 @@
       "name": "Thiago",
       "reason": "Replacement for Haaland: FWD \u00a37.8m, xPts 5.50, GW10 FDR 4.0.",
       "priority": 0.201
+    },
+    {
+      "action": "transfer_out",
+      "element": 31,
+      "name": "Konsa",
+      "reason": "Knee injury - 75% chance of playing",
+      "priority": 1.0
     }
   ]
 }
