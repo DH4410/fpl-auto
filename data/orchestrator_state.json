@@ -1,7 +1,7 @@
 {
   "last_analyzed_gw": 9,
   "last_simulated_gw": 10,
-  "last_executed_gw": 9,
+  "last_executed_gw": 10,
   "approved_plan": {
     "gw": 10,
     "approved_transfers": [
@@ -320,75 +320,6 @@
   "last_deep_research_gw": 8,
   "research_ideas": [],
   "signing_ideas": [],
-  "executed_transfers": {
-    "gw": 10,
-    "pairs": [
-      "101->183"
-    ]
-  },
-  "idea_list": [
-    {
-      "action": "transfer_out",
-      "element": 101,
-      "name": "Henderson",
-      "reason": "Illness - 75% chance of playing",
-      "priority": 0.225
-    },
-    {
-      "action": "transfer_out",
-      "element": 411,
-      "name": "Haaland",
-      "reason": "Scored 2 vs 6.5 expected in GW9 (delta -4.5).",
-      "priority": 0.223
-    },
-    {
-      "action": "transfer_in",
-      "element": 129,
-      "name": "Ayari",
-      "reason": "Replacement for Henderson: MID \u00a35.4m, xPts 7.00, GW10 FDR 3.0.",
-      "priority": 0.203
-    },
-    {
-      "action": "transfer_in",
-      "element": 156,
-      "name": "Neto",
-      "reason": "Replacement for Henderson: MID \u00a36.6m, xPts 6.50, GW10 FDR 3.0.",
-      "priority": 0.203
-    },
-    {
-      "action": "transfer_in",
-      "element": 68,
-      "name": "Tavernier",
-      "reason": "Replacement for Henderson: MID \u00a36.6m, xPts 6.00, GW10 FDR 2.0.",
-      "priority": 0.203
-    },
-    {
-      "action": "transfer_in",
-      "element": 166,
-      "name": "N.Jackson",
-      "reason": "Replacement for Haaland: FWD \u00a37.0m, xPts 8.20, GW10 FDR 3.0.",
-      "priority": 0.201
-    },
-    {
-      "action": "transfer_in",
-      "element": 295,
-      "name": "McBurnie",
-      "reason": "Replacement for Haaland: FWD \u00a35.5m, xPts 5.80, GW10 FDR 5.0.",
-      "priority": 0.201
-    },
-    {
-      "action": "transfer_in",
-      "element": 106,
-      "name": "Thiago",
-      "reason": "Replacement for Haaland: FWD \u00a37.8m, xPts 5.50, GW10 FDR 4.0.",
-      "priority": 0.201
-    },
-    {
-      "action": "transfer_out",
-      "element": 31,
-      "name": "Konsa",
-      "reason": "Knee injury - 75% chance of playing",
-      "priority": 1.0
-    }
-  ]
+  "executed_transfers": {},
+  "idea_list": []
 }
