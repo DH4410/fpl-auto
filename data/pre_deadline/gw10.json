@@ -21,11 +21,11 @@
     "xpts": 6.11
   },
   "vice": {
-    "element": 31,
-    "name": "Konsa",
-    "xpts": 6.19
+    "element": 4,
+    "name": "Gabriel",
+    "xpts": 5.89
   },
-  "reasoning": "Planner proposes 1 transfer(s) worth +12.80 xPts gross over 6 GWs (+12.80 net of 0 hit(s)).",
+  "reasoning": "Planner proposes 1 transfer(s) worth +12.80 xPts gross over 6 GWs (+12.80 net of 0 hit(s)). NOTE: Konsa is flagged urgent (Knee injury - 75% chance of playing) but the optimiser kept them \u2014 benched or judged still worth holding.",
   "transfer_plan_kind": "ordinary_no_hit_counterfactual",
   "execution_plan_version": 4,
   "model_health": {

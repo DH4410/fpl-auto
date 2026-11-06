@@ -1,8 +1,321 @@
 {
   "last_analyzed_gw": 9,
-  "last_simulated_gw": 0,
+  "last_simulated_gw": 10,
   "last_executed_gw": 9,
-  "approved_plan": null,
+  "approved_plan": {
+    "gw": 10,
+    "approved_transfers": [
+      {
+        "element_in": 183,
+        "name_in": "Rudoni",
+        "purchase_price": 49,
+        "element_out": 101,
+        "name_out": "Henderson",
+        "selling_price": 49,
+        "position": 3
+      }
+    ],
+    "approved_chip": null,
+    "expected_net_gain": 12.8,
+    "expected_gross_gain": 12.8,
+    "hit_count": 0,
+    "captain": {
+      "element": 183,
+      "name": "Rudoni",
+      "xpts": 6.11
+    },
+    "vice": {
+      "element": 4,
+      "name": "Gabriel",
+      "xpts": 5.89
+    },
+    "reasoning": "Planner proposes 1 transfer(s) worth +12.80 xPts gross over 6 GWs (+12.80 net of 0 hit(s)). NOTE: Konsa is flagged urgent (Knee injury - 75% chance of playing) but the optimiser kept them \u2014 benched or judged still worth holding.",
+    "transfer_plan_kind": "ordinary_no_hit_counterfactual",
+    "execution_plan_version": 4,
+    "model_health": {
+      "loaded": true,
+      "inference_ok": true,
+      "error": null
+    },
+    "requires_replan": false,
+    "wildcard_validation_errors": [],
+    "wildcard_validated": false,
+    "vetoed_element_ids": [],
+    "picks_payload": [
+      {
+        "element": 385,
+        "position": 1,
+        "is_captain": false,
+        "is_vice_captain": false
+      },
+      {
+        "element": 4,
+        "position": 2,
+        "is_captain": false,
+        "is_vice_captain": true
+      },
+      {
+        "element": 115,
+        "position": 3,
+        "is_captain": false,
+        "is_vice_captain": false
+      },
+      {
+        "element": 504,
+        "position": 4,
+        "is_captain": false,
+        "is_vice_captain": false
+      },
+      {
+        "element": 53,
+        "position": 5,
+        "is_captain": false,
+        "is_vice_captain": false
+      },
+      {
+        "element": 124,
+        "position": 6,
+        "is_captain": false,
+        "is_vice_captain": false
+      },
+      {
+        "element": 183,
+        "position": 7,
+        "is_captain": true,
+        "is_vice_captain": false
+      },
+      {
+        "element": 286,
+        "position": 8,
+        "is_captain": false,
+        "is_vice_captain": false
+      },
+      {
+        "element": 399,
+        "position": 9,
+        "is_captain": false,
+        "is_vice_captain": false
+      },
+      {
+        "element": 79,
+        "position": 10,
+        "is_captain": false,
+        "is_vice_captain": false
+      },
+      {
+        "element": 411,
+        "position": 11,
+        "is_captain": false,
+        "is_vice_captain": false
+      },
+      {
+        "element": 572,
+        "position": 12,
+        "is_captain": false,
+        "is_vice_captain": false
+      },
+      {
+        "element": 31,
+        "position": 13,
+        "is_captain": false,
+        "is_vice_captain": false
+      },
+      {
+        "element": 330,
+        "position": 14,
+        "is_captain": false,
+        "is_vice_captain": false
+      },
+      {
+        "element": 316,
+        "position": 15,
+        "is_captain": false,
+        "is_vice_captain": false
+      }
+    ],
+    "entry_id": 2330027,
+    "source_squad_signature": [
+      4,
+      31,
+      53,
+      79,
+      101,
+      115,
+      124,
+      286,
+      316,
+      330,
+      385,
+      399,
+      411,
+      504,
+      572
+    ],
+    "target_squad_signature": [
+      4,
+      31,
+      53,
+      79,
+      115,
+      124,
+      183,
+      286,
+      316,
+      330,
+      385,
+      399,
+      411,
+      504,
+      572
+    ],
+    "planning_news_guard": [
+      {
+        "element": 4,
+        "status": "a",
+        "chance_next_round": null,
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
+      },
+      {
+        "element": 31,
+        "status": "d",
+        "chance_next_round": 75,
+        "news": "Knee injury - 75% chance of playing",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
+      },
+      {
+        "element": 53,
+        "status": "a",
+        "chance_next_round": 100,
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
+      },
+      {
+        "element": 79,
+        "status": "a",
+        "chance_next_round": null,
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
+      },
+      {
+        "element": 101,
+        "status": "d",
+        "chance_next_round": 75,
+        "news": "Illness - 75% chance of playing",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
+      },
+      {
+        "element": 115,
+        "status": "a",
+        "chance_next_round": null,
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
+      },
+      {
+        "element": 124,
+        "status": "a",
+        "chance_next_round": null,
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
+      },
+      {
+        "element": 183,
+        "status": "a",
+        "chance_next_round": 100,
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
+      },
+      {
+        "element": 286,
+        "status": "a",
+        "chance_next_round": null,
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
+      },
+      {
+        "element": 316,
+        "status": "a",
+        "chance_next_round": 100,
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
+      },
+      {
+        "element": 330,
+        "status": "a",
+        "chance_next_round": null,
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
+      },
+      {
+        "element": 385,
+        "status": "a",
+        "chance_next_round": null,
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
+      },
+      {
+        "element": 399,
+        "status": "a",
+        "chance_next_round": null,
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
+      },
+      {
+        "element": 411,
+        "status": "a",
+        "chance_next_round": 100,
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
+      },
+      {
+        "element": 504,
+        "status": "a",
+        "chance_next_round": null,
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
+      },
+      {
+        "element": 572,
+        "status": "a",
+        "chance_next_round": null,
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
+      }
+    ],
+    "execute_target_utc": "2026-11-06T08:23:25.019839+00:00"
+  },
   "execute_target_utc": null,
   "last_deep_research_gw": 8,
   "research_ideas": [],
