@@ -1,5 +1,5 @@
 {
-  "last_analyzed_gw": 9,
+  "last_analyzed_gw": 10,
   "last_simulated_gw": 10,
   "last_executed_gw": 10,
   "approved_plan": {
@@ -317,17 +317,179 @@
     "execute_target_utc": "2026-11-06T08:23:25.019839+00:00"
   },
   "execute_target_utc": null,
-  "last_deep_research_gw": 8,
-  "research_ideas": [],
+  "last_deep_research_gw": 10,
+  "research_ideas": [
+    {
+      "action": "transfer_in",
+      "element": 1,
+      "name": "Raya",
+      "reason": "Top-100 smart money: 9/10 managers hold (90%), ep_next 6.8",
+      "priority": 0.4
+    },
+    {
+      "action": "transfer_in",
+      "element": 249,
+      "name": "Barry",
+      "reason": "Top-100 smart money: 8/10 managers hold (80%), ep_next 7.0",
+      "priority": 0.4
+    },
+    {
+      "action": "transfer_in",
+      "element": 166,
+      "name": "N.Jackson",
+      "reason": "Top-100 smart money: 8/10 managers hold (80%), ep_next 8.8",
+      "priority": 0.4
+    },
+    {
+      "action": "transfer_in",
+      "element": 334,
+      "name": "Muharemovi\u0107",
+      "reason": "Top-100 smart money: 7/10 managers hold (70%), ep_next 6.8",
+      "priority": 0.4
+    },
+    {
+      "action": "transfer_out",
+      "element": 316,
+      "name": "Emersonn",
+      "reason": "Top-100 avoid: ep_next only 1.5, 2.9% overall ownership \u2014 likely liability",
+      "priority": 0.3
+    },
+    {
+      "action": "transfer_out",
+      "element": 572,
+      "name": "Tzolakis",
+      "reason": "Top-100 avoid: ep_next only 3.0, 13.5% overall ownership \u2014 likely liability",
+      "priority": 0.3
+    },
+    {
+      "action": "transfer_out",
+      "element": 286,
+      "name": "Belloumi",
+      "reason": "Top-100 avoid: ep_next only 3.4, 9.7% overall ownership \u2014 likely liability",
+      "priority": 0.3
+    },
+    {
+      "action": "transfer_out",
+      "element": 330,
+      "name": "Bogle",
+      "reason": "Top-100 avoid: ep_next only 3.8, 11.2% overall ownership \u2014 likely liability",
+      "priority": 0.3
+    }
+  ],
   "signing_ideas": [],
   "executed_transfers": {},
   "idea_list": [
     {
       "action": "transfer_out",
-      "element": 101,
-      "name": "Henderson",
-      "reason": "Illness - 75% chance of playing",
-      "priority": 1.0
+      "element": 286,
+      "name": "Belloumi",
+      "reason": "Scored 0 vs 4.2 expected in GW10 (delta -4.2).",
+      "priority": 0.21
+    },
+    {
+      "action": "transfer_out",
+      "element": 183,
+      "name": "Rudoni",
+      "reason": "Scored 2 vs 6.1 expected in GW10 (delta -4.1).",
+      "priority": 0.206
+    },
+    {
+      "action": "transfer_in",
+      "element": 129,
+      "name": "Ayari",
+      "reason": "Replacement for Belloumi: MID \u00a35.5m, xPts 7.00, GW11 FDR 2.0.",
+      "priority": 0.189
+    },
+    {
+      "action": "transfer_in",
+      "element": 68,
+      "name": "Tavernier",
+      "reason": "Replacement for Belloumi: MID \u00a36.7m, xPts 6.50, GW11 FDR 3.0.",
+      "priority": 0.189
+    },
+    {
+      "action": "transfer_in",
+      "element": 542,
+      "name": "E.Le F\u00e9e",
+      "reason": "Replacement for Belloumi: MID \u00a35.7m, xPts 6.50, GW11 FDR 3.0.",
+      "priority": 0.189
+    },
+    {
+      "action": "transfer_in",
+      "element": 129,
+      "name": "Ayari",
+      "reason": "Replacement for Rudoni: MID \u00a35.5m, xPts 7.00, GW11 FDR 2.0.",
+      "priority": 0.185
+    },
+    {
+      "action": "transfer_in",
+      "element": 68,
+      "name": "Tavernier",
+      "reason": "Replacement for Rudoni: MID \u00a36.7m, xPts 6.50, GW11 FDR 3.0.",
+      "priority": 0.185
+    },
+    {
+      "action": "transfer_in",
+      "element": 542,
+      "name": "E.Le F\u00e9e",
+      "reason": "Replacement for Rudoni: MID \u00a35.7m, xPts 6.50, GW11 FDR 3.0.",
+      "priority": 0.185
+    },
+    {
+      "action": "transfer_out",
+      "element": 53,
+      "name": "Manzambi",
+      "reason": "Scored 2 vs 5.4 expected in GW10 (delta -3.4).",
+      "priority": 0.17
+    },
+    {
+      "action": "transfer_out",
+      "element": 411,
+      "name": "Haaland",
+      "reason": "Scored 2 vs 5.1 expected in GW10 (delta -3.1).",
+      "priority": 0.157
+    },
+    {
+      "action": "transfer_in",
+      "element": 129,
+      "name": "Ayari",
+      "reason": "Replacement for Manzambi: MID \u00a35.5m, xPts 7.00, GW11 FDR 2.0.",
+      "priority": 0.153
+    },
+    {
+      "action": "transfer_in",
+      "element": 68,
+      "name": "Tavernier",
+      "reason": "Replacement for Manzambi: MID \u00a36.7m, xPts 6.50, GW11 FDR 3.0.",
+      "priority": 0.153
+    },
+    {
+      "action": "transfer_in",
+      "element": 542,
+      "name": "E.Le F\u00e9e",
+      "reason": "Replacement for Manzambi: MID \u00a35.7m, xPts 6.50, GW11 FDR 3.0.",
+      "priority": 0.153
+    },
+    {
+      "action": "transfer_in",
+      "element": 166,
+      "name": "N.Jackson",
+      "reason": "Replacement for Haaland: FWD \u00a37.1m, xPts 8.80, GW11 FDR 2.0.",
+      "priority": 0.141
+    },
+    {
+      "action": "transfer_in",
+      "element": 249,
+      "name": "Barry",
+      "reason": "Replacement for Haaland: FWD \u00a35.7m, xPts 7.00, GW11 FDR 4.0.",
+      "priority": 0.141
+    },
+    {
+      "action": "transfer_in",
+      "element": 379,
+      "name": "Isak",
+      "reason": "Replacement for Haaland: FWD \u00a39.3m, xPts 5.60, GW11 FDR 3.0.",
+      "priority": 0.141
     }
   ]
 }
