@@ -1,0 +1,40 @@
+{
+  "gw": 11,
+  "approved_transfers": [
+    {
+      "element_in": 166,
+      "name_in": "N.Jackson",
+      "purchase_price": 72,
+      "element_out": 316,
+      "name_out": "Emersonn",
+      "selling_price": 54,
+      "position": 4
+    }
+  ],
+  "approved_chip": null,
+  "expected_net_gain": 22.74,
+  "expected_gross_gain": 22.74,
+  "hit_count": 0,
+  "captain": {
+    "element": 166,
+    "name": "N.Jackson",
+    "xpts": 7.04
+  },
+  "vice": {
+    "element": 4,
+    "name": "Gabriel",
+    "xpts": 7.18
+  },
+  "reasoning": "Planner proposes 1 transfer(s) worth +22.74 xPts gross over 6 GWs (+22.74 net of 0 hit(s)).",
+  "transfer_plan_kind": "ordinary_no_hit_counterfactual",
+  "execution_plan_version": 4,
+  "model_health": {
+    "loaded": true,
+    "inference_ok": true,
+    "error": null
+  },
+  "requires_replan": false,
+  "wildcard_validation_errors": [],
+  "wildcard_validated": false,
+  "vetoed_element_ids": []
+}
