@@ -1,6 +1,6 @@
 # FPL Season Plan — GW11
 
-*Generated 2026-11-20 01:38 UTC — advisory only, no transfers executed*
+*Generated 2026-11-20 18:18 UTC — advisory only, no transfers executed*
 
 ---
 
@@ -29,13 +29,13 @@ All predictions run locally — no external AI APIs are called. GitHub Actions f
 ### Starting XI
 
 - **Trafford** (GKP, £5.0m): 5.31 xPts for GW11, ranked #1/13 among GKPs in candidate pool. Leeds fixture. P(start) 90%.
-- **De Cuyper** (DEF, £5.5m): 4.21 xPts for GW11, ranked #15/47 among DEFs in candidate pool. Brighton fixture. P(start) 90%.
-- **Gabriel** (DEF, £8.1m) [**Vice**]: 7.18 xPts for GW11, ranked #1/47 among DEFs in candidate pool. Arsenal fixture. P(start) 90%.
-- **Konsa** (DEF, £4.9m): 6.99 xPts for GW11, ranked #2/47 among DEFs in candidate pool. Arsenal fixture. P(start) 90%.
-- **Vuskovic** (DEF, £5.3m): 4.73 xPts for GW11, ranked #9/47 among DEFs in candidate pool. Brighton fixture. P(start) 90%.
-- **Cherki** (MID, £7.9m): 3.81 xPts for GW11, ranked #15/71 among MIDs in candidate pool. Man City fixture. P(start) 90%.
-- **Groß** (MID, £6.3m): 3.88 xPts for GW11, ranked #13/71 among MIDs in candidate pool. Brighton fixture. P(start) 90%.
-- **Rudoni** (MID, £4.9m): 4.58 xPts for GW11, ranked #3/71 among MIDs in candidate pool. Coventry City fixture. P(start) 90%.
+- **De Cuyper** (DEF, £5.5m): 4.21 xPts for GW11, ranked #15/49 among DEFs in candidate pool. Brighton fixture. P(start) 90%.
+- **Gabriel** (DEF, £8.1m) [**Vice**]: 7.18 xPts for GW11, ranked #1/49 among DEFs in candidate pool. Arsenal fixture. P(start) 90%.
+- **Konsa** (DEF, £4.9m): 6.99 xPts for GW11, ranked #2/49 among DEFs in candidate pool. Arsenal fixture. P(start) 90%.
+- **Vuskovic** (DEF, £5.3m): 4.73 xPts for GW11, ranked #9/49 among DEFs in candidate pool. Brighton fixture. P(start) 90%.
+- **Cherki** (MID, £7.9m): 3.81 xPts for GW11, ranked #15/69 among MIDs in candidate pool. Man City fixture. P(start) 90%.
+- **Groß** (MID, £6.3m): 3.88 xPts for GW11, ranked #13/69 among MIDs in candidate pool. Brighton fixture. P(start) 90%.
+- **Rudoni** (MID, £4.9m): 4.58 xPts for GW11, ranked #3/69 among MIDs in candidate pool. Coventry City fixture. P(start) 90%.
 - **Evanilson** (FWD, £6.5m): 5.42 xPts for GW11, ranked #3/19 among FWDs in candidate pool. Bournemouth fixture. P(start) 90%.
 - **Haaland** (FWD, £15.8m): 3.63 xPts for GW11, ranked #7/19 among FWDs in candidate pool. Man City fixture. P(start) 90%.
 - **N.Jackson** (FWD, £7.2m) [**CAPTAIN**]: Highest projected return in the squad: 7.04 xPts (14.09 effective with captain double). Ranked #1/19 among FWDs in the 150-player candidate pool. Captain is always the highest-xPts player in the XI.
@@ -44,8 +44,8 @@ All predictions run locally — no external AI APIs are called. GitHub Actions f
 
 *Bench picks are weighted at 10% in the MILP objective. The optimizer intentionally spends budget on the starting XI and uses bench slots for legal squad shape.*
 
-- **Manzambi** (MID, £6.2m): 1.05 xPts. Budget saved here funds the premium XI picks.
-- **Belloumi** (MID, £5.3m): 1.21 xPts. Budget saved here funds the premium XI picks.
+- **Manzambi** (MID, £6.2m): 2.97 xPts. Budget saved here funds the premium XI picks.
+- **Belloumi** (MID, £5.3m): 3.12 xPts. Budget saved here funds the premium XI picks.
 - **Bogle** (DEF, £4.8m): 3.24 xPts. Budget saved here funds the premium XI picks.
 - **Tzolakis** (GKP, £4.7m): 2.97 xPts. Budget saved here funds the premium XI picks.
 
@@ -94,12 +94,12 @@ N.Jackson projects 7.04 xPts vs Emersonn's 1.17 — a 5.87 xPts improvement this
 
 |   GW | Transfers              | Chip   | Captain   | Vice      |   XI xPts |   Bench xPts |   Hits |   FT→ | Bank   |
 |-----:|:-----------------------|:-------|:----------|:----------|----------:|-------------:|-------:|------:|:-------|
-|   11 | N.Jackson ← Emersonn   | —      | N.Jackson | Gabriel   |     63.84 |         8.47 |      0 |     1 | £4.1m  |
-|   12 | Barry ← Haaland        | —      | N.Jackson | Groß      |     63.6  |        13.97 |      0 |     1 | £14.1m |
-|   13 | B.Fernandes ← Belloumi | —      | Barry     | N.Jackson |     58.07 |        13.55 |      0 |     1 | £7.7m  |
-|   14 | Roll                   | —      | Barry     | N.Jackson |     71.6  |        13.96 |      0 |     2 | £7.7m  |
-|   15 | Roll                   | —      | N.Jackson | Gabriel   |     62.6  |        14.19 |      0 |     3 | £7.7m  |
-|   16 | Roll                   | —      | Barry     | Groß      |     69.43 |        11.94 |      0 |     4 | £7.7m  |
+|   11 | N.Jackson ← Emersonn   | —      | N.Jackson | Gabriel   |     63.84 |        12.3  |      0 |     1 | £4.1m  |
+|   12 | Barry ← Haaland        | —      | N.Jackson | Groß      |     64.38 |        15.61 |      0 |     1 | £14.1m |
+|   13 | B.Fernandes ← Manzambi | —      | Barry     | N.Jackson |     58.07 |        15.1  |      0 |     1 | £8.5m  |
+|   14 | Roll                   | —      | Barry     | N.Jackson |     71.6  |        14.54 |      0 |     2 | £8.5m  |
+|   15 | Roll                   | —      | N.Jackson | Gabriel   |     63.07 |        14.88 |      0 |     3 | £8.5m  |
+|   16 | Roll                   | —      | Barry     | Groß      |     69.43 |        12.75 |      0 |     4 | £8.5m  |
 
 ---
 

@@ -1,8 +1,321 @@
 {
   "last_analyzed_gw": 10,
-  "last_simulated_gw": 0,
+  "last_simulated_gw": 11,
   "last_executed_gw": 10,
-  "approved_plan": null,
+  "approved_plan": {
+    "gw": 11,
+    "approved_transfers": [
+      {
+        "element_in": 166,
+        "name_in": "N.Jackson",
+        "purchase_price": 72,
+        "element_out": 316,
+        "name_out": "Emersonn",
+        "selling_price": 54,
+        "position": 4
+      }
+    ],
+    "approved_chip": null,
+    "expected_net_gain": 22.74,
+    "expected_gross_gain": 22.74,
+    "hit_count": 0,
+    "captain": {
+      "element": 166,
+      "name": "N.Jackson",
+      "xpts": 7.04
+    },
+    "vice": {
+      "element": 4,
+      "name": "Gabriel",
+      "xpts": 7.18
+    },
+    "reasoning": "Planner proposes 1 transfer(s) worth +22.74 xPts gross over 6 GWs (+22.74 net of 0 hit(s)).",
+    "transfer_plan_kind": "ordinary_no_hit_counterfactual",
+    "execution_plan_version": 4,
+    "model_health": {
+      "loaded": true,
+      "inference_ok": true,
+      "error": null
+    },
+    "requires_replan": false,
+    "wildcard_validation_errors": [],
+    "wildcard_validated": false,
+    "vetoed_element_ids": [],
+    "picks_payload": [
+      {
+        "element": 385,
+        "position": 1,
+        "is_captain": false,
+        "is_vice_captain": false
+      },
+      {
+        "element": 4,
+        "position": 2,
+        "is_captain": false,
+        "is_vice_captain": true
+      },
+      {
+        "element": 31,
+        "position": 3,
+        "is_captain": false,
+        "is_vice_captain": false
+      },
+      {
+        "element": 115,
+        "position": 4,
+        "is_captain": false,
+        "is_vice_captain": false
+      },
+      {
+        "element": 504,
+        "position": 5,
+        "is_captain": false,
+        "is_vice_captain": false
+      },
+      {
+        "element": 124,
+        "position": 6,
+        "is_captain": false,
+        "is_vice_captain": false
+      },
+      {
+        "element": 183,
+        "position": 7,
+        "is_captain": false,
+        "is_vice_captain": false
+      },
+      {
+        "element": 399,
+        "position": 8,
+        "is_captain": false,
+        "is_vice_captain": false
+      },
+      {
+        "element": 79,
+        "position": 9,
+        "is_captain": false,
+        "is_vice_captain": false
+      },
+      {
+        "element": 166,
+        "position": 10,
+        "is_captain": true,
+        "is_vice_captain": false
+      },
+      {
+        "element": 411,
+        "position": 11,
+        "is_captain": false,
+        "is_vice_captain": false
+      },
+      {
+        "element": 572,
+        "position": 12,
+        "is_captain": false,
+        "is_vice_captain": false
+      },
+      {
+        "element": 330,
+        "position": 13,
+        "is_captain": false,
+        "is_vice_captain": false
+      },
+      {
+        "element": 286,
+        "position": 14,
+        "is_captain": false,
+        "is_vice_captain": false
+      },
+      {
+        "element": 53,
+        "position": 15,
+        "is_captain": false,
+        "is_vice_captain": false
+      }
+    ],
+    "entry_id": 2330027,
+    "source_squad_signature": [
+      4,
+      31,
+      53,
+      79,
+      115,
+      124,
+      183,
+      286,
+      316,
+      330,
+      385,
+      399,
+      411,
+      504,
+      572
+    ],
+    "target_squad_signature": [
+      4,
+      31,
+      53,
+      79,
+      115,
+      124,
+      166,
+      183,
+      286,
+      330,
+      385,
+      399,
+      411,
+      504,
+      572
+    ],
+    "planning_news_guard": [
+      {
+        "element": 4,
+        "status": "a",
+        "chance_next_round": null,
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
+      },
+      {
+        "element": 31,
+        "status": "a",
+        "chance_next_round": 100,
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
+      },
+      {
+        "element": 53,
+        "status": "a",
+        "chance_next_round": 100,
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
+      },
+      {
+        "element": 79,
+        "status": "a",
+        "chance_next_round": null,
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
+      },
+      {
+        "element": 115,
+        "status": "a",
+        "chance_next_round": null,
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
+      },
+      {
+        "element": 124,
+        "status": "a",
+        "chance_next_round": null,
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
+      },
+      {
+        "element": 166,
+        "status": "a",
+        "chance_next_round": null,
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
+      },
+      {
+        "element": 183,
+        "status": "a",
+        "chance_next_round": 100,
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
+      },
+      {
+        "element": 286,
+        "status": "a",
+        "chance_next_round": 100,
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
+      },
+      {
+        "element": 316,
+        "status": "a",
+        "chance_next_round": 100,
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
+      },
+      {
+        "element": 330,
+        "status": "a",
+        "chance_next_round": null,
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
+      },
+      {
+        "element": 385,
+        "status": "a",
+        "chance_next_round": null,
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
+      },
+      {
+        "element": 399,
+        "status": "a",
+        "chance_next_round": null,
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
+      },
+      {
+        "element": 411,
+        "status": "a",
+        "chance_next_round": 100,
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
+      },
+      {
+        "element": 504,
+        "status": "a",
+        "chance_next_round": null,
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
+      },
+      {
+        "element": 572,
+        "status": "a",
+        "chance_next_round": null,
+        "news": "",
+        "can_select": true,
+        "can_transact": true,
+        "removed": false
+      }
+    ],
+    "execute_target_utc": "2026-11-21T00:32:37.485394+00:00"
+  },
   "execute_target_utc": null,
   "last_deep_research_gw": 10,
   "research_ideas": [
