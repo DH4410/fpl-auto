@@ -1,39 +1,39 @@
-# FPL Auto — GW10 Post-Match Reflection
+# FPL Auto — GW11 Post-Match Reflection
 
-*Generated: 2026-11-09 15:06 UTC*
+*Generated: 2026-11-24 22:10 UTC*
 
 
 ## Summary
 
 | Metric | Value |
 |--------|------:|
-| Actual GW Points | **80** |
+| Actual GW Points | **32** |
 | Predicted (xPts) | 0.0 |
-| Difference | +80.0 |
+| Difference | +32.0 |
 
 ## Player Breakdown
 
 | Player | Pos | Pts | xPts | Diff | Stats |
 |--------|-----|----:|-----:|-----:|-------|
-| Trafford | GKP | 10 | — | — | 90m CS +3b |
-| Gabriel ® | DEF | 8 | 0.00 | +8.0 | 90m CS |
-| Vuskovic | DEF | 12 | — | — | 90m 1A CS +3b |
-| De Cuyper | DEF | 6 | — | — | 81m CS |
-| Konsa | DEF | 8 | — | — | 90m CS |
-| Cherki | MID | 9 | 0.00 | +9.0 | 90m 1G +2b |
-| Groß | MID | 10 | 0.00 | +10.0 | 90m 1G CS +2b |
-| Rudoni © | MID | 4 | — | — | 85m |
-| Manzambi | MID | 2 | — | — | 77m |
-| Evanilson | FWD | 9 | — | — | 84m 1G +3b |
+| Trafford | GKP | 2 | — | — | 90m |
+| Gabriel ® | DEF | 1 | 0.00 | +1.0 | 90m |
+| Konsa | DEF | 1 | — | — | 90m |
+| De Cuyper | DEF | 1 | — | — | 90m |
+| Vuskovic | DEF | 0 | — | — | 90m |
+| Groß | MID | 4 | 0.00 | +4.0 | 90m |
+| Rudoni | MID | 10 | — | — | 90m 2A +2b |
+| Cherki | MID | 1 | 0.00 | +1.0 | 20m |
+| Evanilson | FWD | 6 | — | — | 90m 1G CS |
+| N.Jackson © | FWD | 4 | — | — | 72m CS |
 | Haaland | FWD | 2 | — | — | 90m |
 | *— Bench —* | | | | | |
-| Tzolakis (B) | GKP | 0 | — | — | 90m +1b |
-| Belloumi (B) | MID | 0 | — | — | 0m |
-| Bogle (B) | DEF | 0 | — | — | 90m CS +1b |
-| Emersonn (B) | FWD | 0 | — | — | 53m |
+| Tzolakis (B) | GKP | 0 | — | — | 90m CS +2b |
+| Bogle (B) | DEF | 0 | — | — | 85m 1A |
+| Belloumi (B) | MID | 0 | — | — | 90m 1A CS +1b |
+| Manzambi (B) | MID | 0 | — | — | 59m |
 
 ## Notes
 
 - Predicted values are blended xPts from the pre-GW ML model (40% model + 60% FPL ep_next).
 - Predictions currently only available for GW1 squad; later GWs will add per-GW reports.
-- To get transfer recommendations for next GW, run `python scripts/post_gw.py --gw 11` locally.
+- To get transfer recommendations for next GW, run `python scripts/post_gw.py --gw 12` locally.
