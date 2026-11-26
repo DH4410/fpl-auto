@@ -1,35 +1,35 @@
 {
   "last_analyzed_gw": 11,
-  "last_simulated_gw": 11,
+  "last_simulated_gw": 12,
   "last_executed_gw": 11,
   "approved_plan": {
-    "gw": 11,
+    "gw": 12,
     "approved_transfers": [
       {
-        "element_in": 166,
-        "name_in": "N.Jackson",
-        "purchase_price": 72,
-        "element_out": 316,
-        "name_out": "Emersonn",
-        "selling_price": 54,
-        "position": 4
+        "element_in": 366,
+        "name_in": "Wirtz",
+        "purchase_price": 74,
+        "element_out": 53,
+        "name_out": "Manzambi",
+        "selling_price": 60,
+        "position": 3
       }
     ],
     "approved_chip": null,
-    "expected_net_gain": 22.74,
-    "expected_gross_gain": 22.74,
+    "expected_net_gain": 12.69,
+    "expected_gross_gain": 12.69,
     "hit_count": 0,
     "captain": {
-      "element": 166,
-      "name": "N.Jackson",
-      "xpts": 7.04
+      "element": 183,
+      "name": "Rudoni",
+      "xpts": 7.01
     },
     "vice": {
-      "element": 4,
-      "name": "Gabriel",
-      "xpts": 7.18
+      "element": 366,
+      "name": "Wirtz",
+      "xpts": 6.08
     },
-    "reasoning": "Planner proposes 1 transfer(s) worth +22.74 xPts gross over 6 GWs (+22.74 net of 0 hit(s)).",
+    "reasoning": "Planner proposes 1 transfer(s) worth +12.69 xPts gross over 6 GWs (+12.69 net of 0 hit(s)).",
     "transfer_plan_kind": "ordinary_no_hit_counterfactual",
     "execution_plan_version": 4,
     "model_health": {
@@ -43,7 +43,7 @@
     "vetoed_element_ids": [],
     "picks_payload": [
       {
-        "element": 385,
+        "element": 572,
         "position": 1,
         "is_captain": false,
         "is_vice_captain": false
@@ -52,7 +52,7 @@
         "element": 4,
         "position": 2,
         "is_captain": false,
-        "is_vice_captain": true
+        "is_vice_captain": false
       },
       {
         "element": 31,
@@ -81,53 +81,53 @@
       {
         "element": 183,
         "position": 7,
-        "is_captain": false,
+        "is_captain": true,
         "is_vice_captain": false
       },
       {
-        "element": 399,
+        "element": 286,
         "position": 8,
         "is_captain": false,
         "is_vice_captain": false
       },
       {
-        "element": 79,
+        "element": 366,
         "position": 9,
+        "is_captain": false,
+        "is_vice_captain": true
+      },
+      {
+        "element": 79,
+        "position": 10,
         "is_captain": false,
         "is_vice_captain": false
       },
       {
         "element": 166,
-        "position": 10,
-        "is_captain": true,
-        "is_vice_captain": false
-      },
-      {
-        "element": 411,
         "position": 11,
         "is_captain": false,
         "is_vice_captain": false
       },
       {
-        "element": 572,
+        "element": 385,
         "position": 12,
         "is_captain": false,
         "is_vice_captain": false
       },
       {
-        "element": 330,
+        "element": 399,
         "position": 13,
         "is_captain": false,
         "is_vice_captain": false
       },
       {
-        "element": 286,
+        "element": 330,
         "position": 14,
         "is_captain": false,
         "is_vice_captain": false
       },
       {
-        "element": 53,
+        "element": 411,
         "position": 15,
         "is_captain": false,
         "is_vice_captain": false
@@ -141,9 +141,9 @@
       79,
       115,
       124,
+      166,
       183,
       286,
-      316,
       330,
       385,
       399,
@@ -154,7 +154,6 @@
     "target_squad_signature": [
       4,
       31,
-      53,
       79,
       115,
       124,
@@ -162,6 +161,7 @@
       183,
       286,
       330,
+      366,
       385,
       399,
       411,
@@ -251,18 +251,18 @@
         "removed": false
       },
       {
-        "element": 316,
+        "element": 330,
         "status": "a",
-        "chance_next_round": 100,
+        "chance_next_round": null,
         "news": "",
         "can_select": true,
         "can_transact": true,
         "removed": false
       },
       {
-        "element": 330,
+        "element": 366,
         "status": "a",
-        "chance_next_round": null,
+        "chance_next_round": 100,
         "news": "",
         "can_select": true,
         "can_transact": true,
@@ -314,7 +314,7 @@
         "removed": false
       }
     ],
-    "execute_target_utc": "2026-11-21T00:32:37.485394+00:00"
+    "execute_target_utc": "2026-11-27T16:33:13.445043+00:00"
   },
   "execute_target_utc": null,
   "last_deep_research_gw": 10,

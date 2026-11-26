@@ -1,0 +1,40 @@
+{
+  "gw": 12,
+  "approved_transfers": [
+    {
+      "element_in": 366,
+      "name_in": "Wirtz",
+      "purchase_price": 74,
+      "element_out": 53,
+      "name_out": "Manzambi",
+      "selling_price": 60,
+      "position": 3
+    }
+  ],
+  "approved_chip": null,
+  "expected_net_gain": 12.69,
+  "expected_gross_gain": 12.69,
+  "hit_count": 0,
+  "captain": {
+    "element": 183,
+    "name": "Rudoni",
+    "xpts": 7.01
+  },
+  "vice": {
+    "element": 366,
+    "name": "Wirtz",
+    "xpts": 6.08
+  },
+  "reasoning": "Planner proposes 1 transfer(s) worth +12.69 xPts gross over 6 GWs (+12.69 net of 0 hit(s)).",
+  "transfer_plan_kind": "ordinary_no_hit_counterfactual",
+  "execution_plan_version": 4,
+  "model_health": {
+    "loaded": true,
+    "inference_ok": true,
+    "error": null
+  },
+  "requires_replan": false,
+  "wildcard_validation_errors": [],
+  "wildcard_validated": false,
+  "vetoed_element_ids": []
+}
