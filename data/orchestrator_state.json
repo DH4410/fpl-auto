@@ -321,5 +321,13 @@
   "research_ideas": [],
   "signing_ideas": [],
   "executed_transfers": {},
-  "idea_list": []
+  "idea_list": [
+    {
+      "action": "transfer_out",
+      "element": 330,
+      "name": "Bogle",
+      "reason": "Suspended until 5 Dec",
+      "priority": 1.0
+    }
+  ]
 }
